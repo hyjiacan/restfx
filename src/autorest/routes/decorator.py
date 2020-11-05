@@ -150,7 +150,7 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup: d
     if alias is not None and alias in data:
         return False, data[alias]
 
-    if backup is not None:
+    if isinstance(backup, dict):
         if name in backup:
             return False, backup[name]
 
@@ -289,11 +289,12 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
         variable_args[item] = arg_source[item]
 
     # noinspection PyUnresolvedReferences
-    for item in request.BODY:
-        if item in used_args:
-            continue
-        # noinspection PyUnresolvedReferences
-        variable_args[item] = request.BODY[item]
+    if isinstance(request.BODY, dict):
+        for item in request.BODY:
+            if item in used_args:
+                continue
+            # noinspection PyUnresolvedReferences
+            variable_args[item] = request.BODY[item]
 
     actual_args.update(variable_args)
 
