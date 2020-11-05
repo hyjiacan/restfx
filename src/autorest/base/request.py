@@ -8,6 +8,7 @@ class HttpRequest(Request):
         super(HttpRequest, self).__init__(environ)
         self.context = context
 
-        self.B = {}
-        self.G = {}
-        self.P = {}
+        self.GET = self.args
+        self.POST = self.form
+        self.BODY = None
+        self.FILES = self.files

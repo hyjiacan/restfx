@@ -114,26 +114,18 @@ def _process_json_params(request):
     参数处理
     :return:
     """
-
     if request.content_type != 'application/json':
-        request.G = request.GET.dict()
-        request.P = request.POST.dict()
         return
 
     # 如果请求是json类型，就先处理一下
 
-    body = request.body
+    body = request.data
 
-    if body == '' or body is None:
+    if not body:
         return
 
     try:
-        if isinstance(body, str):
-            request.B = json.loads(body)
-        elif isinstance(body, bytes):
-            request.B = json.loads(body.decode())
-        elif isinstance(body, (dict, list)):
-            request.B = body
+        request.BODY = json.loads(body.decode())
     except Exception as e:
         request.context.logger.warning('Deserialize request body fail: %s' % str(e))
 
@@ -183,7 +175,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
     has_variable_args = False
 
     # noinspection PyUnresolvedReferences
-    arg_source = request.G if method in ['delete', 'get'] else request.P
+    arg_source = request.GET if method in ['delete', 'get'] else request.POST
 
     for arg_name in args.keys():
         arg_spec = args.get(arg_name)
@@ -206,7 +198,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
             continue
 
         # noinspection PyUnresolvedReferences
-        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec, request.B)
+        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec, request.BODY)
 
         # 未找到参数
         if use_default is None:
@@ -297,11 +289,11 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
         variable_args[item] = arg_source[item]
 
     # noinspection PyUnresolvedReferences
-    for item in request.B:
+    for item in request.BODY:
         if item in used_args:
             continue
         # noinspection PyUnresolvedReferences
-        variable_args[item] = request.B[item]
+        variable_args[item] = request.BODY[item]
 
     actual_args.update(variable_args)
 
