@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Table of APIs</title>
+    <style>
+      .container {
+        width: 1200px;
+        margin: 0 auto;
+        color: #333333;
+      }
+
+      h1 {
+        float: left;
+      }
+
+      .tools {
+        float: right;
+        margin-top: 24px;
+      }
+
+      .buttons {
+        text-align: right;
+      }
+
+      .filters {
+        margin-top: 5px;
+      }
+
+      hr {
+        clear: both;
+        border-width: 3px;
+      }
+
+      .method {
+        text-transform: uppercase;
+        color: #e90588;
+        padding: 0 5px;
+      }
+
+      .tip {
+        color: #88888888;
+        font-size: 14px;
+      }
+
+      .args-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      .args-table tr:nth-child(2n) {
+        background-color: #f9f9f5;
+      }
+
+      .args-table tr:hover {
+        background-color: #f9f9e8;
+      }
+
+      .args-table th {
+        background-color: #f6f8fb;
+      }
+
+      .args-table th,
+      .args-table td {
+        border: 1px solid #cfd7de;
+        padding: 5px;
+      }
+
+      details {
+        margin-bottom: 20px;
+        border-left: 1px dotted transparent;
+        clear: both;
+      }
+
+      details summary {
+        cursor: default;
+        outline: none;
+        font-weight: bold;
+      }
+
+      .anchor {
+        visibility: hidden;
+        text-decoration: none;
+        font-size: large;
+        font-weight: bold;
+      }
+
+      details summary:hover {
+        background-color: #eeeeee;
+      }
+
+      details:hover summary .anchor,
+      details li:hover .anchor {
+        visibility: visible;
+      }
+
+      details:hover {
+        border-left-color: #888888;
+      }
+
+      details li {
+        margin-bottom: 40px;
+      }
+
+      details[open] summary {
+        border-bottom: 1px solid #b9b6b6;
+        padding: 5px 0;
+        position: sticky;
+        top: 0;
+        background-color: #ffffff;
+      }
+
+      .info {
+        padding: 5px 0;
+        background-color: #fffdd9;
+        border: 1px solid #f1eeb5;
+      }
+
+      code {
+        color: #006fff;
+        font-size: 12px;
+        padding: 2px 4px;
+        background-color: #fffdd9;
+        border: 1px solid #f1eeb5;
+      }
+
+      code.url {
+        border: none;
+        background: none;
+      }
+
+      footer {
+        text-align: center;
+        font-size: 14px;
+      }
+
+      .hide {
+        display: none;
+      }
+
+      #loading {
+        text-align: center;
+        font-size: 3em;
+        color: #888888;
+      }
+
+      .comment {
+        font-size: 12px;
+        color: #555555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Table of APIs</h1>
+        <div class="tools">
+          <div class="buttons">
+            <button onclick="collapseAll()">全部收起</button>
+            <button onclick="expandAll()">全部展开</button>
+          </div>
+        </div>
+      </header>
+      <hr />
+      <div id="api-list">
+        <p id="loading">正在加载 API 数据...</p>
+      </div>
+      <hr />
+      <footer>
+        Powered by
+        <a href="http://github.com/hyjiacan/restful-dj">restful-dj</a>
+      </footer>
+    </div>
+    <script>
+      ;(function () {
+        /**
+         *
+         * @param {XMLHttpRequest} xhr
+         * @returns {headers: {}, data: string}
+         */
+        function getResponse(xhr) {
+          let data = xhr.responseText
+          let headers = {}
+          xhr
+            .getAllResponseHeaders()
+            .split('\r\n')
+            .forEach((item) => {
+              let temp = item.trim().split(':')
+              if (!temp[0]) {
+                return
+              }
+              headers[temp[0].trim()] = (temp[1] || '').trim()
+            })
+          if (headers['content-type'].indexOf('application/json') !== -1) {
+            try {
+              data = JSON.parse(data)
+            } catch (e) {}
+          }
+          return {
+            data,
+            headers,
+            status: xhr.status,
+            statusText: xhr.statusText
+          }
+        }
+
+        const rootURL = window.location.origin + window.location.pathname
+        // 请求数据
+        request('post', rootURL, {
+          callback: (response) => {
+            render(response.data)
+          }
+        })
+
+        const list = document.querySelector('#api-list')
+
+        function render(data) {
+          const fragment = document.createDocumentFragment()
+
+          for (const module in data) {
+            fragment.appendChild(renderModule(data[module], module))
+          }
+
+          list.innerHTML = ''
+          list.appendChild(fragment)
+        }
+
+        function renderModule(data, module) {
+          return el('details', { open: true }, [
+            el('summary', null, [
+              el(
+                'a',
+                {
+                  href: `#${module}`,
+                  name: module,
+                  class: 'anchor'
+                },
+                '#'
+              ),
+              el('span', null, module)
+            ]),
+            el(
+              'ul',
+              { class: 'api-list' },
+              data.map((route) =>
+                el('li', { class: 'api-item' }, [
+                  el(
+                    'a',
+                    {
+                      href: `#${route.path}`,
+                      name: route.path,
+                      class: 'anchor'
+                    },
+                    '#'
+                  ),
+                  el('span', null, route.name),
+                  el('p', { class: 'info' }, [
+                    el('span', { class: 'method' }, route.method),
+                    el('code', { class: 'url' }, `${rootURL}${route.path}`)
+                  ]),
+                  ...renderArgs(route.args)
+                ])
+              )
+            )
+          ])
+        }
+
+        function renderArgs(args) {
+          if (!args) {
+            return [el('span', { class: 'tip' }, '无参数')]
+          }
+          return [
+            el('div', null, '参数信息'),
+            el('table', { class: 'args-table' }, [
+              el(
+                'thead',
+                null,
+                el('tr', null, [
+                  el('th', null, '名称'),
+                  el('th', null, '类型'),
+                  el('th', null, '默认值'),
+                  el('th', null, '描述')
+                ])
+              ),
+              el(
+                'tbody',
+                null,
+                args.map((arg) =>
+                  el('tr', null, [
+                    el('td', null, arg.name),
+                    el(
+                      'td',
+                      null,
+                      el(
+                        arg.has_annotation ? 'code' : 'span',
+                        null,
+                        arg.has_annotation ? arg.annotation_name : '-'
+                      )
+                    ),
+                    el(
+                      'td',
+                      null,
+                      el(
+                        arg.has_default ? 'code' : 'span',
+                        null,
+                        arg.has_default
+                          ? (() => {
+                              const defaultValue = arg['default']
+                              if (defaultValue === null) {
+                                return 'None'
+                              }
+
+                              if (defaultValue === '') {
+                                return '""'
+                              }
+
+                              if (typeof defaultValue === 'number') {
+                                return defaultValue.toString()
+                              }
+
+                              if (typeof defaultValue === 'boolean') {
+                                return defaultValue ? 'True' : 'False'
+                              }
+
+                              return defaultValue
+                            })()
+                          : '-'
+                      )
+                    ),
+                    el(
+                      'td',
+                      null,
+                      el(
+                        'span',
+                        { class: 'comment' },
+                        arg.comment ? arg.comment : '-'
+                      )
+                    )
+                  ])
+                )
+              )
+            ])
+          ]
+        }
+
+        function el(tag, attrs, children) {
+          const element = document.createElement(tag)
+          if (attrs) {
+            for (const name in attrs) {
+              let val = attrs[name]
+              // if (val === true) {
+              //   val = name
+              // }
+              element.setAttribute(name, val)
+            }
+          }
+          if (children) {
+            if (!Array.isArray(children)) {
+              children = [children]
+            }
+            children.forEach((child) => {
+              if (child === undefined) {
+                return
+              }
+              if (!(child instanceof Node)) {
+                child = document.createTextNode(child.toString())
+              }
+              element.appendChild(child)
+            })
+          }
+          return element
+        }
+
+        function request(method, url, { param, data, headers, callback }) {
+          let xhr = new XMLHttpRequest()
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+              callback(getResponse(xhr))
+            }
+          }
+          xhr.open(method.toUpperCase(), url, true)
+          xhr.setRequestHeader('requested-with', 'XmlHttpRequest')
+          xhr.send(data)
+        }
+      })()
+
+      var all
+
+      function getAll() {
+        if (all) {
+          return all
+        }
+        all = document.body.querySelectorAll('details')
+        return all
+      }
+
+      function collapseAll() {
+        getAll().forEach(function (item) {
+          item.removeAttribute('open')
+        })
+      }
+
+      function expandAll() {
+        getAll().forEach(function (item) {
+          item.setAttribute('open', '')
+        })
+      }
+    </script>
+  </body>
+</html>

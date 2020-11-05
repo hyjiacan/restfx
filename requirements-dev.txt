@@ -1,0 +1,4 @@
+Werkzeug==1.0.1
+click==7.1.2
+watchdog==0.10.3
+wheel==0.35.1
