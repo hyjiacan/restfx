@@ -6,7 +6,7 @@ from ..base.request import HttpRequest
 from ..base.response import HttpResponse, HttpResponseBadRequest, JsonResponse
 from ..routes.meta import RouteMeta
 from ..routes.middleware import MiddlewareManager
-from ..util.utils import ArgumentSpecification, get_func_info
+from ..util.func_util import ArgumentSpecification, get_func_info
 
 
 def route(module=None, name=None, **kwargs):

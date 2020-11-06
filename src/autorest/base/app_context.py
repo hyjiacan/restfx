@@ -45,6 +45,6 @@ class AppContext:
 
         :param app_id:
         :return:
-        :rtype AppContext:
+        :rtype: AppContext
         """
         return AppContext.contexts.get(app_id)

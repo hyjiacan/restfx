@@ -1,10 +1,10 @@
 import os
 
-from .argument_specification import ArgumentSpecification
 from .path_resolver import PathResolver
 from ..base.app_context import AppContext
 from ..base.request import HttpRequest
 from ..base.response import HttpResponseNotFound, HttpResponseServerError, HttpResponse, JsonResponse
+from ..util.func_util import ArgumentSpecification
 from ..util.utils import get_func_info
 
 
@@ -56,12 +56,16 @@ class Router:
                 if len(temp) == 2:
                     suffix = temp[1]
 
-                router = PathResolver(self.context,
-                                      self.modules_cache,
-                                      self.entry_cache,
-                                      request, route['method'], entry, suffix)
-                router.check()
-                define = router.get_func_define()
+                resolver = PathResolver(self.context,
+                                        self.modules_cache,
+                                        self.entry_cache,
+                                        route['method'], entry, suffix)
+                resolver.check()
+                define = resolver.get_func_define()
+
+                if isinstance(define, HttpResponse):
+                    continue
+
                 if define and len(define['args']) > 0:
                     route['args'] = [define['args'][arg] for arg in define['args']]
                 else:
@@ -97,11 +101,15 @@ class Router:
         resolver = PathResolver(self.context,
                                 self.modules_cache,
                                 self.entry_cache,
-                                request, request.method, entry, name)
+                                request.method, entry, name)
         check_result = resolver.check()
         if isinstance(check_result, HttpResponse):
             return check_result
-        return resolver.resolve()
+        func_define = resolver.resolve()
+        if isinstance(func_define, HttpResponse):
+            return func_define
+
+        return self.invoke_handler(request, func_define['func'], func_define['args'])
 
     def route_for_production(self, request, entry, name):
         method = request.method.lower()

@@ -3,9 +3,9 @@ from types import MethodType
 
 from werkzeug.serving import run_simple
 
+from .util.func_util import FunctionDescription
 from .base.app_base import AppBase
 from .base.app_context import AppContext
-from .util import utils
 
 
 class App:
@@ -22,8 +22,8 @@ class App:
         self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash)
         self.app = AppBase(self.context, api_prefix, with_static, static_dir, static_path)
 
-    def startup(self, host='127.0.0.1', port=9127):
-        run_simple(host, port, self.app, use_debugger=True, use_reloader=True)
+    def startup(self, host='127.0.0.1', port=9127, **kwargs):
+        run_simple(host, port, self.app, use_debugger=True, use_reloader=True, **kwargs)
 
     def update_debug_mode(self, debug_mode: bool):
         self.context.update_debug_mode(debug_mode)
@@ -82,10 +82,10 @@ class App:
         if rid in self.app.router.production_routes:
             self.context.logger.warning('%s %s exists' % (method, path))
 
-        args = utils.get_func_args(handler, self.context.logger)
+        desc = FunctionDescription(handler)
         self.app.router.production_routes[rid] = {
             'func': handler,
-            'args': args
+            'args': desc.arguments
         }
 
     def register_globals(self, *global_classes):

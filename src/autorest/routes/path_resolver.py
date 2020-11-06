@@ -2,23 +2,21 @@ import inspect
 import os
 
 from ..base.app_context import AppContext
-from ..base.request import HttpRequest
-from ..base.response import HttpResponseNotFound, HttpResponseServerError, HttpResponse
-from ..util.utils import load_module, get_func_args, get_func_info
+from ..base.response import HttpResponseNotFound
+from ..util.func_util import FunctionDescription
+from ..util.utils import load_module, get_func_info
 
 
 class PathResolver:
     def __init__(self, context: AppContext,
                  modules_cache: dict,
                  entry_cache: dict,
-                 request: HttpRequest,
                  method: str,
                  entry: str,
                  name: str):
         self.context = context
         self.modules_cache = modules_cache
         self.entry_cache = entry_cache
-        self.request = request
         self.entry = entry
         method = method.lower()
         self.method = method
@@ -72,10 +70,7 @@ class PathResolver:
             self.context.logger.info(message)
             return HttpResponseNotFound()
 
-        if func_define is HttpResponse:
-            return func_define
-
-        return self.invoke_handler(self.request, func_define['func'], func_define['args'])
+        return func_define
 
     def get_route_map(self, route_path):
         # 命中
@@ -132,6 +127,7 @@ class PathResolver:
             self.entry_cache[func_name] = False
             return False
 
+        desc = FunctionDescription(func)
         self.entry_cache[fullname] = {
             'func': func,
             # 该函数的参数列表
@@ -139,18 +135,10 @@ class PathResolver:
             #     'annotation': '类型', 当未指定类型时，无此项
             #     'default': '默认值'，当未指定默认值时，无此项
             # }
-            'args': get_func_args(func, self.context.logger)
+            'args': desc.arguments
         }
 
         return self.entry_cache[fullname]
-
-    def invoke_handler(self, request, func, args):
-        try:
-            return func(request, args)
-        except Exception as e:
-            message = '\t%s' % get_func_info(func)
-            self.context.logger.error(message, e)
-            return HttpResponseServerError('%s: %s' % (message, str(e)))
 
     @staticmethod
     def is_valid_route(func):
