@@ -1,6 +1,6 @@
 # autorest
 
-基于 Werkzeug 的 restful 自动路由框架。此框架支持多应用模式。
+基于 Werkzeug 的 restful 多应用自动路由框架。
 
 此包解决的问题：
 
