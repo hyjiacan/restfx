@@ -4,8 +4,9 @@ import re
 from collections import OrderedDict
 from types import MethodType
 
-from ..base.request import HttpRequest
 from .utils import get_func_info
+from ..base.request import HttpRequest
+from ..base.response import HttpResponse
 
 
 class ArgumentSpecification:
@@ -91,9 +92,7 @@ class FunctionDescription:
         self.description = ''
         self.return_description = ''
         self.return_type = ''
-        self.arguments = OrderedDict()
-
-        self._get_func_args()
+        self.arguments = self._get_func_args()
 
     def _get_func_args(self):
         """
