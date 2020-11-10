@@ -3,8 +3,9 @@ from types import MethodType
 
 from werkzeug.serving import run_simple
 
+from .base.session import MemorySessionProvider
 from .util.func_util import FunctionDescription
-from .base.app_base import AppBase
+from .base.wsgi_app import WsgiApp
 from .base.app_context import AppContext
 
 
@@ -16,14 +17,31 @@ class App:
                  static_dir='',
                  static_path='/static',
                  debug_mode=False,
-                 url_endswith_slash=False
+                 url_endswith_slash=False,
+                 session_provider=MemorySessionProvider,
+                 session_expired=20,
+                 sessionid_name='SESSIONID'
                  ):
+        """
+
+        :param app_root:
+        :param api_prefix:
+        :param with_static:
+        :param static_dir:
+        :param static_path:
+        :param debug_mode:
+        :param url_endswith_slash:
+        :param session_provider:
+        :param session_expired: session 过期时长，单位为分钟
+        :param sessionid_name:
+        """
         self.id = uuid.uuid4()
-        self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash)
-        self.app = AppBase(self.context, api_prefix, with_static, static_dir, static_path)
+        self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
+                                  session_provider, session_expired, sessionid_name)
+        self.wsgi = WsgiApp(self.context, api_prefix, with_static, static_dir, static_path)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):
-        run_simple(host, port, self.app, use_debugger=True, use_reloader=True, **kwargs)
+        run_simple(host, port, self.wsgi, use_debugger=True, use_reloader=True, **kwargs)
 
     def update_debug_mode(self, debug_mode: bool):
         self.context.update_debug_mode(debug_mode)
@@ -40,7 +58,7 @@ class App:
         :param intercepter:
         :return:
         """
-        self.app.router.intercepter = intercepter
+        self.wsgi.router.intercepter = intercepter
 
     def set_logger(self, logger):
         """
@@ -79,11 +97,11 @@ class App:
         :return:
         """
         rid = '%s#%s' % (path, method.lower())
-        if rid in self.app.router.production_routes:
+        if rid in self.wsgi.router.production_routes:
             self.context.logger.warning('%s %s exists' % (method, path))
 
         desc = FunctionDescription(handler)
-        self.app.router.production_routes[rid] = {
+        self.wsgi.router.production_routes[rid] = {
             'func': handler,
             'args': desc.arguments
         }

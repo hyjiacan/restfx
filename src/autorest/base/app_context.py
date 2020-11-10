@@ -1,17 +1,28 @@
 from uuid import UUID
 
-from ..util.collector import Collector
+from .session import ISessionProvider
+from ..routes.collector import Collector
 from ..util.logger import Logger
 
 
 class AppContext:
     contexts = {}
 
-    def __init__(self, app_id: UUID, app_root, debug_mode=False, url_endswith_slash=False):
+    def __init__(self, app_id: UUID,
+                 app_root: str,
+                 debug_mode: bool,
+                 url_endswith_slash: bool,
+                 session_provider: type,
+                 session_expired: int,
+                 sessionid_name: str):
         """
 
-        :param debug_mode:
         """
+
+        if not session_provider.__base__ == ISessionProvider:
+            raise TypeError(
+                'Invalid session provider type: %s is not implemention of ISessionProvider' % session_provider.__name__)
+
         self.contexts[app_id] = self
         self.app_id = app_id
         # 是否启用DEBUG模式
@@ -23,6 +34,13 @@ class AppContext:
         self.middlewares = {}
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
+
+        self.session_provider = session_provider(session_expired * 60)
+        """
+        :type: ISessionProvider
+        """
+
+        self.sessionid_name = sessionid_name
 
         self.collector = Collector(app_root, url_endswith_slash)
         self.logger = Logger(debug_mode)

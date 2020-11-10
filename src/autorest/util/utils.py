@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import inspect
 
 
@@ -19,3 +21,15 @@ def get_func_info(func):
         line,
         func.__name__
     )
+
+
+def str_md5(s: str):
+    return hashlib.md5(s.encode(encoding='utf8')).hexdigest()
+
+
+def base64_encode(s: str) -> str:
+    return base64.b64encode(s.encode(encoding='utf8')).decode()
+
+
+def base64_decode(s: str) -> str:
+    return base64.b64decode(s.encode()).decode('utf-8')

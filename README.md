@@ -31,11 +31,11 @@ import autorest
 
 if __name__ == '__main__':
     root = os.path.dirname(__file__)
-    app = autorest.App(root, api_prefix='any/prefix', host='127.0.0.1', port=9127, debug_mode=True)
+    app = autorest.App(root, api_prefix='any/prefix', debug_mode=True)
     app.map_routes({
         'x': 'test'
     })
-    app.startup()
+    app.startup(host='127.0.0.1', port=9127)
 ```
 
 `api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。

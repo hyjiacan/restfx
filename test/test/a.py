@@ -10,9 +10,18 @@ def get(request: HttpRequest, foo: str, required_: int):
     :return: 返回 get 请求的值
     :rtype: dict
     """
+    session = request.session
+    last_foo = None
+    if session.has('foo'):
+        last_foo = session.get('foo')
+        session.remove('foo')
+    else:
+        session.set('foo', foo)
+    session.set('last-foo', foo)
     return {
         'method': 'get',
         'foo': foo,
+        'last-foo': last_foo,
         'required': required_
     }
 
