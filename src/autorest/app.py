@@ -3,10 +3,10 @@ from types import MethodType
 
 from werkzeug.serving import run_simple
 
-from .base.session import MemorySessionProvider
-from .util.func_util import FunctionDescription
-from .base.wsgi_app import WsgiApp
 from .base.app_context import AppContext
+from .base.session import MemorySessionProvider
+from .base.wsgi_app import WsgiApp
+from .util.func_util import FunctionDescription
 
 
 class App:
@@ -20,7 +20,8 @@ class App:
                  url_endswith_slash=False,
                  session_provider=MemorySessionProvider,
                  session_expired=20,
-                 sessionid_name='SESSIONID'
+                 sessionid_name='SESSIONID',
+                 session_extra_params: dict = None
                  ):
         """
 
@@ -37,7 +38,7 @@ class App:
         """
         self.id = uuid.uuid4()
         self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
-                                  session_provider, session_expired, sessionid_name)
+                                  session_provider, session_expired, sessionid_name, session_extra_params)
         self.wsgi = WsgiApp(self.context, api_prefix, with_static, static_dir, static_path)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):

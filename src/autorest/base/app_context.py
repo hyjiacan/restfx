@@ -14,7 +14,8 @@ class AppContext:
                  url_endswith_slash: bool,
                  session_provider: type,
                  session_expired: int,
-                 sessionid_name: str):
+                 sessionid_name: str,
+                 session_extra_params: dict):
         """
 
         """
@@ -35,7 +36,7 @@ class AppContext:
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
 
-        self.session_provider = session_provider(session_expired * 60)
+        self.session_provider = session_provider(session_expired * 60, **session_extra_params)
         """
         :type: ISessionProvider
         """

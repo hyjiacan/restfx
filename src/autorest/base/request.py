@@ -48,4 +48,10 @@ class HttpRequest(Request):
             self.session = context.session_provider.create(expected_session_id)
             return
 
-        self.session.last_access_time = datetime.now()
+        now = datetime.now()
+        # session 过期
+        if self.context.session_provider.is_expired(self.session):
+            self.session.clear()
+            self.session.create_time = now
+
+        self.session.last_access_time = now
