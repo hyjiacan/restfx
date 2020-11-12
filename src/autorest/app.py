@@ -36,7 +36,7 @@ class App:
         :param session_expired: session 过期时长，单位为分钟
         :param sessionid_name:
         """
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
                                   session_provider, session_expired, sessionid_name, session_extra_params)
         self.wsgi = WsgiApp(self.context, api_prefix, with_static, static_dir, static_path)

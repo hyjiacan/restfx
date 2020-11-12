@@ -52,6 +52,7 @@ class WsgiApp:
             else:
                 response = Response(status=404)
 
+            request.session.flush()
             response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
 
             return response(environ, start_response)

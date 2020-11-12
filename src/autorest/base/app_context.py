@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from .session import ISessionProvider
 from ..routes.collector import Collector
 from ..util.logger import Logger
@@ -8,7 +6,7 @@ from ..util.logger import Logger
 class AppContext:
     contexts = {}
 
-    def __init__(self, app_id: UUID,
+    def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
                  url_endswith_slash: bool,
@@ -59,7 +57,7 @@ class AppContext:
             handler(debug_mode)
 
     @staticmethod
-    def get(app_id: UUID):
+    def get(app_id: str):
         """
 
         :param app_id:
