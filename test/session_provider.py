@@ -7,8 +7,6 @@ from autorest.util import b64
 
 
 class MysqlSessionProvider(IDbSessionProvider):
-    table_name = "autorest_session"
-
     def __init__(self, expired: int):
         self.connection = pymysql.connect(
             host='172.16.53.3',
@@ -19,9 +17,15 @@ class MysqlSessionProvider(IDbSessionProvider):
             autocommit=True)
         super().__init__(expired)
 
-    def execute(self, sql: str):
-        cursor = self.connection.cursor()
-        rows = cursor.execute(sql.format(table_name=self.table_name))
+    def execute(self, sql: str, *args):
+        cursor = self.connection.cursor(pymysql.cursors.DictCursor)
+
+        rows = None
+        try:
+            rows = cursor.execute(sql, args)
+        except Exception as e:
+            print(repr(e))
+            return 0, None
 
         if sql.startswith('SELECT'):
             data = cursor.fetchall()
@@ -32,58 +36,50 @@ class MysqlSessionProvider(IDbSessionProvider):
 
     def table_exists(self) -> bool:
         rows, _ = self.execute(
-            """SELECT * FROM information_schema.tables WHERE table_name ='{table_name}' LIMIT 1""")
+            """SELECT * FROM information_schema.tables WHERE table_name ='autorest_session' LIMIT 1""")
         return rows > 0
 
     def create_table(self):
-        self.execute("""CREATE TABLE {table_name} (
+        self.execute("""CREATE TABLE autorest_session (
         id VARCHAR(256) PRIMARY KEY NOT NULL,
-        creation_time FLOAT,
-        last_access_time FLOAT,
+        creation_time LONG,
+        last_access_time LONG,
         store TEXT
         )""")
 
-    @staticmethod
-    def dataset2dict(dataset):
-        return {
-            'id': dataset[0],
-            'creation_time': dataset[1],
-            'last_access_time': dataset[2],
-            'store': b64.dec_bytes(dataset[3]),
-        }
-
-    def get_expired_session(self, time_before: float) -> List[HttpSession]:
-        rows, data = self.execute('SELECT * FROM {table_name} WHERE last_access_time < %d' % time_before)
-
-        return [self.parse(self.dataset2dict(item)) for item in data]
+    def get_expired_session(self, time_before: float) -> List[str]:
+        rows, data = self.execute('SELECT id FROM autorest_session WHERE last_access_time < %s', int(time_before))
+        return [item['id'] for item in data]
 
     def get(self, session_id: str) -> Optional[HttpSession]:
-        rows, data = self.execute("SELECT * FROM {table_name} WHERE id='%s' LIMIT 1" % session_id)
+        rows, data = self.execute("SELECT * FROM autorest_session WHERE id=%s LIMIT 1", session_id)
         if rows == 0:
             return None
-        return self.parse(self.dataset2dict(data[0]))
+        item = data[0]
+        item['store'] = b64.dec_bytes(item['store'])
+        return self.parse(item)
 
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
         data = b64.enc_str(store)
         if self.exists(session_id):
-            self.execute("""UPDATE {table_name} SET last_access_time=%d, store='%s' WHERE id='%s'""" % (
-                last_access_time, data, session_id))
+            self.execute("""UPDATE autorest_session SET last_access_time=%s, store=%s WHERE id=%s""",
+                         int(last_access_time), data, session_id)
             return
 
-        self.execute("""INSERT INTO {table_name} VALUES('%s', %d, %d, '%s')""" % (
-            session_id,
-            creation_time,
-            last_access_time,
-            data
-        ))
+        self.execute("""INSERT INTO autorest_session VALUES(%s, %s, %s, %s)""",
+                     session_id,
+                     int(creation_time),
+                     int(last_access_time),
+                     data
+                     )
 
     def exists(self, session_id: str) -> bool:
-        rows, _ = self.execute("""SELECT * FROM {table_name} WHERE id='%s'""" % (session_id))
+        rows, _ = self.execute("""SELECT * FROM autorest_session WHERE id=%s""", session_id)
         return rows > 0
 
     def remove(self, session_id: str):
-        self.execute("""DELETE FROM {table_name} WHERE id='%s'""" % session_id)
+        self.execute("""DELETE FROM autorest_session WHERE id=%s""", session_id)
 
     def dispose(self):
-        self.execute('TRUNCATE TABLE {table_name}')
+        self.execute('TRUNCATE TABLE autorest_session')
         self.connection.close()

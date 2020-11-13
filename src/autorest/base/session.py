@@ -135,9 +135,9 @@ class ISessionProvider(ABC):
     def _drop_expire_session(self):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
-        for session in expired_sessions:
+        for session_id in expired_sessions:
             # print('Drop expired session:' + session.id)
-            self.remove(session.id)
+            self.remove(session_id)
 
     def is_expired(self, session: HttpSession) -> bool:
         return time.time() - session.last_access_time > self.expired
@@ -149,9 +149,9 @@ class ISessionProvider(ABC):
         return session
 
     @abstractmethod
-    def get_expired_session(self, time_before: float) -> List[HttpSession]:
+    def get_expired_session(self, time_before: float) -> List[str]:
         """
-        查询已经过期的 session
+        查询已经过期的 session 的 id
         :param time_before: 在此时间之前的 session 即为过期
         :return:
         """
@@ -211,11 +211,11 @@ class MemorySessionProvider(ISessionProvider):
         if self.exists(session_id):
             del self.sessions[session_id]
 
-    def get_expired_session(self, time_before: float) -> List[HttpSession]:
+    def get_expired_session(self, time_before: float) -> List[str]:
         expired_sessions = []
         for session in self.sessions.values():
             if time_before > session.last_access_time:
-                expired_sessions.append(session)
+                expired_sessions.append(session.id)
         return expired_sessions
 
     def get(self, session_id: str) -> Optional[HttpSession]:
@@ -280,7 +280,7 @@ class FileSessionProvider(ISessionProvider):
             return
         os.remove(session_file)
 
-    def get_expired_session(self, time_before: float) -> List[HttpSession]:
+    def get_expired_session(self, time_before: float) -> List[str]:
         entities = os.listdir(self.sessions_root)
 
         sessions = []
@@ -288,11 +288,7 @@ class FileSessionProvider(ISessionProvider):
         for entity in entities:
             last_access_time = os.path.getatime(self._get_session_path(entity))
             if time_before > last_access_time:
-                session = self._load_session(entity)
-                if session is None:
-                    continue
-
-                sessions.append(session)
+                sessions.append(entity)
 
         return sessions
 
