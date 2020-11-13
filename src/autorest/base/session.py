@@ -27,6 +27,8 @@ class HttpSession:
         self._drop_watcher = drop_watcher
         # 当前是否已经被销毁
         self._destroyed = False
+        # session 是否有变更
+        self._changed = False
 
     def __str__(self):
         return self.id
@@ -45,6 +47,7 @@ class HttpSession:
         self.creation_time = state['creation_time']
         self.last_access_time = state['last_access_time']
         self._destroyed = False
+        self._changed = False
 
     def get(self, key, default=None):
         """
@@ -67,6 +70,7 @@ class HttpSession:
         if self._destroyed:
             return
         self.store[key] = value
+        self._changed = True
 
     def has(self, key) -> bool:
         """
@@ -88,12 +92,16 @@ class HttpSession:
             return
         if self.has(key):
             del self.store[key]
+            self._changed = True
 
     def flush(self):
         """
         立即将session中的变更存储，否则会在向浏览器发送响应时才会存储
         :return:
         """
+        if not self._changed:
+            return
+        self._changed = False
         self._update_watcher(self)
 
     def clear(self):
