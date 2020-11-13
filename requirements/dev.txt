@@ -1,3 +1,4 @@
 Werkzeug>=1.0.0
 click==7.1.2
+pymysql>=0.10.0
 watchdog==0.10.3

@@ -3,8 +3,7 @@ import pickle
 import time
 from abc import abstractmethod, ABC
 from threading import Timer
-from types import MethodType
-from typing import List
+from typing import List, Optional
 
 
 class HttpSession:
@@ -19,7 +18,7 @@ class HttpSession:
         now = time.time()
 
         # 创建 session 的时间
-        self.create_time = now
+        self.creation_time = now
         # 当前 session 对应的请求上下文最后被客户端访问的时间
         self.last_access_time = now
         # session 项变更的观察者
@@ -28,24 +27,24 @@ class HttpSession:
         self._drop_watcher = drop_watcher
         # 当前是否已经被销毁
         self._destroyed = False
-        # session 是否有变更
-        self._changed = False
+
+    def __str__(self):
+        return self.id
 
     def __getstate__(self):
         return {
             'id': self.id,
             'store': self.store,
-            'create_time': self.create_time,
+            'creation_time': self.creation_time,
             'last_access_time': self.last_access_time,
         }
 
     def __setstate__(self, state):
         self.id = state['id']
         self.store = state['store']
-        self.create_time = state['create_time']
+        self.creation_time = state['creation_time']
         self.last_access_time = state['last_access_time']
         self._destroyed = False
-        self._changed = False
 
     def get(self, key, default=None):
         """
@@ -68,7 +67,6 @@ class HttpSession:
         if self._destroyed:
             return
         self.store[key] = value
-        self._changed = True
 
     def has(self, key) -> bool:
         """
@@ -90,16 +88,12 @@ class HttpSession:
             return
         if self.has(key):
             del self.store[key]
-            self._changed = True
 
     def flush(self):
         """
         立即将session中的变更存储，否则会在向浏览器发送响应时才会存储
         :return:
         """
-        if not self._changed:
-            return
-        self._changed = False
         self._update_watcher(self)
 
     def clear(self):
@@ -131,7 +125,8 @@ class ISessionProvider(ABC):
         self.timer.start()
 
     def _drop_expire_session(self):
-        expired_sessions = self.get_expired_session()
+        time_before = time.time() - self.expired
+        expired_sessions = self.get_expired_session(time_before)
         for session in expired_sessions:
             # print('Drop expired session:' + session.id)
             self.remove(session.id)
@@ -146,11 +141,16 @@ class ISessionProvider(ABC):
         return session
 
     @abstractmethod
-    def get_expired_session(self) -> List[HttpSession]:
+    def get_expired_session(self, time_before: float) -> List[HttpSession]:
+        """
+        查询已经过期的 session
+        :param time_before: 在此时间之前的 session 即为过期
+        :return:
+        """
         pass
 
     @abstractmethod
-    def get(self, session_id: str) -> HttpSession:
+    def get(self, session_id: str) -> Optional[HttpSession]:
         """
         获取指定 id 的 session
         :param session_id:
@@ -168,7 +168,7 @@ class ISessionProvider(ABC):
         pass
 
     @abstractmethod
-    def exists(self, session_id) -> bool:
+    def exists(self, session_id: str) -> bool:
         """
         检索指定 id 的 session 是否存在
         :param session_id:
@@ -177,7 +177,7 @@ class ISessionProvider(ABC):
         pass
 
     @abstractmethod
-    def remove(self, session_id):
+    def remove(self, session_id: str):
         """
         销毁一个 session
         :param session_id:
@@ -187,6 +187,7 @@ class ISessionProvider(ABC):
     @abstractmethod
     def dispose(self):
         """
+        清空所有的 session，
         回收 session provider
         :return:
         """
@@ -195,28 +196,27 @@ class ISessionProvider(ABC):
 
 class MemorySessionProvider(ISessionProvider):
     def __init__(self, expired: int):
-        super().__init__(expired)
         self.sessions = {}
+        super().__init__(expired)
 
-    def remove(self, session_id):
+    def remove(self, session_id: str):
         if self.exists(session_id):
             del self.sessions[session_id]
 
-    def get_expired_session(self) -> List[HttpSession]:
+    def get_expired_session(self, time_before: float) -> List[HttpSession]:
         expired_sessions = []
-        now = time.time()
         for session in self.sessions.values():
-            if now - session.last_access_time > self.expired:
+            if time_before > session.last_access_time:
                 expired_sessions.append(session)
         return expired_sessions
 
-    def get(self, session_id: str):
+    def get(self, session_id: str) -> Optional[HttpSession]:
         return self.sessions[session_id] if self.exists(session_id) else None
 
     def set(self, session: HttpSession):
         self.sessions[session.id] = session
 
-    def exists(self, session_id):
+    def exists(self, session_id: str):
         return session_id in self.sessions
 
     def dispose(self):
@@ -225,19 +225,20 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, expired: int, path: str):
+    def __init__(self, expired: int, sessions_root: str):
+        self.sessions_root = os.path.abspath(sessions_root)
+        if not os.path.exists(self.sessions_root):
+            os.makedirs(self.sessions_root)
+            # print('mkdir:' + self.sessions_root)
         super().__init__(expired)
-        self.session_path = os.path.abspath(path)
-        if not os.path.exists(self.session_path):
-            os.makedirs(self.session_path)
-            # print('mkdir:' + self.session_path)
 
     def _get_session_path(self, session_id: str) -> str:
-        return os.path.join(self.session_path, session_id)
+        # session_id 中可能存在 / 符号
+        return os.path.join(self.sessions_root, session_id.replace('/', '_'))
 
-    def _load_session(self, session_id):
+    def _load_session(self, session_id: str):
         # print('Load session: ' + session_id)
-        session_file = os.path.join(self.session_path, session_id)
+        session_file = self._get_session_path(session_id)
         if not os.path.isfile(session_file):
             # print('The session currently loading not exists:' + session_file)
             return None
@@ -263,7 +264,7 @@ class FileSessionProvider(ISessionProvider):
             setattr(session, '_drop_watcher', self.remove)
             return session
 
-    def remove(self, session_id):
+    def remove(self, session_id: str):
         # print('Remove session:' + session_id)
         session_file = self._get_session_path(session_id)
         if not self.exists(session_file):
@@ -271,15 +272,14 @@ class FileSessionProvider(ISessionProvider):
             return
         os.remove(session_file)
 
-    def get_expired_session(self) -> List[HttpSession]:
-        entities = os.listdir(self.session_path)
+    def get_expired_session(self, time_before: float) -> List[HttpSession]:
+        entities = os.listdir(self.sessions_root)
 
         sessions = []
 
-        now = time.time()
         for entity in entities:
-            access_time = os.path.getatime(self._get_session_path(entity))
-            if now - access_time > self.expired:
+            last_access_time = os.path.getatime(self._get_session_path(entity))
+            if time_before > last_access_time:
                 session = self._load_session(entity)
                 if session is None:
                     continue
@@ -288,7 +288,7 @@ class FileSessionProvider(ISessionProvider):
 
         return sessions
 
-    def get(self, session_id: str):
+    def get(self, session_id: str) -> Optional[HttpSession]:
         return self._load_session(session_id)
 
     def set(self, session: HttpSession):
@@ -297,56 +297,55 @@ class FileSessionProvider(ISessionProvider):
             pickle.dump(session, fp, pickle.HIGHEST_PROTOCOL)
             fp.close()
 
-    def exists(self, session_id):
+    def exists(self, session_id: str):
         return os.path.isfile(self._get_session_path(session_id))
 
     def dispose(self):
-        os.removedirs(self.session_path)
+        os.removedirs(self.sessions_root)
         super().dispose()
 
 
-class DatabaseSessionProvider(ISessionProvider):
-    def __init__(self, expired: int, executor: MethodType, table_name='autorest_sessions'):
+class IDbSessionProvider(ISessionProvider):
+    def __init__(self, expired: int):
+        if not self.table_exists():
+            self.create_table()
         super().__init__(expired)
-        self.sessions = {}
-        self.executor = executor
-        self.table_name = table_name
 
-    def remove(self, session_id):
-        self.executor('delete from %s where id=%s' % (self.table_name, session_id))
+    @abstractmethod
+    def table_exists(self) -> bool:
+        """
+        判断 session 表是否存在
+        :return:
+        """
+        pass
 
-    def _parse(self, data) -> HttpSession:
+    @abstractmethod
+    def create_table(self):
+        """
+        创建 session 表
+        :return:
+        """
+        pass
+
+    def parse(self, data: dict) -> HttpSession:
+        """
+        用于将字典转换成 HttpSession 对象
+        :param data:
+        :return:
+        """
         session = HttpSession(data['id'], self.set, self.remove)
-        session.create_time = data['create_time']
+        session.creation_time = data['creation_time']
         session.last_access_time = data['last_access_time']
         session.store = pickle.loads(data['store'])
 
         return session
 
-    def get_expired_session(self) -> List[HttpSession]:
-        expire_time = time.time() - self.expired
-        result = self.executor('select * from %s where last_access_time<%s' % (self.table_name, expire_time))
-
-        return [
-            self._parse(item)
-            for item in result
-        ]
-
-    def get(self, session_id: str):
-        item = self.executor('select * from %s where id=%s limit 1' % (self.table_name, session_id))
-        session = self._parse(item)
-
-        return session
-
     def set(self, session: HttpSession):
-        # .strftime('%Y-%m-%d %H:%M:%S')
-        if self.exists(session.id):
-            self.executor('update %s set last_access_time=%s, store=%s')
-        self.sessions[session.id] = session
+        self.upsert(session.id,
+                    session.creation_time,
+                    session.last_access_time,
+                    pickle.dumps(session.store))
 
-    def exists(self, session_id):
-        return session_id in self.sessions
-
-    def dispose(self):
-        self.sessions.clear()
-        super().dispose()
+    @abstractmethod
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
+        pass

@@ -1,4 +1,5 @@
-from src.autorest import route, HttpRequest
+from autorest import route
+from autorest.base.request import HttpRequest
 
 
 @route('测试', 'get')
@@ -28,6 +29,7 @@ def get(request: HttpRequest, foo: str, required_: int):
 def post(request: HttpRequest, foo: str, bar=5, **kwargs):
     """
     POST 测试
+    :param bar:
     :param request:
     :param foo: 请求的参数
     :return: 返回 get 请求的值

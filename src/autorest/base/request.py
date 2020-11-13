@@ -60,6 +60,14 @@ class HttpRequest(Request):
     def __init__(self, environ, context: AppContext):
         super().__init__(environ)
         self.context = context
+        """
+        :type: AppContext
+        """
+
+        self.session = None
+        """
+        :type: HttpSession
+        """
 
         self.GET = self.args
         self.POST = self.form

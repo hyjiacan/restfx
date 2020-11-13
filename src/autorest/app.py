@@ -18,10 +18,8 @@ class App:
                  static_path='/static',
                  debug_mode=False,
                  url_endswith_slash=False,
-                 session_provider=MemorySessionProvider,
-                 session_expired=20,
-                 sessionid_name='SESSIONID',
-                 session_extra_params: dict = None
+                 session_provider=MemorySessionProvider(20),
+                 sessionid_name='SESSIONID'
                  ):
         """
 
@@ -33,12 +31,11 @@ class App:
         :param debug_mode:
         :param url_endswith_slash:
         :param session_provider:
-        :param session_expired: session 过期时长，单位为分钟
         :param sessionid_name:
         """
         self.id = str(uuid.uuid4())
         self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
-                                  session_provider, session_expired, sessionid_name, session_extra_params)
+                                  session_provider, sessionid_name)
         self.wsgi = WsgiApp(self.context, api_prefix, with_static, static_dir, static_path)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):

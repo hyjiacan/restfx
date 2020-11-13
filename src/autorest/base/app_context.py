@@ -10,17 +10,11 @@ class AppContext:
                  app_root: str,
                  debug_mode: bool,
                  url_endswith_slash: bool,
-                 session_provider: type,
-                 session_expired: int,
-                 sessionid_name: str,
-                 session_extra_params: dict):
+                 session_provider: ISessionProvider,
+                 sessionid_name: str):
         """
 
         """
-
-        if not session_provider.__base__ == ISessionProvider:
-            raise TypeError(
-                'Invalid session provider type: %s is not implemention of ISessionProvider' % session_provider.__name__)
 
         self.contexts[app_id] = self
         self.app_id = app_id
@@ -34,7 +28,7 @@ class AppContext:
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
 
-        self.session_provider = session_provider(session_expired * 60, **session_extra_params)
+        self.session_provider = session_provider
         """
         :type: ISessionProvider
         """
