@@ -1,6 +1,6 @@
-from .session import ISessionProvider
-from ..routes.collector import Collector
-from ..util.logger import Logger
+from .routes.collector import Collector
+from .session.interfaces import ISessionProvider
+from .util.logger import Logger
 
 
 class AppContext:

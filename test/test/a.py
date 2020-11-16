@@ -1,5 +1,5 @@
 from autorest import route
-from autorest.base.request import HttpRequest
+from autorest.http import HttpRequest
 
 
 @route('测试', 'get')
@@ -8,7 +8,7 @@ def get(request: HttpRequest, foo: str, required_: int):
     GET 测试
     :param request:
     :param foo: 请求的参数
-    :return: 返回 get 请求的值
+    :return: get 请求的值
     :rtype: dict
     """
     session = request.session
@@ -25,32 +25,26 @@ def get(request: HttpRequest, foo: str, required_: int):
     }
 
 
-@route('测试', 'get')
+@route('测试', 'post')
 def post(request: HttpRequest, foo: str, bar=5, **kwargs):
     """
     POST 测试
     :param bar:
     :param request:
     :param foo: 请求的参数
-    :return: 返回 get 请求的值
-    :rtype: dict
+    :return: post 请求的值
+    :rtype: list
     """
-    return {
-        'method': 'post',
-        'foo': foo,
-        'bar': bar,
-        **kwargs
-    }
+    return True, ['post', foo, bar, kwargs.values()]
 
 
-@route('测试', 'get')
+@route('测试', 'delete')
 def delete(request: HttpRequest, foo: str):
     """
     DELETE 测试
     :param request:
     :param foo: 请求的参数
-    :return: 返回 get 请求的值
-    :rtype: dict
+    :return: delete 请求的值
     """
     return {
         'method': 'delete',

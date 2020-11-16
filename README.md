@@ -137,7 +137,8 @@ app.map_routes({
 *test/api/demo.py*
 
 ```python
-from autorest import HttpRequest, route
+from autorest import route
+from autorest.http import HttpRequest 
 
 @route(module='module-name', name='name')
 def get(request, param1, param2=None, param3: int =5):
@@ -232,6 +233,56 @@ def route(module=None, name=None, **kwargs):
 
 注意：一般情况下，使用路由处理函数就能完全操作请求参数，应该尽量减少使用 `BODY/POST/GET`，以避免代码的不明确性。
 
+### session
+
+框架提供了简单的 session 支持。
+
+需要在创建 App 时指定 session 数据源，若不指定时，不启用 session 支持。
+
+```python
+from autorest import App
+from autorest.session.providers import MemorySessionProvider
+app = App(..., session_provider=MemorySessionProvider(20))
+```
+
+内置了以下几种数据源:
+
+- `MemorySessionProvider` 基于内存的 session 实现，_在使用多进程模型时，请勿使用此类型_
+- `FileSessionProvider` 基于文件的 session 实现
+- `MysqlSessionProvider` 基于 mysql 数据库的 session 实现
+
+也可以自定义数据源的实现：
+
+```python
+from autorest.session.interfaces import ISessionProvider, IDbSessionProvider
+
+class CustomSessionProvider(ISessionProvider):
+    pass
+
+class CustomDbSessionProvider(IDbSessionProvider):
+    pass
+```
+
+接口 `ISessionProvider` 和 `IDbSessionProvider` 实现其中一个即可。
+
+对于自定义的数据库源，建议使用 `IDbSessionProvider`。
+
+`IDbSessionProvider` 中使用了 `DBUtils` 包中的 [PooledDB](https://webwareforpython.github.io/DBUtils/main.html#id3)。
+
+在初始化时，应该传入一个 `PooledDB` 实例。
+在使用时，应该通过 `self.connect(shared=True)` 获取新的连接。
+
+在应用内，可以通过 `request.session` 来访问 session 对象。
+
+```python
+from autorest import route
+from autorest.http import HttpRequest
+@route('test', 'test')
+def get(request: HttpRequest):
+    session = request.session
+    
+```
+
 ## 发布 
 
 **发布** 指将 `autorest` 项目发布到服务器上运行(线上环境)。
@@ -268,43 +319,34 @@ routes = app.collect()
 ```python
 import os
 
-restful_map = os.path.join(os.path.dirname(__filename__), 'path/to/restful_map.py')
-# restful_map 参数是可选的，当不传时，调用会返回生成的代码内容
+autorest_map = os.path.join(os.path.dirname(__file__), 'path/to/autorest_map.py')
+# autorest_map 参数是可选的，当不传时，调用会返回生成的代码内容
 # encoding 参数是可选的，默认值为 utf-8。
-app.persist(restful_map, encoding='utf-8')
+app.persist(autorest_map, encoding='utf-8')
 ```
 
 > 此处还需要调用路由的映射注册，以及全局类型注册等。
 > 因此，最佳方法就是，将这些注册写一个单独的 python 文件，在启动和发布时均调用即可。
 
-最终生成的路由代码会写入文件 _restful_map.py_，此文件会暴露一个数据项 `routes`，其中是所有的路由映射。
+最终生成的路由代码会写入文件 _autorest_map.py_，此文件会暴露一个数据项 `routes`，其中是所有的路由映射。
 一般来说，应该在系统启动时 (在主应用的 `urls.py` 文件中) 调用此函数:
 
 ```python
-from path.to import restful_map
-app.register_routes(restful_map.routes)
+from path.to import autorest_map
+app.register_routes(autorest_map.routes)
 ```
 
 综上，**发布以及线上运行流程为**：
 
 1. 发布时调用 `autorest.persist` 生成路由映射文件
-2. 程序启动时，判断 `app.DEBUG=False`，执行 `from path.to import restful_map` 
-    并调用 `autorest.register_routes(restful_map.routes)` 注册路由。
+2. 程序启动时，判断 `app.DEBUG=False`，执行 `from path.to import autorest_map` 
+    并调用 `autorest.register_routes(autorest_map.routes)` 注册路由。
 
 ## 高级用法
 
 ### 分发前的处理
 
 有的时候，需要在分发前对请求参数进行处理。此时可以使用 `autorest.set_intercepter` 来进行一些预处理。
-
-函数签名:
-
-```python
-def set_intercepter(handler):
-    pass
-```
-
-用法:
 
 ```python
 def dispatch_intercepter(request, entry, name):
@@ -359,9 +401,11 @@ app.set_logger(my_logger)
 **path.to.MiddlewareClass**
 
 ```python
-from autorest import HttpRequest, RouteMeta
+from autorest.routes import RouteMeta
+from autorest.middleware import MiddlewareBase
+from autorest.http import HttpRequest
 
-class MiddlewareClass:
+class MiddlewareClass(MiddlewareBase):
     """
     路由中间件
     """
@@ -413,60 +457,12 @@ class MiddlewareClass:
 
 路由元数据，中间件中勾子函数的参数 `meta` 结构。
 
-```python
-from types import FunctionType
-from typing import OrderedDict
-
-class RouteMeta:  
-    @property
-    def handler(self) -> FunctionType:
-        """
-        路由处理函数对象
-        :return:
-        """
-        return self._handler
-
-    @property
-    def func_args(self) -> OrderedDict:
-        """
-        路由处理函数参数列表
-        :return:
-        """
-        return self._func_args
-
-    @property
-    def id(self) -> str:
-        """
-        路由ID，此ID由路由相关信息组合而成
-        :return:
-        """
-        return self._id
-
-    @property
-    def module(self) -> str:
-        """
-        装饰器上指定的 module 值
-        :return:
-        """
-        return self._module
-
-    @property
-    def name(self) -> str:
-        """
-        装饰器上指定的 name 值
-        :return:
-        """
-        return self._name
-
-    @property
-    def kwargs(self) -> dict:
-        """
-        装饰器上指定的其它参数
-        :return:
-        :rtype: Dict
-        """
-        return self._kwargs
-```
+- `id: str` 路由ID，此ID由路由相关信息组合而成
+- `name: str` 装饰器上指定的 name 值
+- `module: str` 装饰器上指定的 module 值
+- `handler: FunctionType` 路由处理函数对象
+- `func_args: OrderedDict` 路由处理函数参数列表
+- `kwargs: dict` 装饰器上指定的其它参数
 
 另外，meta 还提供了 `has` 和 `get` 两个方法，其描述如下：
 
@@ -479,4 +475,3 @@ class RouteMeta:
 
 - [ ] 添加严格模式支持。在严格模式下，不允许传入未声明的参数。
 - [ ] 参数类型支持上传文件
-- [ ] session 支持

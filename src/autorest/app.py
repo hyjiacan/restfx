@@ -3,10 +3,10 @@ from types import MethodType
 
 from werkzeug.serving import run_simple
 
-from .base.app_context import AppContext
-from .base.session import MemorySessionProvider
-from .base.wsgi_app import WsgiApp
+from .app_context import AppContext
+from .session.interfaces import ISessionProvider
 from .util.func_util import FunctionDescription
+from .wsgi_app import WsgiApp
 
 
 class App:
@@ -18,7 +18,7 @@ class App:
                  static_path='/static',
                  debug_mode=False,
                  url_endswith_slash=False,
-                 session_provider=MemorySessionProvider(20),
+                 session_provider: ISessionProvider = None,
                  sessionid_name='SESSIONID'
                  ):
         """

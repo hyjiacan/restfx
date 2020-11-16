@@ -1,10 +1,9 @@
-import random
 import string
 import time
 
 from werkzeug import Request
 
-from ..base.app_context import AppContext
+from ..app_context import AppContext
 from ..util import md5, b64
 
 """
@@ -24,6 +23,7 @@ _padding_chars = string.ascii_letters + string.digits
 
 
 def _get_padding_chars():
+    import random
     return _salt_chars + [ord(ch) for ch in random.sample(_padding_chars, _padding_len)]
 
 
@@ -64,17 +64,19 @@ class HttpRequest(Request):
         :type: AppContext
         """
 
-        self.session = None
-        """
-        :type: HttpSession
-        """
-
         self.GET = self.args
         self.POST = self.form
         self.BODY = None
         self.FILES = self.files
         self.COOKIES = self.cookies
 
+        if context.session_provider is None:
+            return
+
+        self.session = None
+        """
+        :type: HttpSession
+        """
         key = md5.hash_str(b64.enc_bytes('%s#%s#%s' % (
             self.remote_addr, str(self.user_agent), context.app_id
         )))
@@ -87,8 +89,6 @@ class HttpRequest(Request):
             self.session = context.session_provider.create(new_session_id)
             return
 
-        old_session_id = None
-        cookie_key = None
         # noinspection PyBroadException
         try:
             old_session_id = self.cookies[context.sessionid_name]

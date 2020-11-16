@@ -1,8 +1,9 @@
 import inspect
 import os
+from typing import Dict, Optional
 
-from ..base.app_context import AppContext
-from ..base.response import HttpResponseNotFound
+from ..app_context import AppContext
+from ..http.response import HttpResponseNotFound, HttpResponse
 from ..util.func_util import FunctionDescription
 from ..util.utils import load_module, get_func_info
 
@@ -10,7 +11,7 @@ from ..util.utils import load_module, get_func_info
 class PathResolver:
     def __init__(self, context: AppContext,
                  modules_cache: dict,
-                 entry_cache: dict,
+                 entry_cache: Dict[str, Optional[FunctionDescription]],
                  method: str,
                  entry: str,
                  name: str):
@@ -56,21 +57,15 @@ class PathResolver:
         # 完全限定名称
         self.fullname = '%s.%s' % (module_name, self.func_name)
 
-    def resolve(self):
+    def resolve(self) -> [FunctionDescription, HttpResponse]:
         try:
-            func_define = self.get_func_define()
+            desc = self.get_func_desc()
         except Exception as e:
             message = 'Load entry "%s" failed' % self.module_name
             self.context.logger.error(message, e)
             return HttpResponseNotFound()
 
-        # 如果 func_define 为 False ，那就表示此函数不存在
-        if func_define is False:
-            message = 'Route "%s.%s" not found' % (self.module_name, self.func_name)
-            self.context.logger.info(message)
-            return HttpResponseNotFound()
-
-        return func_define
+        return desc
 
     def get_route_map(self, route_path):
         # 命中
@@ -86,7 +81,7 @@ class PathResolver:
         # 将请求路径替换为指定的映射路径
         return ('%s%s' % (hit_route[1], route_path[len(hit_route[0]):])).strip('.')
 
-    def get_func_define(self):
+    def get_func_desc(self) -> [FunctionDescription, HttpResponse]:
         fullname = self.fullname
         func_name = self.func_name
         module_name = self.module_name
@@ -111,8 +106,8 @@ class PathResolver:
         # 模块中也没有这个函数
         if not hasattr(entry_define, func_name):
             # 函数不存在，更新缓存
-            self.entry_cache[func_name] = False
-            return False
+            self.entry_cache[func_name] = None
+            return HttpResponseNotFound()
 
         # 模块中有这个函数
         # 通过反射从模块加载函数
@@ -124,19 +119,10 @@ class PathResolver:
             )
             self.context.logger.warning(msg)
             # 没有配置装饰器@route，则认为函数不可访问，更新缓存
-            self.entry_cache[func_name] = False
-            return False
+            self.entry_cache[func_name] = None
+            return HttpResponseNotFound()
 
-        desc = FunctionDescription(func)
-        self.entry_cache[fullname] = {
-            'func': func,
-            # 该函数的参数列表
-            # 'name': {
-            #     'annotation': '类型', 当未指定类型时，无此项
-            #     'default': '默认值'，当未指定默认值时，无此项
-            # }
-            'args': desc.arguments
-        }
+        self.entry_cache[fullname] = FunctionDescription(func)
 
         return self.entry_cache[fullname]
 

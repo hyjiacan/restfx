@@ -2,10 +2,10 @@ import json
 from collections import OrderedDict
 from functools import wraps
 
-from ..base.request import HttpRequest
-from ..base.response import HttpResponse, HttpResponseBadRequest, JsonResponse
+from ..http import HttpRequest
+from ..http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from ..routes.meta import RouteMeta
-from ..routes.middleware import MiddlewareManager
+from ..middleware import MiddlewareManager
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 

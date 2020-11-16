@@ -1,9 +1,11 @@
 import os
+from types import FunctionType
+from typing import OrderedDict as OrderedDictType
 
 from .path_resolver import PathResolver
-from ..base.app_context import AppContext
-from ..base.request import HttpRequest
-from ..base.response import HttpResponseNotFound, HttpResponseServerError, HttpResponse, JsonResponse
+from ..app_context import AppContext
+from ..http import HttpResponseNotFound, HttpResponseServerError, HttpResponse, JsonResponse
+from ..http.request import HttpRequest
 from ..util.func_util import ArgumentSpecification
 from ..util.utils import get_func_info
 
@@ -13,6 +15,9 @@ class Router:
         self.context = context
         # 函数缓存，减少 inspect 反射调用次数
         self.entry_cache = {}
+        """
+        :type:Dict[str, Optional[FunctionDescription]]
+        """
         # 开发模式的模块缓存，用于API列表
         self.modules_cache = {}
         # 线上模式时，使用固定路由
@@ -31,11 +36,11 @@ class Router:
         if not self.context.DEBUG:
             return HttpResponse(status=404)
 
-        if not self.api_list_html_cache:
-            with open(os.path.join(os.path.dirname(__file__), '../templates/api_list.html'), encoding='utf-8') as fp:
-                lines = fp.readlines()
-                self.api_list_html_cache = ''.join(lines)
-                fp.close()
+        # if not self.api_list_html_cache:
+        with open(os.path.join(os.path.dirname(__file__), '../templates/api_list.html'), encoding='utf-8') as fp:
+            lines = fp.readlines()
+            self.api_list_html_cache = ''.join(lines)
+            fp.close()
 
         if request.method != 'POST':
             return HttpResponse(self.api_list_html_cache, content_type='text/html')
@@ -61,13 +66,17 @@ class Router:
                                         self.entry_cache,
                                         route['method'], entry, suffix)
                 resolver.check()
-                define = resolver.get_func_define()
+                desc = resolver.get_func_desc()
 
-                if isinstance(define, HttpResponse):
+                if isinstance(desc, HttpResponse):
                     continue
 
-                if define and len(define['args']) > 0:
-                    route['args'] = [define['args'][arg] for arg in define['args']]
+                route['func_desc'] = desc.description
+                route['return_type'] = desc.return_type
+                route['return_desc'] = desc.return_description
+
+                if desc and len(desc.arguments) > 0:
+                    route['args'] = [desc.arguments[arg] for arg in desc.arguments]
                 else:
                     route['args'] = None
 
@@ -105,11 +114,11 @@ class Router:
         check_result = resolver.check()
         if isinstance(check_result, HttpResponse):
             return check_result
-        func_define = resolver.resolve()
-        if isinstance(func_define, HttpResponse):
-            return func_define
+        desc = resolver.resolve()
+        if isinstance(desc, HttpResponse):
+            return desc
 
-        return self.invoke_handler(request, func_define['func'], func_define['args'])
+        return self.invoke_handler(request, desc.func, desc.arguments)
 
     def route_for_production(self, request, entry, name):
         method = request.method.lower()
@@ -124,7 +133,7 @@ class Router:
 
         return self.invoke_handler(request, route['func'], route['args'])
 
-    def invoke_handler(self, request, func, args):
+    def invoke_handler(self, request, func: FunctionType, args: OrderedDictType[str, ArgumentSpecification]):
         try:
             return func(request, args)
         except Exception as e:

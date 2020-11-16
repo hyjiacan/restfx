@@ -3,9 +3,9 @@ from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers import Response
 
-from ..base.app_context import AppContext
-from ..base.request import HttpRequest
-from ..routes.router import Router
+from .app_context import AppContext
+from .http import HttpRequest
+from .routes.router import Router
 
 
 class WsgiApp:
@@ -28,7 +28,8 @@ class WsgiApp:
         self.url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='api_list'),
             Rule('/%s/<entry>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_only'),
-            Rule('/%s/<entry>/<name>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_and_name')
+            Rule('/%s/<entry>/<name>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_and_name'),
+            Rule('/<any>', endpoint='bad_request')
         ])
 
     def wsgi_app(self, environ, start_response):
@@ -43,7 +44,9 @@ class WsgiApp:
             adapter = self.url_map.bind_to_environ(environ)
 
             endpoint, values = adapter.match()
-            if endpoint == 'api_list':
+            if endpoint == 'bad_request':
+                response = Response(status=404)
+            elif endpoint == 'api_list':
                 response = self.router.api_list(request)
             elif endpoint == 'entry_only':
                 response = self.router.route(request, values['entry'])
@@ -52,8 +55,9 @@ class WsgiApp:
             else:
                 response = Response(status=404)
 
-            request.session.flush()
-            response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
+            if self.context.session_provider is not None:
+                request.session.flush()
+                response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
 
             return response(environ, start_response)
         except HTTPException as e:
@@ -69,3 +73,6 @@ class WsgiApp:
         return SharedDataMiddleware(self.wsgi_app, {
             self.static_path: self.static_dir
         })(environ, start_response)
+
+    def close(self):
+        self.context.session_provider.dispose()
