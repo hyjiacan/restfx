@@ -1,3 +1,4 @@
+from .interface import MiddlewareBase
 from ..http.response import HttpResponse
 from ..routes.meta import RouteMeta
 
@@ -16,8 +17,6 @@ class MiddlewareManager:
 
     def begin(self):
         for middleware in self.context.middlewares:
-            if not hasattr(middleware, 'process_request'):
-                continue
             result = middleware.process_request(self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
@@ -31,8 +30,6 @@ class MiddlewareManager:
         :return:
         """
         for middleware in self.context.middlewares:
-            if not hasattr(middleware, 'process_invoke'):
-                continue
             result = middleware.process_invoke(self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
@@ -47,13 +44,14 @@ class MiddlewareManager:
         :return:
         """
         for middleware in self.context.middlewares:
-            if not hasattr(middleware, 'process_return'):
-                continue
             result = middleware.process_return(self.request, self.meta, data=data)
 
             # 返回 HttpResponse 终止
             if result is HttpResponse:
                 return result
+
+            if result is None:
+                result = data
 
             # 使用原数据
             data = result
@@ -68,8 +66,9 @@ class MiddlewareManager:
         """
         # 对 response 进行处理
         for middleware in self.context.middlewares:
-            if not hasattr(middleware, 'process_response'):
-                continue
-            response = middleware.process_response(self.request, self.meta, response=response)
+            new_response = middleware.process_response(self.request, self.meta, response=response)
+
+            if new_response is not None:
+                response = new_response
 
         return response

@@ -40,8 +40,7 @@ class MiddlewareBase(ABC):
         :param kwargs: 始终会有一个 'data' 的项，表示路由返回的原始数据
         :return: 返回 HttpResponse 以终止执行，否则返回新的 数据
         """
-        assert 'data' in kwargs
-        return kwargs['data']
+        pass
 
     @abstractmethod
     def process_response(self, request, meta: RouteMeta, **kwargs) -> HttpResponse:
@@ -53,5 +52,4 @@ class MiddlewareBase(ABC):
         :return: 无论何种情况，应该始终返回一个  HttpResponse
         :rtype: HttpResponse
         """
-        assert 'response' in kwargs
-        return kwargs['response']
+        pass

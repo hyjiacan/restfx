@@ -24,7 +24,11 @@ class AppContext:
         self.ROOT = app_root
         self.url_endswith_slash = url_endswith_slash
         # 注册的中间件实例集合
-        self.middlewares = {}
+        self.middlewares = []
+        """
+        :type: List[MiddlewareBase]
+        """
+
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
 
