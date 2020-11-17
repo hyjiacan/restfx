@@ -435,10 +435,9 @@ class MiddlewareClass(MiddlewareBase):
         :param request:
         :param meta:
         :param kwargs: 始终会有一个 'data' 的项，表示返回的原始数据
-        :return: 返回 HttpResponse 以终止执行，否则返回新的 return value
+        :return: 返回 HttpResponse 以终止执行，否则返回新的 return value。当返回 None 时，使用原始的 data
         """
-        assert 'data' in kwargs
-        return kwargs['data']
+        pass
 
     def process_response(self, request: HttpRequest, meta: RouteMeta, **kwargs):
         """
@@ -447,10 +446,9 @@ class MiddlewareClass(MiddlewareBase):
         :param meta:
         :param request:
         :param kwargs: 始终会有一个 'response' 的项，表示返回的 HttpResponse
-        :return: 无论何种情况，应该始终返回一个  HttpResponse
+        :return: 应该始终返回一个  HttpResponse，当返回 None 时，使用原始的 response
         """
-        assert 'response' in kwargs
-        return kwargs['response']
+        pass
 ```
 
 #### RouteMeta
@@ -458,8 +456,10 @@ class MiddlewareClass(MiddlewareBase):
 路由元数据，中间件中勾子函数的参数 `meta` 结构。
 
 - `id: str` 路由ID，此ID由路由相关信息组合而成
-- `name: str` 装饰器上指定的 name 值
 - `module: str` 装饰器上指定的 module 值
+- `name: str` 装饰器上指定的 name 值
+- `method: str` 路由的请求方法 **大写格式**
+- `path: str` 路由的请求路径
 - `handler: FunctionType` 路由处理函数对象
 - `func_args: OrderedDict` 路由处理函数参数列表
 - `kwargs: dict` 装饰器上指定的其它参数
