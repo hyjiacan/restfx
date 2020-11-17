@@ -3,8 +3,8 @@ import os
 import pymysql
 from dbutils.pooled_db import PooledDB
 
-from autorest import App
-from autorest.session.providers import MysqlSessionProvider
+from restfx import App
+from restfx.session.providers import MysqlSessionProvider
 
 if __name__ == '__main__':
     root = os.path.dirname(__file__)

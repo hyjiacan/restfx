@@ -1,4 +1,4 @@
-# autorest
+# restfx
 
 Python3 的 restful 多应用自动路由框架。
 
@@ -10,28 +10,28 @@ Python3 的 restful 多应用自动路由框架。
 
 ## 安装
 
-- Gitee: https://gitee.com/hyjiacan/autorest
-- Github: https://github.com/hyjiacan/autorest
-- PyPI: https://pypi.org/project/autorest/ 
+- Gitee: https://gitee.com/hyjiacan/restfx
+- Github: https://github.com/hyjiacan/restfx
+- PyPI: https://pypi.org/project/restfx/ 
 
 ```shell script
-pip install autorest
+pip install restfx
 ```
 
 ## 使用
 
-此组件提供的包（package）名称为 `autorest`，所有用到的模块都在此包下引入。
+此组件提供的包（package）名称为 `restfx`，所有用到的模块都在此包下引入。
 
 ### 创建应用
 
 ```python
 import os
 
-import autorest
+import restfx
 
 if __name__ == '__main__':
     root = os.path.dirname(__file__)
-    app = autorest.App(root, api_prefix='any/prefix', debug_mode=True)
+    app = restfx.App(root, api_prefix='any/prefix', debug_mode=True)
     app.map_routes({
         'x': 'test'
     })
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
 如：http://127.0.0.1:8000/any/prefix 。
 
-> 多应用模式：每次调用 `autorest.App(...)` 都会启动一个新的应用服务器。
+> 多应用模式：每次调用 `restfx.App(...)` 都会启动一个新的应用服务器。
 > 每个应用中的路由/中间件等都是独立的。
 
 ### 编写路由
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 模块 `test.a` -> 文件 `test/a.py` 
 
 ```python
-from autorest import route
+from restfx import route
 from enums import RouteTypes
 
 @route('module_name', 'route_name', route_type = RouteTypes.TEST)
@@ -60,7 +60,7 @@ def get(req):
 
 装饰器 [@route](#装饰器) 用于标记路由处理函数。`RouteTypes` 是自定义的路由数据(可选项)。
 
-`autorest` 包含以下几个部分：
+`restfx` 包含以下几个部分：
 
 - 路由映射
     > 为了避免在客户端暴露代码路径，从设计上使用了映射的方式来处理请求。
@@ -71,7 +71,7 @@ def get(req):
 - [路由收集与持久化](#发布)
     > 为了提高线上性能的工具。
 
-`autorest` 的使用流程如下：
+`restfx` 的使用流程如下：
 
 1. [注册路由映射](#注册路由映射)
 2. [注册中间件](#注册中间件)
@@ -94,7 +94,7 @@ app.map_routes({
 - `path.to` 为请求路径时，应将其定向到的 python 包/模块。
 
 所有的路由目录(顶层，不包含已经映射过目录的子目录)均需要被映射，未在映射表中的路径请求，不会被处理。
-`autorest` 会自动查找 包/模块 `path.to` 下的所有路由。
+`restfx` 会自动查找 包/模块 `path.to` 下的所有路由。
 
 > 路径应为基于项目根目录的相对路径。
 
@@ -137,8 +137,8 @@ app.map_routes({
 *test/api/demo.py*
 
 ```python
-from autorest import route
-from autorest.http import HttpRequest 
+from restfx import route
+from restfx.http import HttpRequest 
 
 @route(module='module-name', name='name')
 def get(request, param1, param2=None, param3: int =5):
@@ -240,8 +240,8 @@ def route(module=None, name=None, **kwargs):
 需要在创建 App 时指定 session 数据源，若不指定时，不启用 session 支持。
 
 ```python
-from autorest import App
-from autorest.session.providers import MemorySessionProvider
+from restfx import App
+from restfx.session.providers import MemorySessionProvider
 app = App(..., session_provider=MemorySessionProvider(20))
 ```
 
@@ -254,7 +254,7 @@ app = App(..., session_provider=MemorySessionProvider(20))
 也可以自定义数据源的实现：
 
 ```python
-from autorest.session.interfaces import ISessionProvider, IDbSessionProvider
+from restfx.session.interfaces import ISessionProvider, IDbSessionProvider
 
 class CustomSessionProvider(ISessionProvider):
     pass
@@ -275,8 +275,8 @@ class CustomDbSessionProvider(IDbSessionProvider):
 在应用内，可以通过 `request.session` 来访问 session 对象。
 
 ```python
-from autorest import route
-from autorest.http import HttpRequest
+from restfx import route
+from restfx.http import HttpRequest
 @route('test', 'test')
 def get(request: HttpRequest):
     session = request.session
@@ -285,7 +285,7 @@ def get(request: HttpRequest):
 
 ## 发布 
 
-**发布** 指将 `autorest` 项目发布到服务器上运行(线上环境)。
+**发布** 指将 `restfx` 项目发布到服务器上运行(线上环境)。
 
 一般来说，发布时只需要调用 [生成路由映射文件](#生成路由映射文件) 的接口就可以了，
 路由收集在其中会自动调用。
@@ -314,39 +314,39 @@ routes = app.collect()
 
 ### 生成路由映射文件
 
-`autorest` 导出了一个工具函数 `persist`，用于将路由收集起来，并持久化，其用法如下：
+`restfx` 导出了一个工具函数 `persist`，用于将路由收集起来，并持久化，其用法如下：
 
 ```python
 import os
 
-autorest_map = os.path.join(os.path.dirname(__file__), 'path/to/autorest_map.py')
-# autorest_map 参数是可选的，当不传时，调用会返回生成的代码内容
+restfx_map = os.path.join(os.path.dirname(__file__), 'path/to/restfx_map.py')
+# restfx_map 参数是可选的，当不传时，调用会返回生成的代码内容
 # encoding 参数是可选的，默认值为 utf-8。
-app.persist(autorest_map, encoding='utf-8')
+app.persist(restfx_map, encoding='utf-8')
 ```
 
 > 此处还需要调用路由的映射注册，以及全局类型注册等。
 > 因此，最佳方法就是，将这些注册写一个单独的 python 文件，在启动和发布时均调用即可。
 
-最终生成的路由代码会写入文件 _autorest_map.py_，此文件会暴露一个数据项 `routes`，其中是所有的路由映射。
+最终生成的路由代码会写入文件 _restfx_map.py_，此文件会暴露一个数据项 `routes`，其中是所有的路由映射。
 一般来说，应该在系统启动时 (在主应用的 `urls.py` 文件中) 调用此函数:
 
 ```python
-from path.to import autorest_map
-app.register_routes(autorest_map.routes)
+from path.to import restfx_map
+app.register_routes(restfx_map.routes)
 ```
 
 综上，**发布以及线上运行流程为**：
 
-1. 发布时调用 `autorest.persist` 生成路由映射文件
-2. 程序启动时，判断 `app.DEBUG=False`，执行 `from path.to import autorest_map` 
-    并调用 `autorest.register_routes(autorest_map.routes)` 注册路由。
+1. 发布时调用 `restfx.persist` 生成路由映射文件
+2. 程序启动时，判断 `app.DEBUG=False`，执行 `from path.to import restfx_map` 
+    并调用 `restfx.register_routes(restfx_map.routes)` 注册路由。
 
 ## 高级用法
 
 ### 分发前的处理
 
-有的时候，需要在分发前对请求参数进行处理。此时可以使用 `autorest.set_intercepter` 来进行一些预处理。
+有的时候，需要在分发前对请求参数进行处理。此时可以使用 `restfx.set_intercepter` 来进行一些预处理。
 
 ```python
 def dispatch_intercepter(request, entry, name):
@@ -359,13 +359,13 @@ app.set_intercepter(dispatch_intercepter)
 
 ### 注册全局类型
 
-当在路由装饰器参数中使用了自定义的值类型时（比如枚举或类），应该当将其注册到 `autorest`，否则无法正确收集到路由。
+当在路由装饰器参数中使用了自定义的值类型时（比如枚举或类），应该当将其注册到 `restfx`，否则无法正确收集到路由。
 
 例：
 
 *test.py*
 ```python
-from autorest import route
+from restfx import route
 from enums import RouteTypes
 @route('module_name', 'route_name', route_type = RouteTypes.TEST)
 def test(req):
@@ -401,9 +401,9 @@ app.set_logger(my_logger)
 **path.to.MiddlewareClass**
 
 ```python
-from autorest.routes import RouteMeta
-from autorest.middleware import MiddlewareBase
-from autorest.http import HttpRequest
+from restfx.routes import RouteMeta
+from restfx.middleware import MiddlewareBase
+from restfx.http import HttpRequest
 
 class MiddlewareClass(MiddlewareBase):
     """

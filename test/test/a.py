@@ -1,5 +1,5 @@
-from autorest import route
-from autorest.http import HttpRequest
+from restfx import route
+from restfx.http import HttpRequest
 
 
 @route('测试', 'get')

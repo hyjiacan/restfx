@@ -41,7 +41,7 @@ class MemorySessionProvider(ISessionProvider):
 
 class FileSessionProvider(ISessionProvider):
     def __init__(self, expired: int, sessions_root: str):
-        self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'autorest_sessions'))
+        self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
             # print('mkdir:' + self.sessions_root)
@@ -117,7 +117,7 @@ class FileSessionProvider(ISessionProvider):
 
 
 class MysqlSessionProvider(IDbSessionProvider):
-    def __init__(self, pool, table_name="autorest_sessions", expired=20):
+    def __init__(self, pool, table_name="restfx_sessions", expired=20):
         self.table_name = table_name
 
         super().__init__(pool, expired)
