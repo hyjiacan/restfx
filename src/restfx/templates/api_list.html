@@ -12,7 +12,7 @@
       color: #333333;
   }
 
-  h1 {
+  header h1 {
       float: left;
   }
 
@@ -185,7 +185,7 @@
   <hr/>
   <footer>
     Powered by
-    <a href="http://github.com/hyjiacan/restful-dj">restful-dj</a>
+    <a href="http://github.com/hyjiacan/restfx">restfx</a>
   </footer>
 </div>
 <script>
@@ -222,17 +222,25 @@
     }
   }
 
+  const list = document.querySelector('#api-list')
   const rootURL = window.location.origin + window.location.pathname
   // 请求数据
   request('post', rootURL, {
     callback: (response) => {
+      if (response.status !== 200) {
+        list.innerHTML = response.data
+        return
+      }
       render(response.data)
     }
   })
 
-  const list = document.querySelector('#api-list')
-
   function render(data) {
+    if (!data || !Object.keys(data).length) {
+      document.querySelector('#loading').innerHTML = '未找到接口信息'
+      return
+    }
+
     const fragment = document.createDocumentFragment()
 
     for (const module in data) {
