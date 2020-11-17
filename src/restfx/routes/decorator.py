@@ -46,6 +46,8 @@ def route(module=None, name=None, **kwargs):
                 route_id='%s_%s' % (func.__module__.replace('_', '__').replace('.', '_'), func.__name__),
                 module=module,
                 name=name,
+                method=request.method,
+                path=request.path,
                 kwargs=kwargs,
             )
 
