@@ -74,7 +74,7 @@ class Collector:
 
         if not routes_map:
             raise Exception(
-                'Routes map is empty, did you forgot to call `restfx.map_routes(*routes_map)`')
+                'Routes map is empty, did you forgot to call "restfx.map_routes(routes_map: dict)"')
 
         for (http_prefix, pkg_prefix) in routes_map.items():
             route_root = path.abspath(path.join(self.project_root, pkg_prefix.replace('.', path.sep)))

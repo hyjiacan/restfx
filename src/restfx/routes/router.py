@@ -34,6 +34,8 @@ class Router:
         :return:
         """
         if not self.context.DEBUG:
+            self.context.logger.info(
+                'API list is disabled in production, use "App(..., debug_mode=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
         # if not self.api_list_html_cache:
