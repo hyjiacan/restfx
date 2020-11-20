@@ -2,6 +2,7 @@ import string
 import time
 
 from werkzeug import Request
+from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict
 
 from ..app_context import AppContext
 from ..util import md5, b64
@@ -56,6 +57,21 @@ def _decrypt_session_id(session_id, app_id):
     return ''.join(key)
 
 
+def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
+    args = {}
+    for key in data.keys():
+        value = data.getlist(key)
+        value_len = len(value)
+        if not value_len:
+            args[key] = None
+            continue
+        if value_len == 1:
+            args[key] = value[0]
+            continue
+        args[key] = value
+    return ImmutableDict(args)
+
+
 class HttpRequest(Request):
     def __init__(self, environ, context: AppContext):
         super().__init__(environ)
@@ -64,9 +80,9 @@ class HttpRequest(Request):
         :type: AppContext
         """
 
-        self.GET = self.args
-        self.POST = self.form
-        self.BODY = None
+        self.GET = _get_request_data(self.args)
+        self.POST = _get_request_data(self.form)
+        self.BODY = self.data
         self.FILES = self.files
         self.COOKIES = self.cookies
 
