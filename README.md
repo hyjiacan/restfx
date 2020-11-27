@@ -392,7 +392,6 @@ app.set_logger(my_logger)
 
 - debug
 - info
-- success
 - warning
 - error
 

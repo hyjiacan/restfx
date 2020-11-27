@@ -1,3 +1,4 @@
+import os
 import uuid
 from types import MethodType
 
@@ -75,7 +76,11 @@ class App:
         for path in routes_map:
             if not path:
                 raise Exception('Empty route map prefix value')
-            self.context.routes_map[path] = routes_map[path]
+            pkg = routes_map[path]
+            pkg_path = os.path.join(self.context.ROOT, pkg.replace('.', '/'))
+            if not os.path.exists(pkg_path):
+                self.context.logger.warning('Route map "%s" not exists, path=%s' % (pkg, pkg_path))
+            self.context.routes_map[path] = pkg
 
     def register_routes(self, routes: list):
         """
