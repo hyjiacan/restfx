@@ -1,6 +1,6 @@
 import json
 
-from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
+from werkzeug.exceptions import InternalServerError
 from werkzeug.wrappers import Response
 
 
@@ -15,12 +15,12 @@ class JsonResponse(HttpResponse):
         super().__init__(content, content_type='application/json;charset=utf8')
 
 
-class HttpResponseBadRequest(BadRequest, HttpResponse):
+class HttpResponseBadRequest(HttpResponse):
     def __init__(self, content=None):
         super().__init__(content)
 
 
-class HttpResponseNotFound(NotFound, HttpResponse):
+class HttpResponseNotFound(HttpResponse):
     def __init__(self, content=None):
         super().__init__(content)
 

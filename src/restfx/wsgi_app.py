@@ -1,9 +1,10 @@
+from werkzeug.exceptions import NotFound
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers import Response
 
 from .app_context import AppContext
-from .http import HttpRequest, HttpResponseServerError
+from .http import HttpRequest, HttpResponseServerError, HttpResponseNotFound
 from .routes.router import Router
 
 
@@ -60,12 +61,14 @@ class WsgiApp:
                 request.session.flush()
                 response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
         except Exception as e:
-            self.context.logger.warning(repr(e))
-
-            if self.context.DEBUG:
+            if isinstance(e, NotFound):
+                response = HttpResponseNotFound()
+            elif self.context.DEBUG:
                 raise e
+            else:
+                response = HttpResponseServerError()
 
-            response = HttpResponseServerError()
+            self.context.logger.warning(repr(e))
 
         return response(environ, start_response)
 
