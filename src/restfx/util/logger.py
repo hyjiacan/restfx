@@ -1,4 +1,10 @@
 class Logger:
+    colors = {
+        'error': '\033[1;31m',
+        'warning': '\033[1;33m',
+        'debug': '\033[1;37m'
+    }
+
     def __init__(self, debug_mode: bool):
         self.debug_mode = debug_mode
         self.custom_logger = None
@@ -7,17 +13,18 @@ class Logger:
         self.debug_mode = debug_mode
 
     def log(self, level, message, e=None):
-        if self.custom_logger is None:
-            print('[%s] %s' % (level, message))
-        else:
+        if self.custom_logger is not None:
             # noinspection PyUnresolvedReferences
             self.custom_logger(level, message, e)
+            return
+
+        if level not in self.colors:
+            print('[%s] %s' % (level, message))
+
+        print('%s[%s] %s%s' % (self.colors[level], level, message, '\033[0m'))
 
     def debug(self, message):
         self.log('debug', message)
-
-    def success(self, message):
-        self.log('success', message)
 
     def info(self, message):
         self.log('info', message)

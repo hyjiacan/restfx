@@ -41,7 +41,8 @@ class PathResolver:
         module_name = self.module_name
 
         if module_name is None:
-            self.context.logger.warning('Cannot find route map in RESTFUL_DJ.routes: %s' % self.entry)
+            self.context.logger.warning(
+                'Cannot find route "%s" in routes_map' % self.entry)
             return HttpResponseNotFound()
 
         # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
