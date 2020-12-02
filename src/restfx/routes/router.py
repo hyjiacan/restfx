@@ -1,6 +1,5 @@
 import os
 from types import FunctionType
-from typing import OrderedDict as OrderedDictType
 
 from .path_resolver import PathResolver
 from ..app_context import AppContext
@@ -135,7 +134,7 @@ class Router:
 
         return self.invoke_handler(request, route['func'], route['args'])
 
-    def invoke_handler(self, request, func: FunctionType, args: OrderedDictType[str, ArgumentSpecification]):
+    def invoke_handler(self, request, func: FunctionType, args):
         try:
             return func(request, args)
         except Exception as e:

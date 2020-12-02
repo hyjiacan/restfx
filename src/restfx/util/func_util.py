@@ -3,7 +3,6 @@ import json
 import re
 from collections import OrderedDict
 from types import MethodType
-from typing import OrderedDict as OrderedDictType
 
 from .utils import get_func_info
 from ..http import HttpRequest
@@ -94,7 +93,7 @@ class FunctionDescription:
         self.return_type = ''
         self.arguments = self._get_func_args()
 
-    def _get_func_args(self) -> OrderedDictType[str, ArgumentSpecification]:
+    def _get_func_args(self):
         """
         获取函数的参数列表（带参数类型）
         :return:

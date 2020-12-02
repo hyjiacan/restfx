@@ -4,8 +4,8 @@ from functools import wraps
 
 from ..http import HttpRequest
 from ..http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from ..routes.meta import RouteMeta
 from ..middleware import MiddlewareManager
+from ..routes.meta import RouteMeta
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
@@ -136,7 +136,7 @@ def _get_parameter_str(args: OrderedDict):
     return '\n\t\t'.join([str(args[arg]) for arg in args])
 
 
-def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup: dict = None):
+def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup=None):
     """
 
     :param data:

@@ -1,4 +1,3 @@
-from .interface import MiddlewareBase
 from ..http.response import HttpResponse
 from ..routes.meta import RouteMeta
 

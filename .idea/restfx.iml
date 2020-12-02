@@ -8,7 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/restfx.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (restfx)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.5 (restfx)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
