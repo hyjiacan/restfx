@@ -18,7 +18,7 @@ _CODE_TPL = """# -*- coding={encoding} -*-
 
 # REGISTER ROUTES BEGIN
 routes = [
-   {routes}
+{routes}
 ]
 # REGISTER ROUTES END
 """
