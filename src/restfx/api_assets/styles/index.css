@@ -1,0 +1,286 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.container {
+    min-width: 800px;
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    color: #333333;
+    overflow: auto;
+}
+
+header h1 {
+    float: left;
+}
+
+.tools {
+    float: right;
+    margin-top: 24px;
+}
+
+.buttons {
+    text-align: right;
+}
+
+.filters {
+    margin-top: 5px;
+}
+
+hr {
+    clear: both;
+    border-width: 5px;
+    border-style: solid;
+    border-color: white green;
+    height: 1px;
+    background-color: green;
+    border-radius: 4px;
+}
+
+.method {
+    text-transform: uppercase;
+    color: #e90588;
+    padding: 0 5px;
+}
+
+.tip {
+    color: #88888888;
+    font-size: 14px;
+}
+
+.args-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.args-table caption {
+    text-align: left;
+}
+
+.btn-open-test {
+    margin-left: 20px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-open-test:hover {
+    color: blue;
+}
+
+.args-table tr:nth-child(2n) {
+    background-color: #f9f9f5;
+}
+
+.args-table tr:hover {
+    background-color: #f9f9e8;
+}
+
+.args-table th {
+    background-color: #f6f8fb;
+}
+
+.args-table th,
+.args-table td {
+    border: 1px solid #cfd7de;
+    padding: 5px;
+}
+
+details {
+    margin-bottom: 20px;
+    border-left: 1px dotted transparent;
+    clear: both;
+}
+
+details summary {
+    cursor: default;
+    outline: none;
+    font-weight: bold;
+}
+
+.anchor {
+    visibility: hidden;
+    text-decoration: none;
+    font-size: large;
+    font-weight: bold;
+}
+
+details summary:hover {
+    background-color: #eeeeee;
+}
+
+details:hover summary .anchor,
+details li:hover .anchor {
+    visibility: visible;
+}
+
+details:hover {
+    border-left-color: #888888;
+}
+
+details li {
+    margin-bottom: 40px;
+}
+
+details[open] summary {
+    border-bottom: 1px solid #b9b6b6;
+    padding: 5px 0;
+    position: sticky;
+    top: 0;
+    background-color: #ffffff;
+}
+
+.url-info {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.info {
+    padding: 5px 0;
+    background-color: #fffff8;
+    border: 1px solid #faf8d5;
+}
+
+code {
+    color: #006fff;
+    font-size: 12px;
+}
+
+code.url {
+    border: none;
+    background: none;
+}
+
+footer {
+    text-align: center;
+    font-size: 14px;
+}
+
+.hide {
+    display: none;
+}
+
+#loading {
+    text-align: center;
+    font-size: 3em;
+    color: #888888;
+}
+
+.comment {
+    font-size: 12px;
+    color: #555555;
+}
+
+.route-name {
+    font-size: larger;
+    margin-right: 10px;
+}
+
+.return-info {
+    font-size: 1em;
+}
+
+.return-info code {
+    margin-right: 5px;
+}
+
+#test-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, .2);
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+.panel {
+    min-width: 720px;
+    width: 80%;
+    background-color: #ffffff;
+    border-radius: 4px;
+    max-height: 100%;
+}
+
+.panel-heading {
+    padding: 10px;
+    border-bottom: 1px solid #dddddd;
+}
+
+.panel-body {
+    padding: 5px 10px;
+}
+
+.arg-value {
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    border-width: 0 0 1px 0;
+    border-color: #cccccc;
+}
+
+.arg-value:focus,
+.arg-value:hover,
+.arg-value:active {
+    border-color: #888888;
+}
+
+#btn-close-test {
+    float: right;
+    color: blue;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+#btn-close-test:hover {
+    color: red;
+}
+
+#btn-send-test {
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #f4591f;
+    color: #fafafa;
+    border: 1px solid orange;
+    letter-spacing: 5px;
+    border-radius: 2px;
+}
+
+#btn-send-test:hover {
+    background-color: orangered;
+    color: white;
+}
+
+.response {
+
+}
+
+.response p {
+    font-size: 14px;
+}
+
+.response-content {
+    background: #fffff8;
+    padding: 5px;
+    border: 1px solid #faf8d5;
+    width: 100%;
+    min-height: 120px;
+    box-sizing: border-box;
+    outline: none;
+    overflow: auto;
+    resize: vertical;
+}
+
+.required {
+    border-color: red;
+}
