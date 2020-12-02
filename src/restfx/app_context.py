@@ -28,6 +28,10 @@ class AppContext:
         """
         :type: List[MiddlewareBase]
         """
+        self.reversed_middlwares = []
+        """
+        :type: List[MiddlewareBase]
+        """
 
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}

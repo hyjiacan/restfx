@@ -11,17 +11,17 @@ from os import path
 _REGISTER_STMT = "    # {module}-{name}\n    ['{method}', '{path}', {handler}]"
 _CODE_TPL = """# -*- coding={encoding} -*-
 
-   # IMPORT ROUTES BEGIN
-   {imports}
-   # IMPORT ROUTES END
+# IMPORT ROUTES BEGIN
+{imports}
+# IMPORT ROUTES END
 
 
-   # REGISTER ROUTES BEGIN
-   routes = [
+# REGISTER ROUTES BEGIN
+routes = [
    {routes}
-   ]
-   # REGISTER ROUTES END
-   """
+]
+# REGISTER ROUTES END
+"""
 
 
 def _fake_route(module=None, name=None, **kwargs):
@@ -197,7 +197,7 @@ class Collector:
         imports = []
         routes = []
 
-        print('Generating restful map file with encoding %s' % encoding)
+        print('Generating routes map...')
         for route in self.collect(routes_map, *environments):
             # imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
@@ -211,11 +211,11 @@ class Collector:
 
         content = _CODE_TPL.format(encoding=encoding, imports='\n'.join(imports), routes=',\n'.join(routes))
 
-        print('Generate restful map file complete')
+        print('Routes map data generated')
         if not filename:
             return content
 
-        print('Persisting into file %s' % filename)
+        print('Persisting into file %s file with encoding %s' % (filename, encoding))
         with open(filename, mode='wt', encoding=encoding) as fp:
             fp.write(content)
             fp.close()

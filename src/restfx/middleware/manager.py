@@ -43,7 +43,7 @@ class MiddlewareManager:
         :param data:
         :return:
         """
-        for middleware in self.context.middlewares:
+        for middleware in self.context.reversed_middlwares:
             result = middleware.process_return(self.request, self.meta, data=data)
 
             # 返回 HttpResponse 终止
@@ -65,7 +65,7 @@ class MiddlewareManager:
         :return:
         """
         # 对 response 进行处理
-        for middleware in self.context.middlewares:
+        for middleware in self.context.reversed_middlwares:
             new_response = middleware.process_response(self.request, self.meta, response=response)
 
             if new_response is not None:

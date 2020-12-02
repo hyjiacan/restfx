@@ -17,12 +17,12 @@ class JsonResponse(HttpResponse):
 
 class HttpResponseBadRequest(HttpResponse):
     def __init__(self, content=None):
-        super().__init__(content)
+        super().__init__(content, status=400)
 
 
 class HttpResponseNotFound(HttpResponse):
     def __init__(self, content=None):
-        super().__init__(content)
+        super().__init__(content, status=404)
 
 
 class HttpResponseServerError(InternalServerError, HttpResponse):

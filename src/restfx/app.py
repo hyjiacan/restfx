@@ -14,9 +14,7 @@ class App:
     def __init__(self,
                  app_root: str,
                  api_prefix='api',
-                 with_static=False,
-                 static_dir='',
-                 static_path='/static',
+                 static_map: dict = None,
                  debug_mode=False,
                  url_endswith_slash=False,
                  session_provider: ISessionProvider = None,
@@ -26,9 +24,7 @@ class App:
 
         :param app_root:
         :param api_prefix:
-        :param with_static:
-        :param static_dir:
-        :param static_path:
+        :param static_map:
         :param debug_mode:
         :param url_endswith_slash:
         :param session_provider:
@@ -37,7 +33,7 @@ class App:
         self.id = str(uuid.uuid4())
         self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
                                   session_provider, sessionid_name)
-        self.wsgi = WsgiApp(self.context, api_prefix, with_static, static_dir, static_path)
+        self.wsgi = WsgiApp(self.context, api_prefix, static_map)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):
         run_simple(host, port, self.wsgi, use_debugger=True, use_reloader=True, **kwargs)
@@ -126,4 +122,6 @@ class App:
         :return:
         """
         for cls in middlewares:
-            self.context.middlewares.append(cls())
+            instance = cls()
+            self.context.middlewares.append(instance)
+            self.context.reversed_middlwares.insert(0, instance)

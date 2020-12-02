@@ -31,19 +31,25 @@ import restfx
 
 if __name__ == '__main__':
     root = os.path.dirname(__file__)
-    app = restfx.App(root, api_prefix='any/prefix', debug_mode=True)
+    app = restfx.App(root, api_prefix='any/prefix', debug_mode=True, static_map={})
     app.map_routes({
         'x': 'test'
     })
-    app.startup(host='127.0.0.1', port=9127)
+    app.startup(host='127.0.0.1', port=9127, **kwargs)
 ```
 
-`api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。
+- `api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。
+- `static_map` 用于指定静态资源与目录映射关系。
 
 如：http://127.0.0.1:8000/any/prefix 。
 
 > 多应用模式：每次调用 `restfx.App(...)` 都会启动一个新的应用服务器。
 > 每个应用中的路由/中间件等都是独立的。
+
+`app.startup` 有一个参数 `kwargs`，
+其可选的参数见 [werkzeug.serving.run_simple][1]
+
+[1]: https://werkzeug.palletsprojects.com/en/1.0.x/serving/?highlight=run_simple#werkzeug.serving.run_simple
 
 ### 编写路由
 
@@ -63,12 +69,16 @@ def get(req):
 `restfx` 包含以下几个部分：
 
 - 路由映射
+    
     > 为了避免在客户端暴露代码路径，从设计上使用了映射的方式来处理请求。
 - [中间件](#注册中间件)
+    
     > 在处理请求/响应过程中，可以对 `request`/`response` 以及其参数进行处理。
 - [全局类型](#注册全局类型)
+    
     > 在路由装饰器的参数中包含的全局类型，如 `RouteTypes`
 - [路由收集与持久化](#发布)
+    
     > 为了提高线上性能的工具。
 
 `restfx` 的使用流程如下：
@@ -116,7 +126,7 @@ app.register_middlewares(
 
 当注册了多个中间件时，它们会按被注册的顺序执行。
 
-**需要注意**： 每一个中间件类型在程序运行期间共享一个实例。
+**注意**： 每一个中间件类型在程序运行期间共享一个实例。
 
 如何开发中间件？参见 [中间件类结构](#中间件类结构)
 
@@ -193,6 +203,7 @@ def get_param(request, param1, from_=None, param3 =5, **kwargs):
     2. 参数类型为 `HttpRequest`，参数名称可以是任何合法的标识符
     3. 参数名称为 `request`，声明了不是 `HttpRequest` 的类型，此时会被解析成一般的请求参数
     
+
 前端调用:
 
 ```javascript
@@ -450,6 +461,16 @@ class MiddlewareClass(MiddlewareBase):
         pass
 ```
 
+其调用顺序为:
+
+1. `process_request`
+2. `process_invoke`
+3. `process_return`
+4. `process_response`
+
+其中，`process_request` 和 `process_invoke` 按中间件注册的顺序 **顺序** 执行；
+`process_return` 和 `process_response` 按中间件注册的顺序 **倒序** 执行。
+
 #### RouteMeta
 
 路由元数据，中间件中勾子函数的参数 `meta` 结构。
@@ -474,3 +495,5 @@ class MiddlewareClass(MiddlewareBase):
 
 - [ ] 添加严格模式支持。在严格模式下，不允许传入未声明的参数。
 - [ ] 参数类型支持上传文件
+- [ ] 优化静态服务支持
+- [ ] 优化 API 列表页面，添加测试（发送请求）支持

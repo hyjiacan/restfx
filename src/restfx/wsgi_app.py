@@ -1,3 +1,5 @@
+import os
+
 from werkzeug.exceptions import NotFound
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
@@ -12,18 +14,18 @@ class WsgiApp:
     def __init__(self,
                  context: AppContext,
                  api_prefix='api',
-                 with_static=False,
-                 static_dir='',
-                 static_path='/static',
+                 static_map: dict = None,
                  url_endswith_slash=False
                  ):
         self.context = context
-        self.with_static = with_static
         self.api_prefix = api_prefix
-        self.static_dir = static_dir
-        self.static_path = static_path
-
         self.router = Router(self.context)
+
+        if static_map is None:
+            static_map = {}
+        if context.DEBUG:
+            static_map['/api_assets_for_debug'] = os.path.join(os.path.dirname(__file__), 'api_assets')
+        self.static_map = static_map
 
         self.url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='api_list'),
@@ -73,15 +75,10 @@ class WsgiApp:
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
-        if not self.with_static:
+        if not self.static_map:
             return self.wsgi_app(environ, start_response)
 
-        if self.static_dir == '' or self.static_dir == '/':
-            raise Exception('Invalid value of static dir: ' + self.static_dir)
-
-        return SharedDataMiddleware(self.wsgi_app, {
-            self.static_path: self.static_dir
-        })(environ, start_response)
+        return SharedDataMiddleware(self.wsgi_app, self.static_map)(environ, start_response)
 
     def close(self):
         self.context.session_provider.dispose()
