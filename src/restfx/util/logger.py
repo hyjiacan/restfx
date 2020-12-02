@@ -20,6 +20,7 @@ class Logger:
 
         if level not in self.colors:
             print('[%s] %s' % (level, message))
+            return
 
         print('%s[%s] %s%s' % (self.colors[level], level, message, '\033[0m'))
 
