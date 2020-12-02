@@ -148,17 +148,17 @@
     return el('table', {class: 'args-table'}, [
       el('caption', null, '参数信息'),
       el('colgroup', null, [
-        el('col', {style: 'width: 160px'}, null),
-        el('col', {style: 'width: 160px'}, null),
-        el('col', {style: 'width: 240px'}, null),
+        el('col', {style: 'width: 200px'}, null),
+        el('col', {style: 'width: 150px'}, null),
+        el('col', {style: 'width: 200px'}, null),
         el('col', {style: 'width: auto'}, null)
       ]),
       el(
         'thead',
         null,
         el('tr', null, [
-          el('th', null, '名称'),
-          el('th', null, '类型'),
+          el('th', null, '参数名称/别名'),
+          el('th', null, '参数类型'),
           el('th', null, editable ? '值' : '默认值'),
           el('th', null, '描述')
         ])
@@ -168,7 +168,7 @@
         null,
         args.map((arg) =>
           el('tr', null, [
-            el('td', null, arg.name),
+            el('td', null, arg.name + (arg.alias ? '/' + arg.alias : '')),
             el(
               'td',
               null,
@@ -317,10 +317,17 @@
 
     tableContainer.replaceChild(renderArgs(api.args, true), table)
 
+    testPanel.querySelector('.status-code').textContent = ''
+    testPanel.querySelector('.status-text').textContent = ''
+    testPanel.querySelector('.response-content').value = ''
+
     testPanel.style.display = 'flex'
   }
 
   function renderTestResponse(response) {
+    const classList = testPanel.querySelector('.response-status').classList
+    classList.remove('status-success', 'status-failed')
+    classList.add(response.status === 200 ? 'status-success' : 'status-failed')
     testPanel.querySelector('.status-code').textContent = response.status
     testPanel.querySelector('.status-text').textContent = response.statusText
 

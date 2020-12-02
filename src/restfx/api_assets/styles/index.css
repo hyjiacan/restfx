@@ -208,7 +208,9 @@ footer {
     width: 80%;
     background-color: #ffffff;
     border-radius: 4px;
-    max-height: 100%;
+    max-height: 80%;
+    display: grid;
+    grid-template-rows: 45px 1fr;
 }
 
 .panel-heading {
@@ -218,6 +220,7 @@ footer {
 
 .panel-body {
     padding: 5px 10px;
+    overflow: auto;
 }
 
 .arg-value {
@@ -225,13 +228,13 @@ footer {
     width: 100%;
     box-sizing: border-box;
     border-width: 0 0 1px 0;
-    border-color: #cccccc;
+    border-color: #888888;
 }
 
 .arg-value:focus,
 .arg-value:hover,
 .arg-value:active {
-    border-color: #888888;
+    border-color: #555555;
 }
 
 #btn-close-test {
@@ -274,7 +277,7 @@ footer {
     padding: 5px;
     border: 1px solid #faf8d5;
     width: 100%;
-    min-height: 120px;
+    min-height: 200px;
     box-sizing: border-box;
     outline: none;
     overflow: auto;
@@ -283,4 +286,15 @@ footer {
 
 .required {
     border-color: red;
+}
+.response-status {
+    margin-left: 20px;
+    float: right;
+}
+.status-success {
+    color: green;
+}
+
+.status-failed {
+    color: orange;
 }
