@@ -2,7 +2,7 @@ from restfx import route
 from restfx.http import HttpRequest
 
 
-@route('测试', 'get')
+@route('模块名称', '第1个路由')
 def get(request: HttpRequest, foo: str, required_: int):
     """
     GET 测试
@@ -25,7 +25,7 @@ def get(request: HttpRequest, foo: str, required_: int):
     }
 
 
-@route('测试', 'post')
+@route('模块名称', '第2个路由')
 def post(request: HttpRequest, foo: str, bar=5, **kwargs):
     """
     POST 测试
@@ -38,7 +38,7 @@ def post(request: HttpRequest, foo: str, bar=5, **kwargs):
     return True, ['post', foo, bar, kwargs.values()]
 
 
-@route('测试', 'delete')
+@route('模块名称', '第3个路由')
 def delete(request: HttpRequest, foo: str):
     """
     DELETE 测试

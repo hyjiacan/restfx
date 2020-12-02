@@ -3,29 +3,35 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Table of APIs</title>
+    <title>Table of APIs - restfx</title>
     <link type="text/css" rel="stylesheet" href="/api_assets_for_debug/styles/index.css"/>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>Table of APIs</h1>
-        <div class="tools">
-            <div class="buttons">
-                <button onclick="collapseAll()">全部收起</button>
-                <button onclick="expandAll()">全部展开</button>
+    <div class="scroll-proxy">
+        <header>
+            <h1>
+                <span>Table of APIs</span>
+                <span>-</span>
+                <small>restfx</small>
+            </h1>
+            <div class="tools">
+                <div class="buttons">
+                    <button onclick="collapseAll()">全部收起</button>
+                    <button onclick="expandAll()">全部展开</button>
+                </div>
             </div>
+        </header>
+        <hr/>
+        <div id="api-list">
+            <p id="loading">正在加载 API 数据...</p>
         </div>
-    </header>
-    <hr/>
-    <div id="api-list">
-        <p id="loading">正在加载 API 数据...</p>
+        <hr/>
+        <footer>
+            <span>Powered by</span>
+            <a href="http://gitee.com/hyjiacan/restfx">restfx</a>
+        </footer>
     </div>
-    <hr/>
-    <footer>
-        <span>Powered by</span>
-        <a href="http://gitee.com/hyjiacan/restfx">restfx</a>
-    </footer>
 </div>
 <div id="test-panel">
     <div class="panel">

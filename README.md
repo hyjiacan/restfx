@@ -491,9 +491,25 @@ class MiddlewareClass(MiddlewareBase):
 
 > 额外参数: 除 `name` 和 `module` 外的参数
 
+## 截图
+
+### 路由声明
+ 
+![get](./assets/a1.png)
+
+![post](./assets/a2.png)
+
+![delete](./assets/a3.png)
+
+### API列表
+
+![list](./assets/b1.png)
+
+![test](./assets/b2.png)
+
+![test](./assets/b3.png)
+
 ## 待办事项
 
 - [ ] 添加严格模式支持。在严格模式下，不允许传入未声明的参数。
 - [ ] 参数类型支持上传文件
-- [ ] 优化静态服务支持
-- [ ] 优化 API 列表页面，添加测试（发送请求）支持
