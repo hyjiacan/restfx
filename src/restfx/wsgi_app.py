@@ -44,7 +44,8 @@ class WsgiApp:
             request = HttpRequest(environ, self.context)
             adapter = self.url_map.bind_to_environ(environ)
 
-            if request.path == '/':
+            # 仅在调试时重定向
+            if self.context.DEBUG and request.path == '/':
                 response = Response(status=302, headers={
                     'Location': '/' + self.api_prefix
                 })
