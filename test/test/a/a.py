@@ -11,16 +11,16 @@ def get(request: HttpRequest, foo: str, required_: int):
     :return: get 请求的值
     :rtype: dict
     """
-    session = request.session
-    last_foo = None
-    if session.has('foo'):
-        last_foo = session.get('foo')
-        # session.clear()
-    session.set('foo', foo)
+    # session = request.session
+    # last_foo = None
+    # if session.has('foo'):
+    #     last_foo = session.get('foo')
+    #     # session.clear()
+    # session.set('foo', foo)
     return {
         'method': 'get',
         'foo': foo,
-        'last-foo': last_foo,
+        # 'last-foo': last_foo,
         'required': required_
     }
 
@@ -49,4 +49,11 @@ def delete(request: HttpRequest, foo: str):
     return {
         'method': 'delete',
         'foo': foo
+    }
+
+
+@route('模块名称', '第4个路由')
+def get_test():
+    return {
+        'test': True
     }
