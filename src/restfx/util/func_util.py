@@ -196,7 +196,6 @@ class FunctionDescription:
                 docs['__func__'] = ' '.join(buffer)
                 buffer.clear()
                 colon_found = True
-                continue
 
             if last_name:
                 docs[last_name] = ' '.join(buffer)
