@@ -24,7 +24,7 @@ class WsgiApp:
         if static_map is None:
             static_map = {}
         if context.DEBUG:
-            static_map['/api_assets_for_debug'] = os.path.join(os.path.dirname(__file__), 'api_assets')
+            static_map['/api_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'api_assets_for_dev')
         self.static_map = static_map
 
         self.url_map = Map([

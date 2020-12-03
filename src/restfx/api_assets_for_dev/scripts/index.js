@@ -1,7 +1,7 @@
 ;(function () {
   const apis = {}
 
-  function serializeParams(params) {
+  function serializeParams (params) {
     const temp = []
     for (const key in params) {
       temp.push(`${key}=${params[key]}`)
@@ -9,7 +9,12 @@
     return '?' + temp.join('&')
   }
 
-  function request(method, url, {param, data, headers, callback}) {
+  function request (method, url, {
+    param,
+    data,
+    headers,
+    callback
+  }) {
     let xhr = new XMLHttpRequest()
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
@@ -29,7 +34,7 @@
    * @param {XMLHttpRequest} xhr
    * @returns {headers: {}, data: string}
    */
-  function getResponse(xhr) {
+  function getResponse (xhr) {
     let data = xhr.responseText
     let headers = {}
     xhr
@@ -69,7 +74,7 @@
     }
   })
 
-  function render(data) {
+  function render (data) {
     if (!data || !Object.keys(data).length) {
       document.querySelector('#loading').innerHTML = '未找到接口信息'
       return
@@ -85,9 +90,9 @@
     list.appendChild(fragment)
   }
 
-  function renderModule(data, module) {
+  function renderModule (data, module) {
     let index = 0
-    return el('details', {open: true}, [
+    return el('details', { open: true }, [
       el('summary', null, [
         el(
           'a',
@@ -102,11 +107,11 @@
       ]),
       el(
         'ul',
-        {class: 'api-list'},
+        { class: 'api-list' },
         data.map((route) => {
             const id = index++
             apis[id] = route
-            return el('li', {class: 'api-item'}, [
+            return el('li', { class: 'api-item' }, [
               el('div', null, [
                 el(
                   'a',
@@ -117,15 +122,15 @@
                   },
                   '#'
                 ),
-                el('span', {class: 'route-name'}, route.name),
-                el('span', {class: 'comment'}, route.func_desc)
+                el('span', { class: 'route-name' }, route.name),
+                el('span', { class: 'comment' }, route.func_desc)
               ]),
               el('div', {
                 class: 'url-info'
               }, [
-                el('div', {class: 'info'}, [
-                  el('span', {class: 'method'}, route.method),
-                  el('code', {class: 'url'}, `${rootURL}${route.path}`)
+                el('div', { class: 'info' }, [
+                  el('span', { class: 'method' }, route.method),
+                  el('code', { class: 'url' }, `${rootURL}${route.path}`)
                 ]),
                 el('button', {
                   class: 'btn-open-test',
@@ -141,17 +146,83 @@
     ])
   }
 
-  function renderArgs(args, editable) {
+  function renderArgs (args, editable, append) {
     if (!args) {
-      return el('span', {class: 'tip'}, '无参数')
+      return el('span', { class: 'tip' }, '无参数')
     }
-    return el('table', {class: 'args-table'}, [
+
+    const rows = args.map((arg) =>
+      el('tr', null, [
+        el('td', null, arg.name + (arg.alias ? '/' + arg.alias : '')),
+        el(
+          'td',
+          null,
+          el(
+            arg.has_annotation ? 'code' : 'span',
+            null,
+            arg.has_annotation ? arg.annotation_name : '-'
+          )
+        ),
+        el(
+          'td',
+          null,
+          editable && arg.annotation_name !== 'HttpRequest' ? el('input', {
+            type: 'text',
+            name: arg.name,
+            class: 'arg-value',
+            value: arg.has_default ? arg['default'] : '',
+            required: arg.has_default ? undefined : 'required',
+            'data-type': arg.annotation_name
+          }) : el(
+            arg.has_default ? 'code' : 'span',
+            null,
+            arg.has_default
+              ? (() => {
+                const defaultValue = arg['default']
+                if (defaultValue === null) {
+                  return 'None'
+                }
+
+                if (defaultValue === '') {
+                  return '""'
+                }
+
+                if (typeof defaultValue === 'number') {
+                  return defaultValue.toString()
+                }
+
+                if (typeof defaultValue === 'boolean') {
+                  return defaultValue ? 'True' : 'False'
+                }
+
+                return defaultValue
+              })()
+              : '-'
+          )
+        ),
+        el(
+          'td',
+          null,
+          el(
+            'span',
+            { class: 'comment' },
+            arg.comment ? arg.comment : '-'
+          )
+        )
+      ])
+    )
+
+    if (append) {
+      rows.push(append)
+    }
+
+    return el('table', { class: 'args-table' }, [
       el('caption', null, '参数信息'),
       el('colgroup', null, [
-        el('col', {style: 'width: 200px'}, null),
-        el('col', {style: 'width: 150px'}, null),
-        el('col', {style: 'width: 200px'}, null),
-        el('col', {style: 'width: auto'}, null)
+        el('col', { style: 'width: 200px' }, null),
+        el('col', { style: 'width: 150px' }, null),
+        el('col', { style: 'width: 200px' }, null),
+        el('col', { style: 'width: auto' }, null)
       ]),
       el(
         'thead',
@@ -166,80 +237,21 @@
       el(
         'tbody',
         null,
-        args.map((arg) =>
-          el('tr', null, [
-            el('td', null, arg.name + (arg.alias ? '/' + arg.alias : '')),
-            el(
-              'td',
-              null,
-              el(
-                arg.has_annotation ? 'code' : 'span',
-                null,
-                arg.has_annotation ? arg.annotation_name : '-'
-              )
-            ),
-            el(
-              'td',
-              null,
-              editable && arg.annotation_name !== 'HttpRequest' ? el('input', {
-                type: 'text',
-                name: arg.name,
-                class: 'arg-value',
-                value: arg.has_default ? arg['default'] : '',
-                required: arg.has_default ? undefined : 'required',
-                'data-type': arg.annotation_name
-              }) : el(
-                arg.has_default ? 'code' : 'span',
-                null,
-                arg.has_default
-                  ? (() => {
-                    const defaultValue = arg['default']
-                    if (defaultValue === null) {
-                      return 'None'
-                    }
-
-                    if (defaultValue === '') {
-                      return '""'
-                    }
-
-                    if (typeof defaultValue === 'number') {
-                      return defaultValue.toString()
-                    }
-
-                    if (typeof defaultValue === 'boolean') {
-                      return defaultValue ? 'True' : 'False'
-                    }
-
-                    return defaultValue
-                  })()
-                  : '-'
-              )
-            ),
-            el(
-              'td',
-              null,
-              el(
-                'span',
-                {class: 'comment'},
-                arg.comment ? arg.comment : '-'
-              )
-            )
-          ])
-        )
+        rows
       )
     ])
   }
 
-  function renderReturn(route) {
-    return el('p', {class: 'return-info'}, [
+  function renderReturn (route) {
+    return el('p', { class: 'return-info' }, [
       el('span', null, '返回'),
       // route.return_type ? el('code', null, route.return_type) : '',
       el('span', null, ':'),
-      el('span', {class: 'comment'}, route.return_desc || '-')
+      el('span', { class: 'comment' }, route.return_desc || '-')
     ])
   }
 
-  function el(tag, attrs, children) {
+  function el (tag, attrs, children) {
     const element = document.createElement(tag)
     if (attrs) {
       for (const name in attrs) {
@@ -304,7 +316,7 @@
     }
   })
 
-  function openTestPanel(e) {
+  function openTestPanel (e) {
     const id = e.target.getAttribute('data-api')
     const api = apis[id]
     testPanel.querySelector('.module').textContent = api.module
@@ -315,7 +327,11 @@
     let table = testPanel.querySelector('table')
     const tableContainer = table.parentElement
 
-    tableContainer.replaceChild(renderArgs(api.args, true), table)
+    const btnExtra = el('button', {
+      id: 'btnAppendArg'
+    }, '添加自定义参数')
+
+    tableContainer.replaceChild(renderArgs(api.args, true, el('tr', null, el('td', null, btnExtra))), table)
 
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
@@ -324,7 +340,7 @@
     testPanel.style.display = 'flex'
   }
 
-  function renderTestResponse(response) {
+  function renderTestResponse (response) {
     const classList = testPanel.querySelector('.response-status').classList
     classList.remove('status-success', 'status-failed')
     classList.add(response.status === 200 ? 'status-success' : 'status-failed')
@@ -349,7 +365,7 @@
 
 var all
 
-function getAll() {
+function getAll () {
   if (all) {
     return all
   }
@@ -357,13 +373,13 @@ function getAll() {
   return all
 }
 
-function collapseAll() {
+function collapseAll () {
   getAll().forEach(function (item) {
     item.removeAttribute('open')
   })
 }
 
-function expandAll() {
+function expandAll () {
   getAll().forEach(function (item) {
     item.setAttribute('open', '')
   })
