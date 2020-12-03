@@ -26,7 +26,7 @@ def get(request: HttpRequest, foo: str, required_: int):
 
 
 @route('模块名称', '第2个路由')
-def post(request: HttpRequest, foo: str, bar=5, **kwargs):
+def post(request: HttpRequest, foo: list, bar=5, **kwargs):
     """
     POST 测试
     :param bar:
@@ -35,7 +35,7 @@ def post(request: HttpRequest, foo: str, bar=5, **kwargs):
     :return: post 请求的值
     :rtype: list
     """
-    return True, ['post', foo, bar, kwargs.values()]
+    return True, ['post', foo, bar, kwargs]
 
 
 @route('模块名称', '第3个路由')
