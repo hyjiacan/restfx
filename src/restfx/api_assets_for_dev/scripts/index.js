@@ -146,71 +146,88 @@
     ])
   }
 
+  function renderArg (arg, editable) {
+    let argName = arg.name
+    if (arg.alias) {
+      argName += '/' + arg.alias
+    }
+    let argType
+    if (arg.has_annotation) {
+      argType = arg.annotation_name
+    } else if (arg.is_variable) {
+      arg.has_annotation = true
+      argName = '**' + argName
+      argType = 'VAR_KEYWORD'
+    } else {
+      argType = '-'
+    }
+
+    return el('tr', null, [
+      el('td', null, argName),
+      el(
+        'td',
+        null,
+        el(
+          arg.has_annotation ? 'code' : 'span',
+          null,
+          argType
+        )
+      ),
+      el(
+        'td',
+        null,
+        editable && arg.annotation_name !== 'HttpRequest' ? el('input', {
+          type: 'text',
+          name: arg.name,
+          class: 'arg-value',
+          value: arg.has_default ? arg['default'] : '',
+          required: arg.has_default ? undefined : 'required',
+          'data-type': arg.annotation_name
+        }) : el(
+          arg.has_default ? 'code' : 'span',
+          null,
+          arg.has_default
+            ? (() => {
+              const defaultValue = arg['default']
+              if (defaultValue === null) {
+                return 'None'
+              }
+
+              if (defaultValue === '') {
+                return '""'
+              }
+
+              if (typeof defaultValue === 'number') {
+                return defaultValue.toString()
+              }
+
+              if (typeof defaultValue === 'boolean') {
+                return defaultValue ? 'True' : 'False'
+              }
+
+              return defaultValue
+            })()
+            : '-'
+        )
+      ),
+      el(
+        'td',
+        null,
+        el(
+          'span',
+          { class: 'comment' },
+          arg.comment ? arg.comment : '-'
+        )
+      )
+    ])
+  }
+
   function renderArgs (args, editable, append) {
     if (!args) {
       return el('span', { class: 'tip' }, '无参数')
     }
 
-    const rows = args.map((arg) =>
-      el('tr', null, [
-        el('td', null, arg.name + (arg.alias ? '/' + arg.alias : '')),
-        el(
-          'td',
-          null,
-          el(
-            arg.has_annotation ? 'code' : 'span',
-            null,
-            arg.has_annotation ? arg.annotation_name : '-'
-          )
-        ),
-        el(
-          'td',
-          null,
-          editable && arg.annotation_name !== 'HttpRequest' ? el('input', {
-            type: 'text',
-            name: arg.name,
-            class: 'arg-value',
-            value: arg.has_default ? arg['default'] : '',
-            required: arg.has_default ? undefined : 'required',
-            'data-type': arg.annotation_name
-          }) : el(
-            arg.has_default ? 'code' : 'span',
-            null,
-            arg.has_default
-              ? (() => {
-                const defaultValue = arg['default']
-                if (defaultValue === null) {
-                  return 'None'
-                }
-
-                if (defaultValue === '') {
-                  return '""'
-                }
-
-                if (typeof defaultValue === 'number') {
-                  return defaultValue.toString()
-                }
-
-                if (typeof defaultValue === 'boolean') {
-                  return defaultValue ? 'True' : 'False'
-                }
-
-                return defaultValue
-              })()
-              : '-'
-          )
-        ),
-        el(
-          'td',
-          null,
-          el(
-            'span',
-            { class: 'comment' },
-            arg.comment ? arg.comment : '-'
-          )
-        )
-      ])
-    )
+    const rows = args.map(arg => renderArg(arg, editable))
 
     if (append) {
       rows.push(append)
