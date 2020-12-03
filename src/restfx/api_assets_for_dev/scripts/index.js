@@ -26,7 +26,16 @@
     }
     xhr.open(method.toUpperCase(), url, true)
     xhr.setRequestHeader('requested-with', 'XmlHttpRequest')
-    xhr.send(data)
+    const form = new FormData()
+    if (data) {
+      for (key in data) {
+        if (!key) {
+          continue
+        }
+        form.append(key, data[key])
+      }
+    }
+    xhr.send(form)
   }
 
   /**
@@ -82,7 +91,9 @@
 
     const fragment = document.createDocumentFragment()
 
-    for (const module in data) {
+    const modules = Object.keys(data)
+    modules.sort()
+    for (const module of modules) {
       fragment.appendChild(renderModule(data[module], module))
     }
 
@@ -109,7 +120,7 @@
         'ul',
         { class: 'api-list' },
         data.map((route) => {
-            const id = index++
+            const id = route.method + '#' + route.path
             apis[id] = route
             return el('li', { class: 'api-item' }, [
               el('div', null, [
@@ -146,18 +157,69 @@
     ])
   }
 
+  function getArgDefaultValue (arg) {
+    const defaultValue = arg['default']
+    if (defaultValue === null) {
+      return 'None'
+    }
+
+    if (defaultValue === '') {
+      return '""'
+    }
+
+    if (typeof defaultValue === 'number') {
+      return defaultValue.toString()
+    }
+
+    if (typeof defaultValue === 'boolean') {
+      return defaultValue ? 'True' : 'False'
+    }
+
+    return defaultValue
+  }
+
+  function renderArgDefaultValue (arg) {
+    if (!arg.has_default) {
+      return el('span', null, '-')
+    }
+    return el('code', null, getArgDefaultValue(arg))
+  }
+
+  function renderArgEditor (arg) {
+    const attrs = {
+      type: 'text',
+      name: arg.name,
+      class: 'arg-value',
+      'data-type': arg.annotation_name
+    }
+    if (!arg.has_default) {
+      attrs.required = 'required'
+    }
+
+    let editor
+
+    if (['bool', 'int', 'float'].indexOf(arg.annotation_name) === -1) {
+      editor = el('textarea', attrs, arg.has_default ? arg['default'] : '')
+    } else {
+      attrs.value = arg.has_default ? arg['default'] : ''
+      editor = el('input', attrs)
+    }
+
+    return el('div', { class: 'arg-editor' }, editor)
+  }
+
   function renderArg (arg, editable) {
     let argName = arg.name
     if (arg.alias) {
       argName += '/' + arg.alias
     }
     let argType
-    if (arg.has_annotation) {
-      argType = arg.annotation_name
-    } else if (arg.is_variable) {
+    if (arg.is_variable) {
       arg.has_annotation = true
       argName = '**' + argName
       argType = 'VAR_KEYWORD'
+    } else if (arg.has_annotation) {
+      argType = arg.annotation_name
     } else {
       argType = '-'
     }
@@ -176,39 +238,8 @@
       el(
         'td',
         null,
-        editable && arg.annotation_name !== 'HttpRequest' ? el('input', {
-          type: 'text',
-          name: arg.name,
-          class: 'arg-value',
-          value: arg.has_default ? arg['default'] : '',
-          required: arg.has_default ? undefined : 'required',
-          'data-type': arg.annotation_name
-        }) : el(
-          arg.has_default ? 'code' : 'span',
-          null,
-          arg.has_default
-            ? (() => {
-              const defaultValue = arg['default']
-              if (defaultValue === null) {
-                return 'None'
-              }
-
-              if (defaultValue === '') {
-                return '""'
-              }
-
-              if (typeof defaultValue === 'number') {
-                return defaultValue.toString()
-              }
-
-              if (typeof defaultValue === 'boolean') {
-                return defaultValue ? 'True' : 'False'
-              }
-
-              return defaultValue
-            })()
-            : '-'
-        )
+        editable && arg.annotation_name !== 'HttpRequest' && !arg.is_variable ?
+          renderArgEditor(arg) : renderArgDefaultValue(arg)
       ),
       el(
         'td',
@@ -306,7 +337,15 @@
     const url = testPanel.querySelector('.url').textContent.trim()
 
     const fields = {}
-    for (const field of testPanel.querySelectorAll('input')) {
+    for (const field of testPanel.querySelectorAll('input.arg-value')) {
+      if (field.required && !field.value) {
+        field.classList.add('required')
+        return
+      }
+      field.classList.remove('required')
+      fields[field.name] = field.value
+    }
+    for (const field of testPanel.querySelectorAll('textarea.arg-value')) {
       if (field.required && !field.value) {
         field.classList.add('required')
         return
@@ -344,11 +383,7 @@
     let table = testPanel.querySelector('table')
     const tableContainer = table.parentElement
 
-    const btnExtra = el('button', {
-      id: 'btnAppendArg'
-    }, '添加自定义参数')
-
-    tableContainer.replaceChild(renderArgs(api.args, true, el('tr', null, el('td', null, btnExtra))), table)
+    tableContainer.replaceChild(renderArgs(api.args, true), table)
 
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
