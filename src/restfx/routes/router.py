@@ -37,11 +37,11 @@ class Router:
                 'API list is disabled in production, use "App(..., debug_mode=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
-        # if not self.api_list_html_cache:
-        with open(os.path.join(os.path.dirname(__file__), '../templates/api_list.html'), encoding='utf-8') as fp:
-            lines = fp.readlines()
-            self.api_list_html_cache = ''.join(lines)
-            fp.close()
+        if not self.api_list_html_cache:
+            with open(os.path.join(os.path.dirname(__file__), '../assets_for_dev/templates/api_list.html'), encoding='utf-8') as fp:
+                lines = fp.readlines()
+                self.api_list_html_cache = ''.join(lines)
+                fp.close()
 
         if request.method != 'POST':
             return HttpResponse(self.api_list_html_cache, content_type='text/html')

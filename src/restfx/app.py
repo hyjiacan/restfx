@@ -40,6 +40,7 @@ class App:
 
     def update_debug_mode(self, debug_mode: bool):
         self.context.update_debug_mode(debug_mode)
+        return self
 
     def collect(self, *environments):
         return self.context.collector.collect(self.context.routes_map, *environments)
@@ -54,6 +55,7 @@ class App:
         :return:
         """
         self.wsgi.router.intercepter = intercepter
+        return self
 
     def set_logger(self, logger):
         """
@@ -62,6 +64,7 @@ class App:
         :return:
         """
         self.context.logger.custom_logger = logger
+        return self
 
     def map_routes(self, routes_map: dict):
         """
@@ -77,6 +80,7 @@ class App:
             if not os.path.exists(pkg_path):
                 self.context.logger.warning('Route map "%s" not exists, path=%s' % (pkg, pkg_path))
             self.context.routes_map[path] = pkg
+        return self
 
     def register_routes(self, routes: list):
         """
@@ -86,6 +90,7 @@ class App:
         """
         for route in routes:
             self.register(*route)
+        return self
 
     def register(self, method: str, path: str, handler: MethodType):
         """
@@ -104,6 +109,7 @@ class App:
             'func': handler,
             'args': desc.arguments
         }
+        return self
 
     def register_globals(self, *global_classes):
         """
@@ -114,6 +120,7 @@ class App:
         """
         for cls in global_classes:
             self.context.collector.global_classes.append(cls)
+        return self
 
     def register_middleware(self, *middlewares):
         """
@@ -125,3 +132,4 @@ class App:
             instance = cls()
             self.context.middlewares.append(instance)
             self.context.reversed_middlwares.insert(0, instance)
+        return self

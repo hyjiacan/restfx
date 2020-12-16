@@ -25,7 +25,9 @@ class Logger:
         print('%s[%s] %s%s' % (self.colors[level], level, message, '\033[0m'))
 
     def debug(self, message):
-        self.log('debug', message)
+        # 仅在 debug 模式下输出这类日志
+        if self.debug_mode:
+            self.log('debug', message)
 
     def info(self, message):
         self.log('info', message)

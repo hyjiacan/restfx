@@ -23,8 +23,19 @@ class WsgiApp:
 
         if static_map is None:
             static_map = {}
+        else:
+            for url in static_map:
+                target_path = static_map[url]
+                abs_target_path = os.path.abspath(os.path.join(context.ROOT, target_path))
+                static_map[url] = abs_target_path
+                if os.path.exists(abs_target_path):
+                    self.context.logger.debug('Map static url %s to path %s' % (url, abs_target_path))
+                else:
+                    self.context.logger.warning(
+                        'The target path of static url %s not found: %s' % (url, abs_target_path))
+
         if context.DEBUG:
-            static_map['/api_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'api_assets_for_dev')
+            static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
         self.static_map = static_map
 
         self.url_map = Map([
@@ -40,6 +51,7 @@ class WsgiApp:
         :param start_response:
         :return:
         """
+        request = None
         try:
             request = HttpRequest(environ, self.context)
             adapter = self.url_map.bind_to_environ(environ)
@@ -71,7 +83,10 @@ class WsgiApp:
             else:
                 response = HttpResponseServerError()
 
-            self.context.logger.warning(repr(e))
+            msg = repr(e)
+            if request:
+                msg += ':' + request.path
+            self.context.logger.warning(msg)
 
         return response(environ, start_response)
 
