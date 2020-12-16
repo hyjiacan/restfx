@@ -116,7 +116,7 @@ def _process_json_params(request):
     参数处理
     :return:
     """
-    if request.content_type != 'application/json':
+    if request.content_type is None or 'application/json' not in request.content_type:
         return
 
     # 如果请求是json类型，就先处理一下
@@ -129,7 +129,7 @@ def _process_json_params(request):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        request.context.logger.warning('Deserialize request body fail: %s' % str(e))
+        request.context.logger.warning('Deserialize request body failed: %s' % str(e))
 
 
 def _get_parameter_str(args: OrderedDict):
