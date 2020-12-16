@@ -1,4 +1,3 @@
-include src/restfx/templates/*
-include src/restfx/api_assets_for_dev/**/*
+include src/restfx/assets_for_dev/**/*
 include requirements/*.txt
 global-exclude *.pyc

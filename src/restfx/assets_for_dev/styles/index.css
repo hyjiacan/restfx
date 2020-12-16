@@ -322,3 +322,7 @@ textarea.arg-value:active {
 .status-failed {
     color: orange;
 }
+
+.response-time {
+    margin-left: 20px;
+}

@@ -335,6 +335,11 @@
   document.querySelector('#btn-send-test').addEventListener('click', function () {
     const method = testPanel.querySelector('.method').textContent.trim()
     const url = testPanel.querySelector('.url').textContent.trim()
+    testPanel.querySelector('.response-content').value = ''
+    testPanel.querySelector('.response-status').classList.remove('status-success', 'status-failed')
+    testPanel.querySelector('.status-code').textContent = ''
+    testPanel.querySelector('.status-text').textContent = ''
+    testPanel.querySelector('.response-time').textContent = 'Loading...'
 
     const fields = {}
     for (const field of testPanel.querySelectorAll('input.arg-value')) {
@@ -353,9 +358,13 @@
       field.classList.remove('required')
       fields[field.name] = field.value
     }
-
+    const start = new Date().getTime()
     const option = {
-      callback: renderTestResponse
+      callback: function(response) {
+        const end = new Date().getTime()
+        testPanel.querySelector('.response-time').textContent = (end - start) + 'ms'
+        renderTestResponse(response)
+      }
     }
 
     if (['get', 'delete'].indexOf(method) === -1) {
@@ -388,6 +397,7 @@
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
     testPanel.querySelector('.response-content').value = ''
+    testPanel.querySelector('.response-time').textContent = ''
 
     testPanel.style.display = 'flex'
   }
