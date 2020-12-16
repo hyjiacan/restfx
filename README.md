@@ -40,6 +40,14 @@ if __name__ == '__main__':
 
 - `api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。
 - `static_map` 用于指定静态资源与目录映射关系。
+  ```python
+  import os
+  static_map = {
+    '/static': os.path.join(root, 'path/to/static')
+  }
+  ```
+  此配置会允许通过url `/static` 访问静态目录 `{root}/path/to/static`。
+  指定的静态目录可以是绝对路径，也可以是相对 `root` 的相对路径。
 
 如：http://127.0.0.1:8000/any/prefix 。
 
@@ -148,38 +156,42 @@ app.map_routes({
 
 ```python
 from restfx import route
-from restfx.http import HttpRequest 
+from restfx.http import HttpRequest
 
-@route(module='module-name', name='name')
-def get(request, param1, param2=None, param3: int =5):
+
+@route(module='测试名称-模块', name='测试名称-GET')
+def get(request, param1, param2=None, param3: int = 5):
     # request 会是 HttpRequest
     return {
-        'param1': param1, 
-        'param2': param2, 
-        'param3': param3, 
+        'param1': param1,
+        'param2': param2,
+        'param3': param3,
     }
 
-@route(module='module-name', name='name')
-def get_param(param1, req: HttpRequest, from_=None, param3 =5):
+
+@route(module='测试名称-模块', name='测试名称-POST_PARAM')
+def get_param(param1, req: HttpRequest, from_=None, param3=5):
     # req 会是 HttpRequest
     return {
-        'param1': param1, 
-        'from': from_, 
+        'param1': param1,
+        'from': from_,
         'param3': param3,
-    } 
+    }
 
-@route(module='module-name', name='name')
-def get_param(request: str, param1, from_=None, param3 =5):
+
+@route(module='测试名称-模块', name='测试名称-PUT_PARAM')
+def put(request: str, param1, from_=None, param3=5):
     # request 会是请求参数，参数列表中没有 HttpRequest
     return {
         'request': request,
-        'param1': param1, 
-        'from': from_, 
+        'param1': param1,
+        'from': from_,
         'param3': param3,
-    } 
+    }
 
-@route(module='module-name', name='name')
-def get_param(request, param1, from_=None, param3 =5, **kwargs):
+
+@route(module='测试名称-模块', name='测试名称-DELETE_PARAM')
+def delete(request, param1, from_=None, param3=5, **kwargs):
     # 未在函数的参数列表中声明的请求参数，会出现在 kwargs 中
     return {
         'param1': param1,
@@ -202,16 +214,38 @@ def get_param(request, param1, from_=None, param3 =5, **kwargs):
     1. 参数名称为 `request`，并且未指定参数类型(或指定类型为 `HttpRequest`)
     2. 参数类型为 `HttpRequest`，参数名称可以是任何合法的标识符
     3. 参数名称为 `request`，声明了不是 `HttpRequest` 的类型，此时会被解析成一般的请求参数
-    
 
-前端调用:
+URL格式
+
+```
+http://127.0.0.1:9127/api/test.demo/param?param1=1&param2=2&param3=3
+```
+
+- `127.0.0.1` `startup` 的 `host` 参数
+- `9127` `startup` 的 `port` 参数
+- `api` `App` 初始化时的 `api_prefix` 参数
+- `test.demo` `app.map_routes` 参数中定义的 `'test': 'test.api'`，最终会访问到包 `test.api.demo`
+- `/param` `get_param()` 中的 `_param` 名称匹配符
+- `param1/2/3` 分别会填充到跟帖处理函数的参数中
+
+前端调用
 
 ```javascript
 // 请求 get 函数
 ajax.get('test.demo?param1=1&param2=2&param3=3')
 
 // 请求 get_param 函数
-ajax.get('test.demo/param?param1=1&param2=2&param3=3')
+ajax.get('test.demo/param?param1=1&from_=2&param3=3')
+
+// 请求 post 函数
+ajax.post('test.demo', {
+    param1: 1,
+    from_: 2,
+    param3: 3
+})
+
+// 请求 delete 函数
+ajax.delete('test.demo?param1=1&from_=2&param3=3&param4=4')
 ```
 
 路由可以返回任何类型的数据。路由会自动根据函数定义来判断传入参数的类型是否合法。
@@ -220,6 +254,7 @@ ajax.get('test.demo/param?param1=1&param2=2&param3=3')
 - 如果传入了字符串类型的数值，路由会自动转换成数值类型
 - 另外，如果设置了 `None` 以外的默认值，那么路由会根据默认值的类型自动去判断，
 此时可以省略参数类型，如: `param3: int =5` 省略为 `param3=5`
+- `param4` 会出现在 `delete` 请求的 `kwargs` 中
 
 ### 装饰器
 

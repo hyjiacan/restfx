@@ -1,7 +1,7 @@
 from restfx import route
 
 
-@route('另一个模块名称', '包路由')
+@route('声明在包中的模块', '包路由')
 def get(**kwargs):
     """
     sdfs

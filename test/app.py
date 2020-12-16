@@ -43,9 +43,11 @@ root = os.path.dirname(__file__)
 # )
 # session_provider = MysqlSessionProvider(db_pool)
 # app = App(root, debug_mode=True, session_provider=session_provider)
-app = App(root, debug_mode=True)
+app = App(root, debug_mode=True, static_map={
+    '/static': os.path.join(root, 'static')
+})
 app.map_routes({
-    'x': 'test'
+    'test': 'test.api'
 })
 
 if __name__ == '__main__':
