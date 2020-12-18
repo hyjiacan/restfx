@@ -127,14 +127,14 @@ from path.to import FooMiddleware
 from path.to import BarMiddleware
 
 app.register_middlewares(
-    FooMiddleware,
-    BarMiddleware,
+    FooMiddleware(),
+    BarMiddleware(),
 )
 ```
 
 当注册了多个中间件时，它们会按被注册的顺序执行。
 
-**注意**： 每一个中间件类型在程序运行期间共享一个实例。
+**注意**： 注册的是中间件实例，每一个中间件类型在程序运行期间共享一个实例。
 
 如何开发中间件？参见 [中间件类结构](#中间件类结构)
 

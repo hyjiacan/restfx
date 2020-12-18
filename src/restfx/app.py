@@ -125,11 +125,10 @@ class App:
     def register_middleware(self, *middlewares):
         """
         注册中间件，注册的中间件将按顺序执行
-        :param middlewares:
+        :param middlewares: 中间件实例列表
         :return:
         """
-        for cls in middlewares:
-            instance = cls()
-            self.context.middlewares.append(instance)
-            self.context.reversed_middlwares.insert(0, instance)
+        for middleware in middlewares:
+            self.context.middlewares.append(middleware)
+            self.context.reversed_middlwares.insert(0, middleware)
         return self
