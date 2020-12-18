@@ -14,14 +14,14 @@ class MiddlewareManager:
         # 元数据信息
         self.meta = meta
 
-    def begin(self):
+    def handle_request(self):
         for middleware in self.context.middlewares:
             result = middleware.process_request(self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
-            # 返回 False 以阻止后续中间件执行
-            if result is False:
-                return
+            # 返回 None 以阻止后续中间件执行
+            if result is not None:
+                return result
 
     def before_invoke(self):
         """
@@ -32,11 +32,11 @@ class MiddlewareManager:
             result = middleware.process_invoke(self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
-            # 返回 False 以阻止后续中间件执行
-            if result is False:
-                return
+            # 返回 None 以阻止后续中间件执行
+            if result is not None:
+                return result
 
-    def process_return(self, data):
+    def after_return(self, data):
         """
         在路由函数调用后，对其返回值进行处理
         :param data:
@@ -57,7 +57,7 @@ class MiddlewareManager:
 
         return data
 
-    def end(self, response):
+    def handle_response(self, response):
         """
         在响应前，对响应的数据进行处理
         :param response:

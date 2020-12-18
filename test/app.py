@@ -1,10 +1,7 @@
 import os
 
-import pymysql
-from dbutils.pooled_db import PooledDB
-
 from restfx import App
-from restfx.session.providers import MysqlSessionProvider
+from midlewares import MiddlewareA, MiddlewareB, MiddlewareC
 
 root = os.path.dirname(__file__)
 
@@ -49,6 +46,12 @@ app = App(root, debug_mode=True, static_map={
 app.map_routes({
     'test': 'test.api'
 })
+
+app.register_middleware(
+    MiddlewareA(),
+    MiddlewareB(),
+    MiddlewareC()
+)
 
 if __name__ == '__main__':
     app.startup()

@@ -68,15 +68,15 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
     func = meta.handler
 
     # 调用中间件，以处理请求
-    result = mgr.begin()
+    result = mgr.handle_request()
 
     # 返回了 HttpResponse，直接返回此对象
     if isinstance(result, HttpResponse):
-        return mgr.end(result)
+        return mgr.handle_response(result)
 
-    # 返回了 False，表示未授权访问
-    if result is False:
-        return mgr.end(HttpResponseUnauthorized())
+    # 返回了 None，表示停止请求，并将结果作为函数的返回值
+    if result is not None:
+        return mgr.handle_response(_wrap_http_response(mgr, result))
 
     # 处理请求中的json参数
     # 处理后可能会在 request 上添加一个 json 的项，此项存放着json格式的 body 内容
@@ -85,18 +85,18 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
 
     result = mgr.before_invoke()
 
-    # 返回了 False，表示未授权访问
-    if result is False:
-        return mgr.end(HttpResponseUnauthorized())
-
     # 返回了 HttpResponse ， 直接返回此对象
     if isinstance(result, HttpResponse):
-        return mgr.end(result)
+        return mgr.handle_response(result)
+
+    # 返回了 None，表示停止请求，并将结果作为函数的返回值
+    if result is not None:
+        return mgr.handle_response(_wrap_http_response(mgr, result))
 
     # 调用路由处理函数
     arg_len = len(func_args)
     if arg_len == 0:
-        return mgr.end(_wrap_http_response(mgr, func()))
+        return mgr.handle_response(_wrap_http_response(mgr, func()))
 
     # 有参数，自动从 queryString, POST 或 json 中获取
     # 匹配参数
@@ -104,11 +104,11 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
     actual_args = _get_actual_args(request, func, func_args)
 
     if isinstance(actual_args, HttpResponse):
-        return mgr.end(actual_args)
+        return mgr.handle_response(actual_args)
 
     result = func(**actual_args)
 
-    return mgr.end(_wrap_http_response(mgr, result))
+    return mgr.handle_response(_wrap_http_response(mgr, result))
 
 
 def _process_json_params(request):
@@ -311,7 +311,7 @@ def _wrap_http_response(mgr, data):
     """
 
     # 处理返回函数
-    data = mgr.process_return(data)
+    data = mgr.after_return(data)
 
     if data is None:
         return HttpResponse()
@@ -332,7 +332,3 @@ def _wrap_http_response(mgr, data):
         return HttpResponse(data)
 
     return HttpResponse(str(data).encode())
-
-
-class HttpResponseUnauthorized(HttpResponse):
-    status_code = 401

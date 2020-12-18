@@ -77,16 +77,16 @@ def get(req):
 `restfx` 包含以下几个部分：
 
 - 路由映射
-    
+  
     > 为了避免在客户端暴露代码路径，从设计上使用了映射的方式来处理请求。
 - [中间件](#注册中间件)
-    
+  
     > 在处理请求/响应过程中，可以对 `request`/`response` 以及其参数进行处理。
 - [全局类型](#注册全局类型)
-    
+  
     > 在路由装饰器的参数中包含的全局类型，如 `RouteTypes`
 - [路由收集与持久化](#发布)
-    
+  
     > 为了提高线上性能的工具。
 
 `restfx` 的使用流程如下：
@@ -448,50 +448,50 @@ app.set_logger(my_logger)
 ```python
 from restfx.routes import RouteMeta
 from restfx.middleware import MiddlewareBase
-from restfx.http import HttpRequest
+
 
 class MiddlewareClass(MiddlewareBase):
     """
     路由中间件
     """
 
-    def process_request(self, request: HttpRequest, meta: RouteMeta, **kwargs):
+    def process_request(self, request, meta: RouteMeta, **kwargs):
         """
         对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(B,P,G 尚不可用)
         :param request:
         :param meta:
-        :return: 返回 HttpResponse 以终止请求，返回 False 以停止执行后续的中间件(表示访问未授权)，返回 None 或不返回任何值继续执行后续中间件
+        :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
 
-    def process_invoke(self, request: HttpRequest, meta: RouteMeta, **kwargs):
+    def process_invoke(self, request, meta: RouteMeta, **kwargs):
         """
         在路由函数调用前，对其参数等进行处理，此时路由组件已经完成了请求数据的解析(B,P,G 已可用)
         此时可以对解析后的参数进行变更
         :param request:
         :param meta:
-        :return: 返回 HttpResponse 以终止请求，返回 False 以停止执行后续的中间件(表示访问未授权)，返回 None 或不返回任何值继续执行后续中间件
+        :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
 
-    def process_return(self, request: HttpRequest, meta: RouteMeta, **kwargs):
+    def process_return(self, request, meta: RouteMeta, **kwargs):
         """
         在路由函数调用后，对其返回值进行处理
         :param request:
         :param meta:
-        :param kwargs: 始终会有一个 'data' 的项，表示返回的原始数据
-        :return: 返回 HttpResponse 以终止执行，否则返回新的 return value。当返回 None 时，使用原始的 data
+        :param kwargs: 始终会有一个 'data' 的项，表示路由返回的原始数据
+        :return: 返回 HttpResponse 以终止执行，否则返回新的 数据
         """
         pass
 
-    def process_response(self, request: HttpRequest, meta: RouteMeta, **kwargs):
+    def process_response(self, request, meta: RouteMeta, **kwargs):
         """
         对 response 数据进行预处理。一般用于响应的数据的编码
-        :rtype: HttpResponse
-        :param meta:
         :param request:
-        :param kwargs: 始终会有一个 'response' 的项，表示返回的 HttpResponse
-        :return: 应该始终返回一个  HttpResponse，当返回 None 时，使用原始的 response
+        :param meta:
+        :param kwargs: 始终会有一个 'response' 的项，表示路由返回的原始 HttpResponse
+        :return: 返回类型可以是  HttpResponse 或 None(保留原来的 response)
+        :rtype: HttpResponse
         """
         pass
 ```
@@ -505,6 +505,105 @@ class MiddlewareClass(MiddlewareBase):
 
 其中，`process_request` 和 `process_invoke` 按中间件注册的顺序 **顺序** 执行；
 `process_return` 和 `process_response` 按中间件注册的顺序 **倒序** 执行。
+
+在 `process_request` 和 `process_invoke` 中返回了 `HttpResponse` 后，
+会中止后续所有中间件执行 `process_request`, `process_invoke`, `process_return`，
+并开始执行 `process_response`
+
+在 `process_request` 和 `process_invoke` 中返回了非 `None/HttpResponse` 后，
+会中止后续所有中间件执行 `process_request`, `process_invoke`,
+并开始执行 `process_return`, `process_response`
+
+在 `process_return` 中返回了 `HttpResponse` 后，会中止持续所有中间件执行 `process_return`，
+并开始执行 `process_response`; 返回 `None` 表示不改变返回值(的引用); 返回其它值会作为新的返回值
+
+在 `process_response` 中返回了 `HttpResponse` 后，会中止持续所有中间件执行 `process_response`，
+并结束请求。
+
+> 在处理函数中，返回 `None` 不会改变执行顺序。
+
+例如，注册了三个中间件， `MiddlewareA, MiddlewareB, MiddlewareC`，以在 `MiddlewareB` 中为例，
+以下是几种会改变中间件执行顺序的情形说明：
+
+- `MiddlewareB.process_request` 返回 **非** `None/HttpResponse` 数据
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - ~~Middleware**C**.process_request~~
+    - ~~Middleware**A**.process_invoke~~
+    - ~~Middleware**B**.process_invoke~~
+    - ~~Middleware**C**.process_invoke~~
+    - Middleware**C**.process_return
+    - Middleware**B**.process_return
+    - Middleware**A**.process_return
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - Middleware**A**.process_response
+- `MiddlewareB.process_request` 返回 `HttpResponse`
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - ~~Middleware**C**.process_request~~
+    - ~~Middleware**A**.process_invoke~~
+    - ~~Middleware**B**.process_invoke~~
+    - ~~Middleware**C**.process_invoke~~
+    - ~~Middleware**C**.process_return~~
+    - ~~Middleware**B**.process_return~~
+    - ~~Middleware**A**.process_return~~
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - Middleware**A**.process_response
+- `MiddlewareB.process_invoke` 返回 **非** `None/HttpResponse` 数据
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - Middleware**C**.process_request
+    - Middleware**A**.process_invoke
+    - Middleware**B**.process_invoke
+    - ~~Middleware**C**.process_invoke~~
+    - Middleware**C**.process_return
+    - Middleware**B**.process_return
+    - Middleware**A**.process_return
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - Middleware**A**.process_response
+- `MiddlewareB.process_invoke` 返回 `HttpResponse`
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - Middleware**C**.process_request
+    - Middleware**A**.process_invoke
+    - Middleware**B**.process_invoke
+    - ~~Middleware**C**.process_invoke~~
+    - ~~Middleware**C**.process_return~~
+    - ~~Middleware**B**.process_return~~
+    - ~~Middleware**A**.process_return~~
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - Middleware**A**.process_response
+- `MiddlewareB.process_return` 返回 `HttpResponse`
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - Middleware**C**.process_request
+    - Middleware**A**.process_invoke
+    - Middleware**B**.process_invoke
+    - Middleware**C**.process_invoke
+    - Middleware**C**.process_return
+    - Middleware**B**.process_return
+    - ~~Middleware**A**.process_return~~
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - Middleware**A**.process_response
+- `MiddlewareB.process_response` 返回 `HttpResponse`
+    - Middleware**A**.process_request
+    - Middleware**B**.process_request
+    - Middleware**C**.process_request
+    - Middleware**A**.process_invoke
+    - Middleware**B**.process_invoke
+    - Middleware**C**.process_invoke
+    - Middleware**C**.process_return
+    - Middleware**B**.process_return
+    - Middleware**A**.process_return
+    - Middleware**C**.process_response
+    - Middleware**B**.process_response
+    - ~~Middleware**A**.process_response~~
+
 
 #### RouteMeta
 
@@ -529,7 +628,7 @@ class MiddlewareClass(MiddlewareBase):
 ## 截图
 
 ### 路由声明
- 
+
 ![get](./assets/a1.png)
 
 ![post](./assets/a2.png)

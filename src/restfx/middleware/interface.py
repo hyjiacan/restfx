@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from ..http.response import HttpResponse
 from ..routes.meta import RouteMeta
@@ -16,7 +17,7 @@ class MiddlewareBase(ABC):
         对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(B,P,G 尚不可用)
         :param request:
         :param meta:
-        :return: 返回 HttpResponse 以终止请求，返回 False 以停止执行后续的中间件(表示访问未授权)，返回 None 或不返回任何值继续执行后续中间件
+        :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
 
@@ -27,7 +28,7 @@ class MiddlewareBase(ABC):
         此时可以对解析后的参数进行变更
         :param request:
         :param meta:
-        :return: 返回 HttpResponse 以终止请求，返回 False 以停止执行后续的中间件(表示访问未授权)，返回 None 或不返回任何值继续执行后续中间件
+        :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
 
@@ -38,18 +39,18 @@ class MiddlewareBase(ABC):
         :param request:
         :param meta:
         :param kwargs: 始终会有一个 'data' 的项，表示路由返回的原始数据
-        :return: 返回 HttpResponse 以终止执行，否则返回新的 数据
+        :return: 返回 HttpResponse 以终止执行，否则返回新的数据
         """
         pass
 
     @abstractmethod
-    def process_response(self, request, meta: RouteMeta, **kwargs) -> HttpResponse:
+    def process_response(self, request, meta: RouteMeta, **kwargs):
         """
         对 response 数据进行预处理。一般用于响应的数据的编码
         :param request:
         :param meta:
         :param kwargs: 始终会有一个 'response' 的项，表示路由返回的原始 HttpResponse
-        :return: 无论何种情况，应该始终返回一个  HttpResponse
-        :rtype: HttpResponse
+        :return: 返回类型可以是 HttpResponse 或 None(保留原来的 response)
+        :rtype: Union[HttpResponse, None]
         """
         pass
