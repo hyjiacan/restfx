@@ -606,12 +606,31 @@ class MiddlewareClass(MiddlewareBase):
     - Middleware**B**.process_response
     - ~~Middleware**A**.process_response~~
 
+#### RouteMeta
 
-#### 内置中间件
+路由元数据，中间件中勾子函数的参数 `meta` 结构。
 
-Http身份校验 `HttpAuthMiddleware`
+- `id: str` 路由ID，此ID由路由相关信息组合而成
+- `module: str` 装饰器上指定的 module 值
+- `name: str` 装饰器上指定的 name 值
+- `method: str` 路由的请求方法 **大写格式**
+- `path: str` 路由的请求路径
+- `handler: FunctionType` 路由处理函数对象
+- `func_args: OrderedDict` 路由处理函数参数列表
+- `kwargs: dict` 装饰器上指定的其它参数
 
-此中间件提供 `Http Authentication`，其基于 `WWW-Authenticate` 实现。
+另外，meta 还提供了 `has` 和 `get` 两个方法，其描述如下：
+
+- `has(arg_name)` 判断是否指定了额外参数
+- `get(arg_name, default_value=None)` 若存在指定名称的额外参数，则返回值，否则返回指定的默认值
+
+> 额外参数: 除 `name` 和 `module` 外的参数
+
+### 内置中间件
+
+#### HttpAuthMiddleware
+
+此中间件提供 HTTP 身份校验 `Http Authentication` 支持，其基于 `WWW-Authenticate` 实现。
 
 ```python
 from restfx.middleware.contribs import HttpAuthMiddleware
@@ -638,25 +657,7 @@ auth_mw.auth_type = 'basic'
 auth_mw.on_auth = on_http_auth
 ```
 
-#### RouteMeta
-
-路由元数据，中间件中勾子函数的参数 `meta` 结构。
-
-- `id: str` 路由ID，此ID由路由相关信息组合而成
-- `module: str` 装饰器上指定的 module 值
-- `name: str` 装饰器上指定的 name 值
-- `method: str` 路由的请求方法 **大写格式**
-- `path: str` 路由的请求路径
-- `handler: FunctionType` 路由处理函数对象
-- `func_args: OrderedDict` 路由处理函数参数列表
-- `kwargs: dict` 装饰器上指定的其它参数
-
-另外，meta 还提供了 `has` 和 `get` 两个方法，其描述如下：
-
-- `has(arg_name)` 判断是否指定了额外参数
-- `get(arg_name, default_value=None)` 若存在指定名称的额外参数，则返回值，否则返回指定的默认值
-
-> 额外参数: 除 `name` 和 `module` 外的参数
+> 一般来说，此中间件应该被第一个注册，以防止越权操作。
 
 ## 截图
 
