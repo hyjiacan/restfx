@@ -3,7 +3,7 @@ from collections import OrderedDict
 from functools import wraps
 
 from ..http import HttpRequest
-from ..http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
 from ..routes.meta import RouteMeta
 from ..util.func_util import ArgumentSpecification, get_func_info
@@ -210,7 +210,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
                 _get_parameter_str(args)
             )
             request.context.logger.warning(msg)
-            return HttpResponseBadRequest(msg)
+            return HttpBadRequest(msg)
 
         # 使用默认值
         if use_default is True:
@@ -278,7 +278,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
             msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", signature: (%s)' \
                   % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
             request.context.logger.warning(msg)
-            return HttpResponseBadRequest(msg)
+            return HttpBadRequest(msg)
 
     if not has_variable_args:
         return actual_args

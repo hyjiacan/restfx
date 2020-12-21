@@ -6,7 +6,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers import Response
 
 from .app_context import AppContext
-from .http import HttpRequest, HttpResponseServerError, HttpResponseNotFound
+from .http import HttpRequest, HttpServerError, HttpNotFound
 from .routes.router import Router
 
 
@@ -77,11 +77,11 @@ class WsgiApp:
                 response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
         except Exception as e:
             if isinstance(e, NotFound):
-                response = HttpResponseNotFound()
+                response = HttpNotFound()
             elif self.context.DEBUG:
                 raise e
             else:
-                response = HttpResponseServerError()
+                response = HttpServerError()
 
             msg = repr(e)
             if request:

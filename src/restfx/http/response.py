@@ -3,10 +3,13 @@ import json
 from werkzeug.exceptions import InternalServerError
 from werkzeug.wrappers import Response
 
+from .. import __meta__
+
 
 class HttpResponse(Response):
     def __init__(self, content=None, content_type='text/html;charset=utf8', status=200, headers=None, **kwargs):
         super().__init__(content, content_type=content_type, status=status, headers=headers, **kwargs)
+        self.headers.set('x-powered-by', '%s %s' % (__meta__.name, __meta__.version))
 
 
 class JsonResponse(HttpResponse):
@@ -15,17 +18,22 @@ class JsonResponse(HttpResponse):
         super().__init__(content, content_type='application/json;charset=utf8')
 
 
-class HttpResponseBadRequest(HttpResponse):
+class HttpBadRequest(HttpResponse):
     def __init__(self, content=None):
         super().__init__(content, status=400)
 
 
-class HttpResponseNotFound(HttpResponse):
+class HttpUnauthorized(HttpResponse):
+    def __init__(self, content=None):
+        super().__init__(content, status=401)
+
+
+class HttpNotFound(HttpResponse):
     def __init__(self, content=None):
         super().__init__(content, status=404)
 
 
-class HttpResponseServerError(InternalServerError, HttpResponse):
+class HttpServerError(InternalServerError, HttpResponse):
     def __init__(self, content=None):
         e = None
         if isinstance(content, Exception):

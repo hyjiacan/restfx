@@ -3,7 +3,7 @@ from types import FunctionType
 
 from .path_resolver import PathResolver
 from ..app_context import AppContext
-from ..http import HttpResponseNotFound, HttpResponseServerError, HttpResponse, JsonResponse
+from ..http import HttpNotFound, HttpServerError, HttpResponse, JsonResponse
 from ..http.request import HttpRequest
 from ..util.func_util import ArgumentSpecification
 from ..util.utils import get_func_info
@@ -130,7 +130,7 @@ class Router:
             else:
                 route = self.production_routes['%s/%s#%s' % (entry, name, method)]
         except Exception:
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         return self.invoke_handler(request, route['func'], route['args'])
 
@@ -140,4 +140,4 @@ class Router:
         except Exception as e:
             message = '\t%s' % get_func_info(func)
             self.context.logger.error(message, e)
-            return HttpResponseServerError('%s: %s' % (message, str(e)))
+            return HttpServerError('%s: %s' % (message, str(e)))

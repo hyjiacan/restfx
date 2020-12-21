@@ -3,7 +3,7 @@ import os
 from typing import Dict, Optional
 
 from ..app_context import AppContext
-from ..http.response import HttpResponseNotFound, HttpResponse
+from ..http.response import HttpNotFound, HttpResponse
 from ..util.func_util import FunctionDescription
 from ..util.utils import load_module, get_func_info
 
@@ -43,7 +43,7 @@ class PathResolver:
         if module_name is None:
             self.context.logger.warning(
                 'Cannot find route "%s" in routes_map' % self.entry)
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
         abs_path = os.path.join(self.context.ROOT, module_name.replace('.', os.path.sep))
@@ -51,7 +51,7 @@ class PathResolver:
             self.context.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
             module_name = '%s.%s' % (module_name, '__init__')
         elif not os.path.exists('%s.py' % abs_path):
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         self.module_name = module_name
 
@@ -64,7 +64,7 @@ class PathResolver:
         except Exception as e:
             message = 'Load entry "%s" failed' % self.module_name
             self.context.logger.error(message, e)
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         return desc
 
@@ -102,13 +102,13 @@ class PathResolver:
         except Exception as e:
             message = 'Load module "%s" failed' % module_name
             self.context.logger.error(message, e)
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         # 模块中也没有这个函数
         if not hasattr(entry_define, func_name):
             # 函数不存在，更新缓存
             self.entry_cache[func_name] = None
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         # 模块中有这个函数
         # 通过反射从模块加载函数
@@ -121,7 +121,7 @@ class PathResolver:
             self.context.logger.warning(msg)
             # 没有配置装饰器@route，则认为函数不可访问，更新缓存
             self.entry_cache[func_name] = None
-            return HttpResponseNotFound()
+            return HttpNotFound()
 
         self.entry_cache[fullname] = FunctionDescription(func)
 
