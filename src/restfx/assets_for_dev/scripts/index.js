@@ -56,7 +56,8 @@
         }
         headers[temp[0].trim()] = (temp[1] || '').trim()
       })
-    if (headers['content-type'].indexOf('application/json') !== -1) {
+    const contentType = headers['content-type']
+    if (contentType && contentType.indexOf('application/json') !== -1) {
       try {
         data = JSON.parse(data)
       } catch (e) {
