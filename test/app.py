@@ -1,7 +1,9 @@
 import os
 
 from restfx import App
-from midlewares import MiddlewareA, MiddlewareB, MiddlewareC
+from restfx.http import HttpRequest
+from restfx.middleware.contribs.auth import HttpAuthMiddleware
+from restfx.routes import RouteMeta
 
 root = os.path.dirname(__file__)
 
@@ -47,10 +49,22 @@ app.map_routes({
     'test': 'test.api'
 })
 
+
+def on_auth(request: HttpRequest, meta: RouteMeta):
+    if request.authorization.username == 'aaa' and request.authorization.password == 'bbb':
+        return True
+    else:
+        return False
+
+
+auth_middleware = HttpAuthMiddleware()
+auth_middleware.on_auth = on_auth
+
 app.register_middleware(
-    MiddlewareA(),
-    MiddlewareB(),
-    MiddlewareC()
+    auth_middleware,
+    # MiddlewareA(),
+    # MiddlewareB(),
+    # MiddlewareC()
 )
 
 if __name__ == '__main__':

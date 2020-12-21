@@ -138,6 +138,8 @@ app.register_middlewares(
 
 如何开发中间件？参见 [中间件类结构](#中间件类结构)
 
+`restfx` 内置了一些中间件，参见 [内置中间件](#内置中间件)
+
 ### 编写路由处理函数
 
 路由文件位置没有要求，只要配置好就可以了。
@@ -604,6 +606,37 @@ class MiddlewareClass(MiddlewareBase):
     - Middleware**B**.process_response
     - ~~Middleware**A**.process_response~~
 
+
+#### 内置中间件
+
+Http身份校验 `HttpAuthMiddleware`
+
+此中间件提供 `Http Authentication`，其基于 `WWW-Authenticate` 实现。
+
+```python
+from restfx.middleware.contribs import HttpAuthMiddleware
+from restfx.routes import RouteMeta
+from restfx.http import HttpRequest
+
+def on_http_auth(request: HttpRequest, meta: RouteMeta):
+    if not meta.get('auth', True):
+        """
+        当 @route 中指定了 auth=False 时，表示此路由不需要身份验证
+        auth 为开发者自己定义的名称，并未内置。
+        """
+        return True
+    authorization = request.authorization
+    if authorization.username == 'admin' and authorization.password == '123456':
+        return True
+    else:
+        return False
+
+auth_mw = HttpAuthMiddleware()
+
+auth_mw.realm = '.'
+auth_mw.auth_type = 'basic'
+auth_mw.on_auth = on_http_auth
+```
 
 #### RouteMeta
 
