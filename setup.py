@@ -2,8 +2,8 @@ import re
 
 import setuptools
 
-with open("src/restfx/__init__.py", encoding="utf8") as f:
-    version = re.search(r'__version__ = ([\'"])(.*?)\1', f.read()).group(2)
+with open("src/restfx/__meta__.py", encoding="utf8") as f:
+    version = re.search(r'version = ([\'"])(.*?)\1', f.read()).group(2)
 
 setuptools.setup(
     name='restfx',

@@ -4,6 +4,7 @@ from types import MethodType
 
 from werkzeug.serving import run_simple
 
+from . import __meta__
 from .app_context import AppContext
 from .session.interfaces import ISessionProvider
 from .util.func_util import FunctionDescription
@@ -36,6 +37,7 @@ class App:
         self.wsgi = WsgiApp(self.context, api_prefix, static_map)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):
+        print("Powered by %s %s" % (__meta__.name, __meta__.version))
         run_simple(host, port, self.wsgi, use_debugger=True, use_reloader=True, **kwargs)
 
     def update_debug_mode(self, debug_mode: bool):
