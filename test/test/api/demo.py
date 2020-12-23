@@ -4,6 +4,14 @@ from restfx.http import HttpRequest
 
 @route(module='测试名称-模块', name='测试名称-GET')
 def get(request, param1, param2=None, param3: int = 5):
+    """
+
+    :param request:
+    :param param1:
+    :param param2:
+    :param param3:
+    :return: 返回值为参数字典
+    """
     # request 会是 HttpRequest
     return {
         'param1': param1,
@@ -14,6 +22,14 @@ def get(request, param1, param2=None, param3: int = 5):
 
 @route(module='测试名称-模块', name='测试名称-POST_PARAM')
 def get_param(param1, req: HttpRequest, from_=None, param3=5):
+    """
+
+    :param param1:
+    :param req:
+    :param from_:
+    :param param3:
+    :return: 返回值为参数字典
+    """
     # req 会是 HttpRequest
     return {
         'param1': param1,

@@ -1,3 +1,4 @@
+from ..app_context import AppContext
 from ..http.response import HttpResponse
 from ..routes.meta import RouteMeta
 
@@ -8,7 +9,7 @@ class MiddlewareManager:
     """
 
     def __init__(self, request, meta: RouteMeta):
-        self.context = request.context
+        self.context = AppContext.get(request.app_id)
         # HTTP请求对象
         self.request = request
         # 元数据信息

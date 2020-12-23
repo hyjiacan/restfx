@@ -7,8 +7,13 @@ def load_module(module_name: str):
     :param module_name:
     :return:
     """
-    # noinspection PyTypeChecker
-    return __import__(module_name, fromlist=True)
+    # __import__ 自带缓存
+    module = __import__(module_name)
+    temp = module_name.split('.')
+    if len(temp) > 1:
+        for seg in temp[1:]:
+            module = getattr(module, seg)
+    return module
 
 
 def get_func_info(func):

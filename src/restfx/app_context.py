@@ -1,5 +1,4 @@
 from .routes.collector import Collector
-from .session.interfaces import ISessionProvider
 from .util.logger import Logger
 
 
@@ -9,9 +8,7 @@ class AppContext:
     def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
-                 url_endswith_slash: bool,
-                 session_provider: ISessionProvider,
-                 sessionid_name: str):
+                 url_endswith_slash: bool):
         """
 
         """
@@ -35,13 +32,6 @@ class AppContext:
 
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
-
-        self.session_provider = session_provider
-        """
-        :type: ISessionProvider
-        """
-
-        self.sessionid_name = sessionid_name
 
         self.collector = Collector(app_root, url_endswith_slash)
         self.logger = Logger(debug_mode)

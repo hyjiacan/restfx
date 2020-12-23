@@ -8,6 +8,9 @@ from os import path
 
 # 生成：注册路由的代码 -- 模板
 # 注意生成的代码中的缩进，使用的是空格
+from ..util import utils
+from ..util.func_util import FunctionDescription
+
 _REGISTER_STMT = "    # {module}-{name}\n    ['{method}', '{path}', {handler}]"
 _CODE_TPL = """# -*- coding={encoding} -*-
 
@@ -16,11 +19,11 @@ _CODE_TPL = """# -*- coding={encoding} -*-
 # IMPORT ROUTES END
 
 
-# REGISTER ROUTES BEGIN
+# LIST ROUTES BEGIN
 routes = [
 {routes}
 ]
-# REGISTER ROUTES END
+# LIST ROUTES END
 """
 
 
@@ -139,8 +142,9 @@ class Collector:
             # -3 是为了干掉最后的 .py 字样
             pkg = re.sub(r'[/\\]', '.', path.relpath(fullname, route_define))[0:-3]
 
+            is_package = path.basename(fullname) == '__init__.py'
             # 当是包时，移除 __init__ 部分
-            if path.basename(fullname) == '__init__.py':
+            if is_package:
                 http_path = '%s.%s' % (http_prefix, pkg[0:-len('__init__')])
             else:
                 http_path = '%s.%s' % (http_prefix, pkg)
@@ -149,16 +153,22 @@ class Collector:
             # 当路由文件为根目录下的 __init__.py 时，没有可访问的文件名
             # 此时会出现得到的路由为  xxx. 的情况
             # 所以在此移除末尾的 . 符号
-            http_path = '/' + http_path.strip('.')
+            http_path = '/' + http_path.strip('.').replace('.', '/')
 
             # 如果指定了名称，就追加到地址后
-            if name is not None:
+            ext_mode = name is not None
+            if ext_mode:
                 http_path += '/' + name
 
             if self.url_endswith_slash:
                 http_path += '/'
 
             pkg = '%s.%s' % (pkg_prefix, pkg)
+
+            module = utils.load_module(pkg)
+            handler_obj = getattr(module, func)
+            handler_info = FunctionDescription(handler_obj)
+
             # 唯一标识
             define['id'] = '%s_%s' % (pkg.replace('_', '__').replace('.', '_'), func)
             # 路由所在包名称
@@ -171,6 +181,12 @@ class Collector:
             define['method'] = method
             # 路由的请求路径
             define['path'] = http_path
+            # 路由处理函数的描述
+            define['handler_info'] = handler_info
+            # 是否是包
+            define['is_package'] = is_package
+            # 是否是扩展模式
+            define['ext_mode'] = ext_mode
 
             yield define
 

@@ -4,65 +4,75 @@ from typing import Dict, Optional
 
 from ..app_context import AppContext
 from ..http.response import HttpNotFound, HttpResponse
+from ..util import utils
 from ..util.func_util import FunctionDescription
-from ..util.utils import load_module, get_func_info
 
 
-class PathResolver:
+class RouteResolver:
     def __init__(self, context: AppContext,
                  modules_cache: dict,
                  entry_cache: Dict[str, Optional[FunctionDescription]],
                  method: str,
-                 entry: str,
-                 name: str):
+                 entry: str):
         self.context = context
         self.modules_cache = modules_cache
         self.entry_cache = entry_cache
         self.entry = entry
-        method = method.lower()
-        self.method = method
+        self.method = method.lower()
 
-        # 如果指定了名称，那么就加上
-        # 如：name = 'detail'
-        #   func_name = get_detail
-        if name:
-            func_name = '%s_%s' % (method, name.lower())
-        else:
-            func_name = method
-        self.func_name = func_name
+    def _get_module_abs_path(self, module_name):
+        abs_path = os.path.join(self.context.ROOT, module_name)
 
+        if os.path.isdir(abs_path):
+            # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
+            self.context.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
+            return '%s%s%s' % (module_name, os.path.sep, '__init__')
+
+        if os.path.exists('%s.py' % abs_path):
+            return module_name
+
+        return None
+
+    def resolve(self) -> [FunctionDescription, HttpResponse]:
         # 处理映射
-        # 对应的模块(文件路径）
-        self.module_name = self.get_route_map(entry)
+        # 对应的模块(包或模块路径，使用 . 分隔）
+        module_name = self.get_route_map(self.entry)
 
-        self.fullname = ''
-
-    def check(self):
-        module_name = self.module_name
+        func_name = self.method
 
         if module_name is None:
             self.context.logger.warning(
                 'Cannot find route "%s" in routes_map' % self.entry)
             return HttpNotFound()
 
-        # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
-        abs_path = os.path.join(self.context.ROOT, module_name.replace('.', os.path.sep))
-        if os.path.isdir(abs_path):
-            self.context.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
-            module_name = '%s.%s' % (module_name, '__init__')
-        elif not os.path.exists('%s.py' % abs_path):
-            return HttpNotFound()
+        module_path = module_name.replace('.', os.path.sep)
 
-        self.module_name = module_name
+        # 先检查完整路径是否存在
+        module_abs_path = self._get_module_abs_path(module_path)
+        if module_abs_path is None:
+            # 再检查 append 函数是否存在
+            # 将请求路径拆分成 entry 和 name
+            temp = module_path.split(os.path.sep)
+            name = temp.pop()
+            module_path = os.path.sep.join(temp)
+            module_abs_path = self._get_module_abs_path(module_path)
+
+            if module_abs_path is None:
+                return HttpNotFound()
+
+            module_name = module_abs_path.replace(os.path.sep, '.')
+
+            # 如果指定了名称，那么就加上
+            # 如：name = 'detail'
+            #   func_name = get_detail
+            func_name = '%s_%s' % (func_name, name.lower())
 
         # 完全限定名称
-        self.fullname = '%s.%s' % (module_name, self.func_name)
-
-    def resolve(self) -> [FunctionDescription, HttpResponse]:
+        fullname = '%s.%s' % (module_name, func_name)
         try:
-            desc = self.get_func_desc()
+            desc = self._get_handler_info(module_name, func_name, fullname)
         except Exception as e:
-            message = 'Load entry "%s" failed' % self.module_name
+            message = 'Load entry "%s" failed: %s' % (self.entry, fullname)
             self.context.logger.error(message, e)
             return HttpNotFound()
 
@@ -80,13 +90,9 @@ class PathResolver:
             return None
 
         # 将请求路径替换为指定的映射路径
-        return ('%s%s' % (hit_route[1], route_path[len(hit_route[0]):])).strip('.')
+        return ('%s%s' % (hit_route[1], route_path[len(hit_route[0]):])).replace('/', '.').strip('.')
 
-    def get_func_desc(self) -> [FunctionDescription, HttpResponse]:
-        fullname = self.fullname
-        func_name = self.func_name
-        module_name = self.module_name
-
+    def _get_handler_info(self, module_name, func_name, fullname) -> [FunctionDescription, HttpResponse]:
         # 缓存中有这个函数
         if fullname in self.entry_cache.keys():
             return self.entry_cache[fullname]
@@ -95,10 +101,7 @@ class PathResolver:
         # ---------------
 
         try:
-            # 如果不加上fromlist=True,只会导入目录
-            # noinspection PyTypeChecker
-            # __import__ 自带缓存
-            entry_define = load_module(module_name)
+            entry_define = utils.load_module(module_name.replace('/', '.'))
         except Exception as e:
             message = 'Load module "%s" failed' % module_name
             self.context.logger.error(message, e)
@@ -115,7 +118,7 @@ class PathResolver:
         func = getattr(entry_define, func_name)
         if not self.is_valid_route(func):
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (
-                get_func_info(func),
+                utils.get_func_info(func),
                 fullname
             )
             self.context.logger.warning(msg)

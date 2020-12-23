@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from functools import wraps
 
+from ..app_context import AppContext
 from ..http import HttpRequest
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
@@ -39,6 +40,8 @@ def route(module=None, name=None, **kwargs):
             # 此时直接将原参数传给 func 进行调用
             if not isinstance(request, HttpRequest) or not isinstance(func_args, OrderedDict):
                 return func(*args)
+            
+            context = AppContext.get(request.app_id)
 
             meta = RouteMeta(
                 func,
@@ -51,14 +54,14 @@ def route(module=None, name=None, **kwargs):
                 kwargs=kwargs,
             )
 
-            return _invoke_with_route(request, meta)
+            return _invoke_with_route(request, meta, context)
 
         return caller
 
     return invoke_route
 
 
-def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
+def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContext):
     mgr = MiddlewareManager(
         request,
         meta
@@ -81,7 +84,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
     # 处理请求中的json参数
     # 处理后可能会在 request 上添加一个 json 的项，此项存放着json格式的 body 内容
     # noinspection PyTypeChecker
-    _process_json_params(request)
+    _process_json_params(request, context)
 
     result = mgr.before_invoke()
 
@@ -101,7 +104,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
     # 有参数，自动从 queryString, POST 或 json 中获取
     # 匹配参数
 
-    actual_args = _get_actual_args(request, func, func_args)
+    actual_args = _get_actual_args(request, func, func_args, context)
 
     if isinstance(actual_args, HttpResponse):
         return mgr.handle_response(actual_args)
@@ -111,7 +114,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta):
     return mgr.handle_response(_wrap_http_response(mgr, result))
 
 
-def _process_json_params(request):
+def _process_json_params(request: HttpRequest, context: AppContext):
     """
     参数处理
     :return:
@@ -129,7 +132,7 @@ def _process_json_params(request):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        request.context.logger.warning('Deserialize request body failed: %s' % str(e))
+        context.logger.warning('Deserialize request body failed: %s' % str(e))
 
 
 def _get_parameter_str(args: OrderedDict):
@@ -167,7 +170,7 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup=No
     return None, None
 
 
-def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or HttpResponse:
+def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: AppContext) -> dict or HttpResponse:
     method = request.method.lower()
     actual_args = {}
 
@@ -209,7 +212,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
                 arg_name,
                 _get_parameter_str(args)
             )
-            request.context.logger.warning(msg)
+            context.logger.warning(msg)
             return HttpBadRequest(msg)
 
         # 使用默认值
@@ -249,7 +252,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
                 actual_args[arg_name] = False
                 used_args.append(arg_name)
             else:
-                request.context.logger.error(
+                context.logger.error(
                     'Value for "%s!%s" may be incorrect (a boolean value expected: true/false): %s' % (
                         func.__name__, arg_name, arg_value))
             continue
@@ -264,7 +267,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
                     arg_value = json.loads(arg_value)
                 except Exception:
                     # 此处的异常直接忽略即可
-                    request.context.logger.warning(
+                    context.logger.warning(
                         'Value for "%s!%s" may be incorrect: %s' % (func.__name__, arg_name, arg_value))
 
                 # 类型一致，直接使用
@@ -277,7 +280,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict) -> dict or H
         except Exception:
             msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", signature: (%s)' \
                   % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
-            request.context.logger.warning(msg)
+            context.logger.warning(msg)
             return HttpBadRequest(msg)
 
     if not has_variable_args:

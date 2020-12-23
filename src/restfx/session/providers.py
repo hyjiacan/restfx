@@ -10,9 +10,9 @@ from ..util import b64
 
 
 class MemorySessionProvider(ISessionProvider):
-    def __init__(self, expired: int):
+    def __init__(self, expired: int, *args, **kwargs):
         self.sessions = {}
-        super().__init__(expired)
+        super().__init__(expired, *args, **kwargs)
 
     def remove(self, session_id: str):
         if self.exists(session_id):
@@ -40,12 +40,12 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, expired: int, sessions_root: str):
+    def __init__(self, expired: int, sessions_root: str, *args, **kwargs):
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
             # print('mkdir:' + self.sessions_root)
-        super().__init__(expired)
+        super().__init__(expired, *args, **kwargs)
 
     def _get_session_path(self, session_id: str) -> str:
         # session_id 中可能存在 / 符号
@@ -117,10 +117,10 @@ class FileSessionProvider(ISessionProvider):
 
 
 class MysqlSessionProvider(IDbSessionProvider):
-    def __init__(self, pool, table_name="restfx_sessions", expired=20):
+    def __init__(self, pool, table_name="restfx_sessions", expired=20, *args, **kwargs):
         self.table_name = table_name
 
-        super().__init__(pool, expired)
+        super().__init__(pool, expired, *args, **kwargs)
 
     def execute(self, sql: str, *args):
         conn = self.connect()

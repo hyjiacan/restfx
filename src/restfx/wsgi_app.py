@@ -40,8 +40,7 @@ class WsgiApp:
 
         self.url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='api_list'),
-            Rule('/%s/<entry>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_only'),
-            Rule('/%s/<entry>/<name>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_and_name')
+            Rule('/%s/<path:entry>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_only')
         ])
 
     def wsgi_app(self, environ, start_response):
@@ -53,7 +52,7 @@ class WsgiApp:
         """
         request = None
         try:
-            request = HttpRequest(environ, self.context)
+            request = HttpRequest(environ, self.context.app_id)
             adapter = self.url_map.bind_to_environ(environ)
 
             # 仅在调试时重定向
@@ -66,15 +65,9 @@ class WsgiApp:
                 if endpoint == 'api_list':
                     response = self.router.api_list(request)
                 elif endpoint == 'entry_only':
-                    response = self.router.route(request, values['entry'])
-                elif endpoint == 'entry_and_name':
-                    response = self.router.route(request, values['entry'], values['name'])
+                    response = self.router.dispatch(request, values['entry'])
                 else:
                     response = Response(status=404)
-
-            if self.context.session_provider is not None:
-                request.session.flush()
-                response.set_cookie(self.context.sessionid_name, request.session.id, path='/', httponly=True)
         except Exception as e:
             if isinstance(e, NotFound):
                 response = HttpNotFound()

@@ -56,8 +56,11 @@
         }
         headers[temp[0].trim()] = (temp[1] || '').trim()
       })
-    const contentType = headers['content-type']
-    if (contentType && contentType.indexOf('application/json') !== -1) {
+    let contentType = headers['content-type']
+    if (!contentType) {
+      headers['content-type'] = contentType = ''
+    }
+    if (contentType.indexOf('application/json') !== -1) {
       try {
         data = JSON.parse(data)
       } catch (e) {
@@ -149,7 +152,7 @@
                   'data-api': id
                 }, '测试')
               ]),
-              renderArgs(route.args),
+              renderArgs(route.handler_info.arguments),
               renderReturn(route)
             ])
           }
@@ -294,9 +297,9 @@
   function renderReturn (route) {
     return el('p', { class: 'return-info' }, [
       el('span', null, '返回'),
-      // route.return_type ? el('code', null, route.return_type) : '',
+      // route.handler_info.return_type ? el('code', null, route.return_type) : '',
       el('span', null, ':'),
-      el('span', { class: 'comment' }, route.return_desc || '-')
+      el('span', { class: 'comment' }, route.handler_info.return_description || '-')
     ])
   }
 
@@ -336,11 +339,14 @@
   document.querySelector('#btn-send-test').addEventListener('click', function () {
     const method = testPanel.querySelector('.method').textContent.trim()
     const url = testPanel.querySelector('.url').textContent.trim()
-    testPanel.querySelector('.response-content').value = ''
+    testPanel.querySelector('div.response-content').innerHTML = ''
+    testPanel.querySelector('textarea.response-content').value = ''
+    testPanel.querySelector('div.response-content').style.display = 'none'
+    testPanel.querySelector('textarea.response-content').style.display = 'none'
     testPanel.querySelector('.response-status').classList.remove('status-success', 'status-failed')
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
-    testPanel.querySelector('.response-time').textContent = 'Loading...'
+    testPanel.querySelector('.response-time').textContent = ''
 
     const fields = {}
     for (const field of testPanel.querySelectorAll('input.arg-value')) {
@@ -359,6 +365,7 @@
       field.classList.remove('required')
       fields[field.name] = field.value
     }
+    testPanel.querySelector('.response-time').textContent = 'Loading...'
     const start = new Date().getTime()
     const option = {
       callback: function(response) {
@@ -393,11 +400,14 @@
     let table = testPanel.querySelector('table')
     const tableContainer = table.parentElement
 
-    tableContainer.replaceChild(renderArgs(api.args, true), table)
+    tableContainer.replaceChild(renderArgs(api.handler_info.arguments, true), table)
 
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
-    testPanel.querySelector('.response-content').value = ''
+    testPanel.querySelector('div.response-content').innerHTML = ''
+    testPanel.querySelector('textarea.response-content').value = ''
+    testPanel.querySelector('div.response-content').style.display = 'none'
+    testPanel.querySelector('textarea.response-content').style.display = 'none'
     testPanel.querySelector('.response-time').textContent = ''
 
     testPanel.style.display = 'flex'
@@ -409,6 +419,12 @@
     classList.add(response.status === 200 ? 'status-success' : 'status-failed')
     testPanel.querySelector('.status-code').textContent = response.status
     testPanel.querySelector('.status-text').textContent = response.statusText
+
+    if (response.headers['content-type'].indexOf('text/html') !== -1) {
+      testPanel.querySelector('div.response-content').innerHTML = response.data
+      testPanel.querySelector('div.response-content').style.display = 'block'
+      return
+    }
 
     let content
 
@@ -422,7 +438,8 @@
       content = response.data
     }
 
-    testPanel.querySelector('.response-content').value = content
+    testPanel.querySelector('textarea.response-content').value = content
+    testPanel.querySelector('textarea.response-content').style.display = 'block'
   }
 })()
 

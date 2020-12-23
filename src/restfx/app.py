@@ -6,7 +6,6 @@ from werkzeug.serving import run_simple
 
 from . import __meta__
 from .app_context import AppContext
-from .session.interfaces import ISessionProvider
 from .util.func_util import FunctionDescription
 from .wsgi_app import WsgiApp
 
@@ -17,9 +16,7 @@ class App:
                  api_prefix='api',
                  static_map: dict = None,
                  debug_mode=False,
-                 url_endswith_slash=False,
-                 session_provider: ISessionProvider = None,
-                 sessionid_name='SESSIONID'
+                 url_endswith_slash=False
                  ):
         """
 
@@ -28,12 +25,9 @@ class App:
         :param static_map:
         :param debug_mode:
         :param url_endswith_slash:
-        :param session_provider:
-        :param sessionid_name:
         """
         self.id = str(uuid.uuid4())
-        self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash,
-                                  session_provider, sessionid_name)
+        self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash)
         self.wsgi = WsgiApp(self.context, api_prefix, static_map)
 
     def startup(self, host='127.0.0.1', port=9127, **kwargs):

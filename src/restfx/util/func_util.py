@@ -57,7 +57,7 @@ class ArgumentSpecification:
 
         return '%s: %s' % (name, arg_type)
 
-    class JsonEncoder(json.JSONEncoder):
+    class JSONEncoder(json.JSONEncoder):
         def default(self, o):
             if not isinstance(o, ArgumentSpecification):
                 return json.JSONEncoder.default(self, o)
@@ -227,3 +227,17 @@ class FunctionDescription:
             docs[last_name] = ' '.join(buffer)
             buffer.clear()
         return docs
+
+    class JSONEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, ArgumentSpecification):
+                return ArgumentSpecification.JSONEncoder.default(self, o)
+            if not isinstance(o, FunctionDescription):
+                return json.JSONEncoder.default(self, o)
+            return {
+                'name': o.func.__name__,
+                'description': o.description,
+                'return_description': o.return_description,
+                'return_type': o.return_type,
+                'arguments': [o.arguments[arg] for arg in o.arguments]
+            }

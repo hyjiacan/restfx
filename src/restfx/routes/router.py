@@ -1,11 +1,11 @@
 import os
 from types import FunctionType
 
-from .path_resolver import PathResolver
+from .route_resolver import RouteResolver
 from ..app_context import AppContext
 from ..http import HttpNotFound, HttpServerError, HttpResponse, JsonResponse
 from ..http.request import HttpRequest
-from ..util.func_util import ArgumentSpecification
+from ..util.func_util import FunctionDescription
 from ..util.utils import get_func_info
 
 
@@ -38,7 +38,8 @@ class Router:
             return HttpResponse(status=404)
 
         if not self.api_list_html_cache:
-            with open(os.path.join(os.path.dirname(__file__), '../assets_for_dev/templates/api_list.html'), encoding='utf-8') as fp:
+            with open(os.path.join(os.path.dirname(__file__), '../assets_for_dev/templates/api_list.html'),
+                      encoding='utf-8') as fp:
                 lines = fp.readlines()
                 self.api_list_html_cache = ''.join(lines)
                 fp.close()
@@ -54,81 +55,44 @@ class Router:
             for route in routes:
                 module = route['module']
 
-                # 移除路径两侧的 / 符号
-                p = route['path'].strip('/')
-                suffix = ''
-                temp = p.split('/')
-                entry = temp[0]
-                if len(temp) == 2:
-                    suffix = temp[1]
-
-                resolver = PathResolver(self.context,
-                                        self.modules_cache,
-                                        self.entry_cache,
-                                        route['method'], entry, suffix)
-                resolver.check()
-                desc = resolver.get_func_desc()
-
-                if isinstance(desc, HttpResponse):
-                    continue
-
-                route['func_desc'] = desc.description
-                route['return_type'] = desc.return_type
-                route['return_desc'] = desc.return_description
-
-                if desc and len(desc.arguments) > 0:
-                    route['args'] = [desc.arguments[arg] for arg in desc.arguments]
-                else:
-                    route['args'] = None
-
-                # 不需要 kwargs ，因为其中的数据是无法预估的，在api列表中也没有多大的意义
-                if 'kwargs' in route:
-                    del route['kwargs']
-
                 if module in modules:
                     modules[module].append(route)
                 else:
                     modules[module] = [route]
             self.modules_cache = modules
 
-        return JsonResponse(self.modules_cache, encoder=ArgumentSpecification.JsonEncoder)
+        return JsonResponse(self.modules_cache, encoder=FunctionDescription.JSONEncoder)
 
-    def route(self, request: HttpRequest, entry, name=''):
+    def dispatch(self, request: HttpRequest, entry):
         """
         路由分发入口
         :param request: 请求
         :param entry: 入口文件，包名使用 . 符号分隔
-        :param name='' 指定的函数名称
         :return:
         """
         if self.intercepter is not None:
             # noinspection PyCallingNonCallable
-            entry, name = self.intercepter(request, entry, name)
+            entry = self.intercepter(request, entry)
 
         if not self.context.DEBUG:
-            return self.route_for_production(request, entry, name)
+            return self.route_for_production(request, entry)
 
-        resolver = PathResolver(self.context,
-                                self.modules_cache,
-                                self.entry_cache,
-                                request.method, entry, name)
-        check_result = resolver.check()
-        if isinstance(check_result, HttpResponse):
-            return check_result
-        desc = resolver.resolve()
-        if isinstance(desc, HttpResponse):
-            return desc
+        resolver = RouteResolver(self.context,
+                                 self.modules_cache,
+                                 self.entry_cache,
+                                 request.method, entry)
 
-        return self.invoke_handler(request, desc.func, desc.arguments)
+        route = resolver.resolve()
+        if isinstance(route, HttpResponse):
+            return route
 
-    def route_for_production(self, request, entry, name):
+        return self.invoke_handler(request, route.func, route.arguments)
+
+    def route_for_production(self, request, entry):
         method = request.method.lower()
         # noinspection PyBroadException
         try:
-            if name == '':
-                route = self.production_routes['%s#%s' % (entry, method)]
-            else:
-                route = self.production_routes['%s/%s#%s' % (entry, name, method)]
+            route = self.production_routes['%s#%s' % (entry, method)]
         except Exception:
             return HttpNotFound()
 

@@ -13,7 +13,7 @@ class ISessionProvider(ABC):
     此类不可被实例化
     """
 
-    def __init__(self, expired: int):
+    def __init__(self, expired: int, *args, **kwargs):
         """
 
         :param expired: 过期时长，单位为秒
@@ -94,14 +94,14 @@ class ISessionProvider(ABC):
 
 
 class IDbSessionProvider(ISessionProvider):
-    def __init__(self, pool, expired: int):
+    def __init__(self, pool, expired: int, *args, **kwargs):
         self.pool = pool
         """
         :type: PooledDB
         """
         if not self.table_exists():
             self.create_table()
-        super().__init__(expired)
+        super().__init__(expired, *args, **kwargs)
 
     def connect(self, shareable=True):
         return self.pool.connection(shareable)

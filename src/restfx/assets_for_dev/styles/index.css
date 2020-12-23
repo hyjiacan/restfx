@@ -1,9 +1,11 @@
 html, body {
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    font-size: 14px !important;
 }
 
 .container {
