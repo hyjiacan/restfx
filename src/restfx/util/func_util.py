@@ -2,7 +2,7 @@ import inspect
 import json
 import re
 from collections import OrderedDict
-from types import MethodType
+from types import FunctionType
 
 from .utils import get_func_info
 from ..http import HttpRequest
@@ -86,7 +86,7 @@ class ArgumentSpecification:
 
 
 class FunctionDescription:
-    def __init__(self, func: MethodType):
+    def __init__(self, func: FunctionType):
         self.func = func
         self.description = ''
         self.return_description = ''

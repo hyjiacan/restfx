@@ -256,7 +256,6 @@ textarea.arg-value {
 }
 
 textarea.arg-value:focus,
-textarea.arg-value:hover,
 textarea.arg-value:active {
     height: 80px;
     width: 400px;

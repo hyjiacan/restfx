@@ -8,15 +8,6 @@ Python3 的 restful 多应用自动路由框架。
 - 便捷的 restful 编码体验
 - 自动解析/校验请求参数，并填充到路由处理函数
 
-使用此框架按约定优于配置风格。
-
-我们作出以下约定：
-
-- 路由处理函数名称均使用 **小写**
-- 路由处理函数名称使用 **下划线风格**
-- 当使用路径 `GET /path/to/route` 的时候，如果 `to.py` 文件存在，
-    则会加载 `to.py` 中的 `get_route` 而不是 `route.py`
-
 ## 安装
 
 - Gitee: https://gitee.com/hyjiacan/restfx
@@ -30,6 +21,22 @@ pip install restfx
 ## 使用
 
 此组件提供的包（package）名称为 `restfx`。
+
+此框架遵循约定优于编码，我们作出以下约定：
+
+- 路由处理函数名称均使用 **小写**
+- 路由处理函数名称使用 **下划线风格**
+- 当使用路径 `GET /path/to/route` 的时候，如果 `to.py` 文件存在，
+    则会加载 `to.py` 中的 `get_route` 而不是 `route.py`
+
+### 名词说明
+
+- 应用 使用 `App()` 初始化得到的实例
+- 装饰器 类型 `restfx.route`，这是一个装饰器 `@route`
+- 路由处理函数 由装饰器 `@route` 装饰的函数，用于处理请求
+- 中间件 继承 `restfx.middleware.MiddlewareBase` 的类，用于对请求和响应进行自定义处理
+- 扩展路由 一般的路由处理函数名称为请求的 `method`，如: `get/post`，扩展指具有扩展名称的路由: `get_test/post_test`
+- 全局类型 当在装饰器 `@route()` 的参数中使用的自定义数据类型，需要通过 `app.register_globals()` 进行注册
 
 ### 创建应用
 
@@ -67,6 +74,25 @@ if __name__ == '__main__':
 
 [1]: https://werkzeug.palletsprojects.com/en/1.0.x/serving/?highlight=run_simple#werkzeug.serving.run_simple
 
+应用 `app` 暴露了以下接口:
+
+- app.startup(host: str, port: int, **kwargs) 启动调试服务器
+- app.update_debug_mode(debug_mode: bool)->App 改变当前的 debug 状态
+- app.set_intercepter(intercepter: FunctionType)->App 指定请求拦截器，其会在分发路由前调用
+- app.set_logger(logger: FunctionType)->App 指定日志记录函数，不指定时仅仅会在控制台输出日志
+- app.map_routes(routes_map: dict)->App 指定路由映射表，此表用于重写请求路径
+- app.map_static(static_map: dict)->App 指定静态资源映射表，此表用于描述静态资源路径
+- app.register_routes(routes: list)->App 注册路由列表，此函数应该在线上模式时被调用，
+    其参数为通过 persist 生成的文件中的 `routes` 字段
+- app.register(method: str, path: str, handler: FunctionType)->App 手动注册一个路由
+- app.register_globals(*global_classes)->App 注册全局类型
+- app.register_middleware(*middlewares)-> 注册中间件
+- app.collect(*global_classes)->list 收集路由信息。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
+- app.persist(filename: str = '', encoding='utf8', *global_classes)->str 获取持久化的路由串，用于写入持久化文件。
+    通过 `register_globals` 指定过的全局类型，此处不用重新指定。
+
+> `->App` 表示返回了实例本身，也就是说这些接口可以通过链式调用
+
 ### 编写路由
 
 模块 `test.a` -> 文件 `test/a.py` 
@@ -88,13 +114,10 @@ def get(req):
   
     > 为了避免在客户端暴露代码路径，从设计上使用了映射的方式来处理请求。
 - [中间件](#注册中间件)
-  
     > 在处理请求/响应过程中，可以对 `request`/`response` 以及其参数进行处理。
 - [全局类型](#注册全局类型)
-  
     > 在路由装饰器的参数中包含的全局类型，如 `RouteTypes`
 - [路由收集与持久化](#发布)
-  
     > 为了提高线上性能的工具。
 
 `restfx` 的使用流程如下：

@@ -1,6 +1,6 @@
 import os
 import uuid
-from types import MethodType
+from types import FunctionType
 
 from werkzeug.serving import run_simple
 
@@ -135,14 +135,14 @@ class App:
     def register_routes(self, routes: list):
         """
         手动注册路由列表
-        :param routes: 其每一项都应该是一个 list, 元素依次为 method: str, path: str, handler: MethodType
+        :param routes: 其每一项都应该是一个 list, 元素依次为 method: str, path: str, handler: FunctionType
         :return:
         """
         for route in routes:
             self.register(*route)
         return self
 
-    def register(self, method: str, path: str, handler: MethodType):
+    def register(self, method: str, path: str, handler: FunctionType):
         """
         手动注册路由
         :param path:

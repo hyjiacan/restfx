@@ -1,4 +1,4 @@
-from types import MethodType
+from types import FunctionType
 
 
 class RouteMeta:
@@ -7,7 +7,7 @@ class RouteMeta:
     """
 
     def __init__(self,
-                 handler: MethodType,
+                 handler: FunctionType,
                  func_args,
                  route_id=None,
                  module=None,
