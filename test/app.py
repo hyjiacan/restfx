@@ -6,6 +6,7 @@ from dbutils.pooled_db import PooledDB
 from restfx import App
 from restfx.http import HttpRequest
 from restfx.middleware.middlewares import SessionMiddleware, HttpAuthMiddleware
+from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
 from restfx.session.providers import MysqlSessionProvider, MemorySessionProvider
 
@@ -67,6 +68,7 @@ def on_auth(request: HttpRequest, meta: RouteMeta):
 
 
 app.register_middleware(
+    TimetickMiddleware(),
     HttpAuthMiddleware(on_auth),
     SessionMiddleware(MemorySessionProvider(20)),
     # MiddlewareA(),
