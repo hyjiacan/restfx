@@ -31,12 +31,12 @@ pip install restfx
 
 ### 名词说明
 
-- 应用 使用 `App()` 初始化得到的实例
-- 装饰器 类型 `restfx.route`，这是一个装饰器 `@route`
-- 路由处理函数 由装饰器 `@route` 装饰的函数，用于处理请求
-- 中间件 继承 `restfx.middleware.MiddlewareBase` 的类，用于对请求和响应进行自定义处理
-- 扩展路由 一般的路由处理函数名称为请求的 `method`，如: `get/post`，扩展指具有扩展名称的路由: `get_test/post_test`
-- 全局类型 当在装饰器 `@route()` 的参数中使用的自定义数据类型，需要通过 `app.register_globals()` 进行注册
+- **应用** 使用 `App()` 初始化得到的实例
+- **装饰器** 类型 `restfx.route`，这是一个装饰器 `@route`
+- **路由处理函数** 由装饰器 `@route` 装饰的函数，用于处理请求
+- **中间件** 继承 `restfx.middleware.MiddlewareBase` 的类，用于对请求和响应进行自定义处理
+- **扩展路由** 一般的路由处理函数名称为请求的 `method`，如: `get/post`，扩展指具有扩展名称的路由: `get_test/post_test`
+- **全局类型** 当在装饰器 `@route()` 的参数中使用的自定义数据类型，需要通过 `app.register_globals()` 进行注册
 
 ### 创建应用
 
@@ -72,24 +72,24 @@ if __name__ == '__main__':
 `app.startup` 有一个参数 `kwargs`，
 其可选的参数见 [werkzeug.serving.run_simple][1]
 
-[1]: https://werkzeug.palletsprojects.com/en/1.0.x/serving/?highlight=run_simple#werkzeug.serving.run_simple
+[1]: https://werkzeug.palletsprojects.com/en/1.0.x/serving/#werkzeug.serving.run_simple
 
 应用 `app` 暴露了以下接口:
 
-- app.startup(host: str, port: int, **kwargs) 启动调试服务器
-- app.update_debug_mode(debug_mode: bool)->App 改变当前的 debug 状态
-- app.set_intercepter(intercepter: FunctionType)->App 指定请求拦截器，其会在分发路由前调用
-- app.set_logger(logger: FunctionType)->App 指定日志记录函数，不指定时仅仅会在控制台输出日志
-- app.map_routes(routes_map: dict)->App 指定路由映射表，此表用于重写请求路径
-- app.map_static(static_map: dict)->App 指定静态资源映射表，此表用于描述静态资源路径
-- app.register_routes(routes: list)->App 注册路由列表，此函数应该在线上模式时被调用，
+- `app.startup(host: str, port: int, **kwargs)` 启动调试服务器
+- `app.update_debug_mode(debug_mode: bool)->App` 改变当前的 debug 状态
+- `app.set_intercepter(intercepter: FunctionType)->App` 指定请求拦截器，其会在分发路由前调用
+- `app.set_logger(logger: FunctionType)->App` 指定日志记录函数，不指定时仅仅会在控制台输出日志
+- `app.map_routes(routes_map: dict)->App` 指定路由映射表，此表用于重写请求路径
+- `app.map_static(static_map: dict)->App` 指定静态资源映射表，此表用于描述静态资源路径
+- `app.register_routes(routes: list)->App` 注册路由列表，此函数应该在线上模式时被调用，
     其参数为通过 persist 生成的文件中的 `routes` 字段
-- app.register(method: str, path: str, handler: FunctionType)->App 手动注册一个路由
-- app.register_globals(*global_classes)->App 注册全局类型
-- app.register_middleware(*middlewares)-> 注册中间件
-- app.collect(*global_classes)->list 收集路由信息。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
-- app.persist(filename: str = '', encoding='utf8', *global_classes)->str 获取持久化的路由串，用于写入持久化文件。
-    通过 `register_globals` 指定过的全局类型，此处不用重新指定。
+- `app.register(method: str, path: str, handler: FunctionType)->App` 手动注册一个路由
+- `app.register_globals(*global_classes)->App` 注册全局类型
+- `app.register_middleware(*middlewares)->App` 注册中间件
+- `app.collect(*global_classes)->list` 收集路由信息。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
+- `app.persist(filename: str = '', encoding='utf8', *global_classes)->str` 获取持久化的路由串(生成的 python 代码)，
+    用于写入持久化文件。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
 
 > `->App` 表示返回了实例本身，也就是说这些接口可以通过链式调用
 
@@ -123,8 +123,8 @@ def get(req):
 `restfx` 的使用流程如下：
 
 1. [注册路由映射](#注册路由映射)
-2. [注册中间件](#注册中间件)
-3. [编写路由处理函数](#编写路由处理函数)
+2. [编写路由处理函数](#编写路由处理函数)
+3. [注册中间件](#注册中间件)
 4. [发布](#发布)
 
 ### 注册路由映射
@@ -140,36 +140,12 @@ app.map_routes({
 ```
 
 - `path/prefix` 为请求的路径
-- `path.to` 为请求路径时，应将其定向到的 python 包/模块。
+- `path.to` 为请求路径时，框架会将 `prefix` 指定的路径定向到对应的 python 包/模块。
 
 所有的路由目录(顶层，不包含已经映射过目录的子目录)均需要被映射，未在映射表中的路径请求，不会被处理。
-`restfx` 会自动查找 包/模块 `path.to` 下的所有路由。
+`restfx` 会自动查找 `path.to` 包/模块下的所有路由。
 
 > 路径应为基于项目根目录的相对路径。
-
-### 注册中间件
-
-中间件用于在处理请求/响应过程中，对 `request`/`response` 以及其参数进行处理。
-
-注册方式如下：
-
-```python
-from path.to import FooMiddleware
-from path.to import BarMiddleware
-
-app.register_middlewares(
-    FooMiddleware(),
-    BarMiddleware(),
-)
-```
-
-当注册了多个中间件时，它们会按被注册的顺序执行。
-
-**注意**： 注册的是中间件实例，每一个中间件类型在程序运行期间共享一个实例。
-
-如何开发中间件？参见 [中间件类结构](#中间件类结构)
-
-`restfx` 内置了一些中间件，参见 [内置中间件](#内置中间件)
 
 ### 编写路由处理函数
 
@@ -259,8 +235,8 @@ http://127.0.0.1:9127/api/test/demo/param?param1=1&param2=2&param3=3
 - `9127` `startup` 的 `port` 参数
 - `api` `App` 初始化时的 `api_prefix` 参数
 - `test/demo` `app.map_routes` 参数中定义的 `'test': 'test.api'`，最终会访问到包 `test.api.demo`
-- `/param` `get_param()` 中的 `_param` 名称匹配符
-- `param1/2/3` 分别会填充到跟帖处理函数的参数中
+- `/param` `get_param()` 中的 `_param` 名称匹配符扩展路由名称
+- `param1/2/3` 分别会填充到处理函数的对应参数中
 
 前端调用
 
@@ -292,7 +268,7 @@ ajax.delete('/test/demo?param1=1&from_=2&param3=3&param4=4')
 
 ### 装饰器
 
-装饰器 `route` 用于声明某个函数可以被路由使用。通过添加此装饰器以限制非路由函数被非法访问。
+装饰器 `route` 用于声明某个函数是一个路由处理函数。通过添加此装饰器以限制非路由函数被非法访问。
 
 声明为：
 
@@ -303,7 +279,7 @@ def route(module=None, name=None, **kwargs):
 
 - `module` 此路由所属的业务/功能模块名称
 - `name` 此路由的名称
-- `**kwargs` *额外参数*
+- `**kwargs` *用户自定义参数*
 
 > 这些参数都会被传递给中间件的各个函数的参数 `meta`。详细见 [RouteMeta](#RouteMeta)
 
@@ -313,7 +289,31 @@ def route(module=None, name=None, **kwargs):
 
 注意：一般情况下，使用路由处理函数就能完全操作请求参数，应该尽量减少使用 `BODY/POST/GET`，以避免代码的不明确性。
 
-### session
+### 注册中间件
+
+中间件用于在处理请求/响应过程中，对 `request`/`response` 以及其参数进行处理。
+
+注册方式如下：
+
+```python
+from path.to import FooMiddleware
+from path.to import BarMiddleware
+
+app.register_middlewares(
+    FooMiddleware(),
+    BarMiddleware(),
+)
+```
+
+当注册了多个中间件时，它们会按被注册的顺序执行。
+
+**注意**： 注册的是中间件实例，每一个中间件类型在程序运行期间共享一个实例。
+
+如何开发中间件？参见 [中间件类结构](#中间件类结构)
+
+`restfx` 内置了一些中间件，参见 [内置中间件](#内置中间件)
+
+### Session
 
 框架以[中间件](#sessionmiddleware)的方式提供了简单的 session 支持。
 
@@ -373,6 +373,8 @@ def get(request: HttpRequest):
 
 ### 路由收集
 
+> 此功能一般仅用于辅助功能，在开发中若不会显式用到路由列表，不需要调用此函数
+
 路由收集器用于收集项目中的所有路由，通过以下方式调用:
 
 ```python
@@ -413,7 +415,7 @@ app.persist(restfx_map, encoding='utf-8')
 > 因此，最佳方法就是，将这些注册写一个单独的 python 文件，在启动和发布时均调用即可。
 
 最终生成的路由代码会写入文件 _restfx_map.py_，此文件会暴露一个数据项 `routes`，其中是所有的路由映射。
-一般来说，应该在系统启动时 (在主应用的 `urls.py` 文件中) 调用此函数:
+一般来说，在线上环境中，应该在系统启动时调用此函数:
 
 ```python
 from path.to import restfx_map
@@ -497,7 +499,9 @@ class MiddlewareClass(MiddlewareBase):
         """
         对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(B,P,G 尚不可用)
         :param request:
+        :type request: HttpRequest
         :param meta:
+        :type meta: RouteMeta
         :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
@@ -507,7 +511,9 @@ class MiddlewareClass(MiddlewareBase):
         在路由函数调用前，对其参数等进行处理，此时路由组件已经完成了请求数据的解析(B,P,G 已可用)
         此时可以对解析后的参数进行变更
         :param request:
+        :type request: HttpRequest
         :param meta:
+        :type meta: RouteMeta
         :return: 返回 HttpResponse 以终止请求，返回非 None 以停止执行后续的中间件，返回 None 或不返回任何值继续执行后续中间件
         """
         pass
@@ -516,20 +522,27 @@ class MiddlewareClass(MiddlewareBase):
         """
         在路由函数调用后，对其返回值进行处理
         :param request:
+        :type request: HttpRequest
         :param meta:
-        :param kwargs: 始终会有一个 'data' 的项，表示路由返回的原始数据
-        :return: 返回 HttpResponse 以终止执行，否则返回新的 数据
+        :type meta: RouteMeta
+        :param data: 表示路由返回的原始数据
+        :param kwargs: 保留参数
+        :return: 返回 HttpResponse 以终止执行，否则返回新的数据
         """
         pass
 
-    def process_response(self, request, meta, **kwargs):
+    def process_response(self, request, meta, response, **kwargs):
         """
         对 response 数据进行预处理。一般用于响应的数据的编码
         :param request:
+        :type request: HttpRequest
         :param meta:
-        :param kwargs: 始终会有一个 'response' 的项，表示路由返回的原始 HttpResponse
-        :return: 返回类型可以是  HttpResponse 或 None(保留原来的 response)
-        :rtype: HttpResponse
+        :type meta: RouteMeta
+        :param response: 表示路由返回的原始 HttpResponse
+        :type response: HttpResponse
+        :param kwargs: 始终会有一个 'response' 的项，
+        :return: 返回类型可以是 HttpResponse 或 None(保留原来的 response)
+        :rtype: Union[HttpResponse, None]
         """
         pass
 ```
