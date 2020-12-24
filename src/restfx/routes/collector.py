@@ -63,14 +63,14 @@ class Collector:
             env[arg.__name__] = arg
         return env
 
-    def collect(self, routes_map: dict, *environments):
+    def collect(self, routes_map: dict, *global_classes):
         """
         执行收集操作
         :return: 所有路由的集合
         """
         # 为 route 提供的执行环境
         # 读取在 settings.py 中配置的环境
-        route_env = self._get_env(_fake_route, *environments)
+        route_env = self._get_env(_fake_route, *global_classes)
 
         # 所有路由的集合
         routes = []
@@ -200,7 +200,7 @@ class Collector:
         method, lodash, name = re.match(r'([a-z]+)(_(.+))?', func).groups()
         return method, name
 
-    def persist(self, routes_map: dict, filename: str = '', encoding='utf8', *environments):
+    def persist(self, routes_map: dict, filename: str = '', encoding='utf8', *global_classes):
         """
         将路由持久化
         :param routes_map:
@@ -213,7 +213,7 @@ class Collector:
         routes = []
 
         print('Generating routes map...')
-        for route in self.collect(routes_map, *environments):
+        for route in self.collect(routes_map, *global_classes):
             # imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             routes.append(_REGISTER_STMT.format(

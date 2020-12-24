@@ -57,9 +57,25 @@ def _decrypt_session_id(session_id, app_id):
 
 
 class SessionMiddleware(MiddlewareBase):
-    def __init__(self, session_provider: ISessionProvider, session_name='sessionid'):
+    def __init__(self, session_provider: ISessionProvider,
+                 session_name='sessionid',
+                 cookie_max_age=None,
+                 cookie_expires=None,
+                 cookie_path="/",
+                 cookie_domain=None,
+                 cookie_secure=False,
+                 cookie_samesite=None,
+                 cookie_httponly=True
+                 ):
         self.session_provider = session_provider
         self.session_name = session_name
+        self.cookie_max_age = cookie_max_age
+        self.cookie_expires = cookie_expires
+        self.cookie_path = cookie_path
+        self.cookie_domain = cookie_domain
+        self.cookie_secure = cookie_secure
+        self.cookie_samesite = cookie_samesite
+        self.cookie_httponly = cookie_httponly
 
     def process_request(self, request, meta, **kwargs):
         context = AppContext.get(request.app_id)
@@ -119,6 +135,18 @@ class SessionMiddleware(MiddlewareBase):
         pass
 
     def process_response(self, request, meta, response, **kwargs):
+        # 在响应结束时才写入，以减少 IO
         request.session.flush()
-        # 支持更多参数
-        response.set_cookie(self.session_name, request.session.id, path='/', httponly=True)
+        response.set_cookie(self.session_name,
+                            request.session.id,
+                            max_age=self.cookie_max_age,
+                            expires=self.cookie_expires,
+                            path=self.cookie_path,
+                            domain=self.cookie_domain,
+                            secure=self.cookie_secure,
+                            httponly=self.cookie_httponly,
+                            samesite=self.cookie_samesite,
+                            )
+
+    def dispose(self):
+        self.session_provider.dispose()

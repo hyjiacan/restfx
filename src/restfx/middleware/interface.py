@@ -10,6 +10,9 @@ class MiddlewareBase(ABC):
     def __int__(self, *args, **kwargs):
         pass
 
+    def dispose(self):
+        pass
+
     @abstractmethod
     def process_request(self, request, meta, **kwargs):
         """

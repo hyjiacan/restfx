@@ -1,3 +1,5 @@
+import os
+
 from .routes.collector import Collector
 from .util.logger import Logger
 
@@ -32,6 +34,11 @@ class AppContext:
 
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
+
+        self.static_map = {}
+
+        if debug_mode:
+            self.static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
 
         self.collector = Collector(app_root, url_endswith_slash)
         self.logger = Logger(debug_mode)

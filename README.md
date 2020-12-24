@@ -2,11 +2,20 @@
 
 Python3 的 restful 多应用自动路由框架。
 
-此包解决的问题：
+此框架解决的问题：
 
 - 没有繁锁的路由配置
 - 便捷的 restful 编码体验
-- 自动解析/校验请求参数，并填充到路由处理函数`
+- 自动解析/校验请求参数，并填充到路由处理函数
+
+使用此框架按约定优于配置风格。
+
+我们作出以下约定：
+
+- 路由处理函数名称均使用 **小写**
+- 路由处理函数名称使用 **下划线风格**
+- 当使用路径 `GET /path/to/route` 的时候，如果 `to.py` 文件存在，
+    则会加载 `to.py` 中的 `get_route` 而不是 `route.py`
 
 ## 安装
 
@@ -20,7 +29,7 @@ pip install restfx
 
 ## 使用
 
-此组件提供的包（package）名称为 `restfx`，所有用到的模块都在此包下引入。
+此组件提供的包（package）名称为 `restfx`。
 
 ### 创建应用
 
@@ -31,15 +40,14 @@ import restfx
 
 if __name__ == '__main__':
     root = os.path.dirname(__file__)
-    app = restfx.App(root, api_prefix='any/prefix', debug_mode=True, static_map={})
+    app = restfx.App(root, api_prefix='any/prefix', debug_mode=True)
     app.map_routes({
         'x': 'test'
-    })
-    app.startup(host='127.0.0.1', port=9127, **kwargs)
+    }).map_static(static_map={}).startup(host='127.0.0.1', port=9127, **kwargs)
 ```
 
 - `api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。
-- `static_map` 用于指定静态资源与目录映射关系。
+- `map_static` 用于指定静态资源与目录映射关系。
   ```python
   import os
   static_map = {
@@ -104,11 +112,11 @@ def get(req):
 
 ```python
 app.map_routes({
-    'path.prefix': 'path.to',
+    'path/prefix': 'path.to',
 })
 ```
 
-- `path.prefix` 为请求的路径
+- `path/prefix` 为请求的路径
 - `path.to` 为请求路径时，应将其定向到的 python 包/模块。
 
 所有的路由目录(顶层，不包含已经映射过目录的子目录)均需要被映射，未在映射表中的路径请求，不会被处理。
@@ -207,11 +215,12 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 一些需要注意的地方：
 
 - 当代码中需要使用关键字作为名称时，请在名称后添加 `_`，此时前端请求时，`_` 符号可省略，
-如: `from_` 在请求时可写作 `from=test` （`from_=test` 亦可）。
-- 对于语言间的命令差异，可以自动兼容 `下划线命名法` 与 `驼峰命名法`，如：请求参数中的 `pageIndex`，在处理函数中可以写作 `page_index`或`_page_index_` ，
-也就是说，在前后添加 `_` 符号都不会影响参数的解析。
+    如: `from_` 在请求时可写作 `from=test` （`from_=test` 亦可）。
+- 对于语言间的命令差异，可以自动兼容 `下划线命名法` 与 `驼峰命名法`，如：请求参数中的 `pageIndex`，
+    在处理函数中可以写作 `page_index`或`_page_index_` ，
+    也就是说，在前后添加 `_` 符号都不会影响参数的解析。
 - 路由处理函数可以添加一个可变参数(如：`**kwargs**`)，用于接收未在参数列表中列出的请求项。
-当然，`kwargs`和普通函数一样，可以是任何其它名称。
+    当然，`kwargs`和普通函数一样，可以是任何其它名称。
 - `request` 参数(与参数位置无关)，可能被解析成三种结果(`1`和`2`均会将其作为 `HttpRequest` 参数处理)：
     1. 参数名称为 `request`，并且未指定参数类型(或指定类型为 `HttpRequest`)
     2. 参数类型为 `HttpRequest`，参数名称可以是任何合法的标识符
@@ -220,13 +229,13 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 URL格式
 
 ```
-http://127.0.0.1:9127/api/test.demo/param?param1=1&param2=2&param3=3
+http://127.0.0.1:9127/api/test/demo/param?param1=1&param2=2&param3=3
 ```
 
 - `127.0.0.1` `startup` 的 `host` 参数
 - `9127` `startup` 的 `port` 参数
 - `api` `App` 初始化时的 `api_prefix` 参数
-- `test.demo` `app.map_routes` 参数中定义的 `'test': 'test.api'`，最终会访问到包 `test.api.demo`
+- `test/demo` `app.map_routes` 参数中定义的 `'test': 'test.api'`，最终会访问到包 `test.api.demo`
 - `/param` `get_param()` 中的 `_param` 名称匹配符
 - `param1/2/3` 分别会填充到跟帖处理函数的参数中
 
@@ -234,20 +243,20 @@ http://127.0.0.1:9127/api/test.demo/param?param1=1&param2=2&param3=3
 
 ```javascript
 // 请求 get 函数
-ajax.get('test.demo?param1=1&param2=2&param3=3')
+ajax.get('/test/demo?param1=1&param2=2&param3=3')
 
 // 请求 get_param 函数
-ajax.get('test.demo/param?param1=1&from_=2&param3=3')
+ajax.get('/test/demo/param?param1=1&from_=2&param3=3')
 
 // 请求 post 函数
-ajax.post('test.demo', {
+ajax.post('/test/demo', {
     param1: 1,
     from_: 2,
     param3: 3
 })
 
 // 请求 delete 函数
-ajax.delete('test.demo?param1=1&from_=2&param3=3&param4=4')
+ajax.delete('/test/demo?param1=1&from_=2&param3=3&param4=4')
 ```
 
 路由可以返回任何类型的数据。路由会自动根据函数定义来判断传入参数的类型是否合法。
@@ -283,14 +292,15 @@ def route(module=None, name=None, **kwargs):
 
 ### session
 
-框架提供了简单的 session 支持。
+框架以[中间件](#sessionmiddleware)的方式提供了简单的 session 支持。
 
-需要在创建 App 时指定 session 数据源，若不指定时，不启用 session 支持。
+若不指定，不启用 session 支持。
 
 ```python
 from restfx import App
 from restfx.session.providers import MemorySessionProvider
-app = App(..., session_provider=MemorySessionProvider(20))
+app = App(...)
+app.register_middleware(MemorySessionProvider(20))
 ```
 
 内置了以下几种数据源:
@@ -359,6 +369,9 @@ routes = app.collect()
 - handler # 路由请求的处理函数
 - method # 路由的请求方法
 - path # 路由的请求路径
+- handler_info # 路由处理函数描述，这些信息从参数和注释收集而来
+- is_package # 路由处理函数是否存在于包 `__init__.py` 文件中
+- ext_mode # 是否为扩展路由。扩展路由处理函数的命名方式为 `get_xxx/post_xxx`
 
 ### 生成路由映射文件
 
@@ -397,10 +410,10 @@ app.register_routes(restfx_map.routes)
 有的时候，需要在分发前对请求参数进行处理。此时可以使用 `restfx.set_intercepter` 来进行一些预处理。
 
 ```python
-def dispatch_intercepter(request, entry, name):
+def dispatch_intercepter(request, entry):
     # 可以在此处修改 request 的数据
-    # 也可以重新定义 entry 和 name
-    return entry, name
+    # 也可以重新定义 entry
+    return entry
 
 app.set_intercepter(dispatch_intercepter)
 ```
@@ -457,7 +470,7 @@ class MiddlewareClass(MiddlewareBase):
     路由中间件
     """
 
-    def process_request(self, request, meta: RouteMeta, **kwargs):
+    def process_request(self, request, meta, **kwargs):
         """
         对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(B,P,G 尚不可用)
         :param request:
@@ -466,7 +479,7 @@ class MiddlewareClass(MiddlewareBase):
         """
         pass
 
-    def process_invoke(self, request, meta: RouteMeta, **kwargs):
+    def process_invoke(self, request, meta, **kwargs):
         """
         在路由函数调用前，对其参数等进行处理，此时路由组件已经完成了请求数据的解析(B,P,G 已可用)
         此时可以对解析后的参数进行变更
@@ -476,7 +489,7 @@ class MiddlewareClass(MiddlewareBase):
         """
         pass
 
-    def process_return(self, request, meta: RouteMeta, **kwargs):
+    def process_return(self, request, meta, data, **kwargs):
         """
         在路由函数调用后，对其返回值进行处理
         :param request:
@@ -486,7 +499,7 @@ class MiddlewareClass(MiddlewareBase):
         """
         pass
 
-    def process_response(self, request, meta: RouteMeta, **kwargs):
+    def process_response(self, request, meta, **kwargs):
         """
         对 response 数据进行预处理。一般用于响应的数据的编码
         :param request:
@@ -628,12 +641,36 @@ class MiddlewareClass(MiddlewareBase):
 
 ### 内置中间件
 
+#### SessionMiddleware
+
+此中间件用于提供 session 支持。
+
+```python
+from restfx import App
+from restfx.middleware.middlewares import SessionMiddleware
+from restfx.session.providers import MemorySessionProvider
+
+app = App()
+app.register_middleware(
+    SessionMiddleware(MemorySessionProvider(20),
+                 session_name='sessionid',
+                 cookie_max_age=None,
+                 cookie_expires=None,
+                 cookie_path="/",
+                 cookie_domain=None,
+                 cookie_secure=False,
+                 cookie_samesite=None,
+                 cookie_httponly=True)
+)
+```
+
 #### HttpAuthMiddleware
 
 此中间件提供 HTTP 身份校验 `Http Authentication` 支持，其基于 `WWW-Authenticate` 实现。
 
 ```python
-from restfx.middleware.contribs import HttpAuthMiddleware
+from restfx import App
+from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.routes import RouteMeta
 from restfx.http import HttpRequest
 
@@ -645,16 +682,15 @@ def on_http_auth(request: HttpRequest, meta: RouteMeta):
         """
         return True
     authorization = request.authorization
-    if authorization.username == 'admin' and authorization.password == '123456':
+    if authorization is not None and authorization.username == 'admin' and authorization.password == '123456':
         return True
     else:
         return False
 
-auth_mw = HttpAuthMiddleware()
-
-auth_mw.realm = '.'
-auth_mw.auth_type = 'basic'
-auth_mw.on_auth = on_http_auth
+app = App()
+app.register_middleware(
+    HttpAuthMiddleware(on_auth = on_http_auth)
+)
 ```
 
 > 一般来说，此中间件应该被第一个注册，以防止越权操作。

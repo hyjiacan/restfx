@@ -6,7 +6,6 @@ from dbutils.pooled_db import PooledDB
 from restfx import App
 from restfx.http import HttpRequest
 from restfx.middleware.middlewares import SessionMiddleware
-from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.routes import RouteMeta
 from restfx.session.providers import MysqlSessionProvider, MemorySessionProvider
 
@@ -46,12 +45,12 @@ db_pool = PooledDB(
     autocommit=True
 )
 session_provider = MysqlSessionProvider(db_pool)
-app = App(root, debug_mode=True, static_map={
-    '/static': os.path.join(root, 'static')
-})
+app = App(root, debug_mode=True)
 
 app.map_routes({
     'test': 'test.api'
+}).map_static({
+    '/static': os.path.join(root, 'static')
 })
 
 

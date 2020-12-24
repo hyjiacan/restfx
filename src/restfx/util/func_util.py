@@ -202,21 +202,21 @@ class FunctionDescription:
                 buffer.clear()
                 last_name = None
 
-            match = re.match(r':param\s+(?P<name>[\S]+):(?P<comment>.*)$', line)
+            match = re.match(r':param\s+(?P<name>[\S]+):\s*(?P<comment>.*)$', line)
 
             if match:
                 last_name = match.group('name')
                 buffer.append(match.group('comment'))
                 continue
 
-            match = re.match(r':return:(?P<comment>.*)$', line)
+            match = re.match(r':return:\s*(?P<comment>.*)$', line)
 
             if match:
                 last_name = '__return__'
                 buffer.append(match.group('comment'))
                 continue
 
-            match = re.match(r':rtype:(?P<comment>.*)$', line)
+            match = re.match(r':rtype:\s*(?P<comment>.*)$', line)
 
             if match:
                 last_name = '__rtype__'
