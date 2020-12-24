@@ -5,7 +5,7 @@ from dbutils.pooled_db import PooledDB
 
 from restfx import App
 from restfx.http import HttpRequest
-from restfx.middleware.middlewares import SessionMiddleware
+from restfx.middleware.middlewares import SessionMiddleware, HttpAuthMiddleware
 from restfx.routes import RouteMeta
 from restfx.session.providers import MysqlSessionProvider, MemorySessionProvider
 
@@ -55,6 +55,9 @@ app.map_routes({
 
 
 def on_auth(request: HttpRequest, meta: RouteMeta):
+    # 不需要授权
+    if not meta.get('auth', True):
+        return True
     if request.authorization is None:
         return False
     if request.authorization.username == 'aaa' and request.authorization.password == 'bbb':
@@ -64,8 +67,8 @@ def on_auth(request: HttpRequest, meta: RouteMeta):
 
 
 app.register_middleware(
-    SessionMiddleware(MemorySessionProvider(20))
-    # HttpAuthMiddleware(on_auth),
+    HttpAuthMiddleware(on_auth),
+    SessionMiddleware(MemorySessionProvider(20)),
     # MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
