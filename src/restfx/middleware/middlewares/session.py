@@ -82,7 +82,6 @@ class SessionMiddleware(MiddlewareBase):
         if context is None or self.session_provider is None:
             return
 
-        request.session = None
         """
         :type: HttpSession
         """
@@ -136,6 +135,8 @@ class SessionMiddleware(MiddlewareBase):
 
     def process_response(self, request, meta, response, **kwargs):
         # 在响应结束时才写入，以减少 IO
+        if not request.session:
+            return
         request.session.flush()
         response.set_cookie(self.session_name,
                             request.session.id,
