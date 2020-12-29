@@ -12,15 +12,15 @@ class WsgiApp:
     def __init__(self,
                  context: AppContext,
                  api_prefix,
-                 url_endswith_slash
+                 append_slash
                  ):
         self.context = context
         self.api_prefix = api_prefix
         self.router = Router(self.context)
 
         self.url_map = Map([
-            Rule('/%s%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='api_list'),
-            Rule('/%s/<path:entry>%s' % (api_prefix, '/' if url_endswith_slash else ''), endpoint='entry_only')
+            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_list'),
+            Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
 
     def wsgi_app(self, environ, start_response):

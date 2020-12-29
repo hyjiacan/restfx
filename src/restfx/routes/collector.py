@@ -44,9 +44,9 @@ def _fake_route(module=None, name=None, **kwargs):
 
 
 class Collector:
-    def __init__(self, project_root: str, url_endswith_slash: bool):
+    def __init__(self, project_root: str, append_slash: bool):
         self.project_root = project_root
-        self.url_endswith_slash = url_endswith_slash
+        self.append_slash = append_slash
         # 全局类列表
         self.global_classes = []
 
@@ -160,7 +160,7 @@ class Collector:
             if ext_mode:
                 http_path += '/' + name
 
-            if self.url_endswith_slash:
+            if self.append_slash:
                 http_path += '/'
 
             pkg = '%s.%s' % (pkg_prefix, pkg)

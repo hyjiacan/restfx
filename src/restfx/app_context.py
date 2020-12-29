@@ -10,7 +10,7 @@ class AppContext:
     def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
-                 url_endswith_slash: bool):
+                 append_slash: bool):
         """
 
         """
@@ -21,7 +21,7 @@ class AppContext:
         self.DEBUG = debug_mode
         # 工作目录
         self.ROOT = app_root
-        self.url_endswith_slash = url_endswith_slash
+        self.append_slash = append_slash
         # 注册的中间件实例集合
         self.middlewares = []
         """
@@ -40,7 +40,7 @@ class AppContext:
         if debug_mode:
             self.static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
 
-        self.collector = Collector(app_root, url_endswith_slash)
+        self.collector = Collector(app_root, append_slash)
         self.logger = Logger(debug_mode)
         # debug 状态变化时的处理函数
         self.debug_changed_handlers = [self.logger.on_debug_mode_changed]

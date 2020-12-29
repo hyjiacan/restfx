@@ -15,21 +15,21 @@ class App:
                  app_root: str,
                  api_prefix='api',
                  debug_mode=False,
-                 url_endswith_slash=False
+                 append_slash=False
                  ):
         """
 
         :param app_root:
         :param api_prefix:
         :param debug_mode:
-        :param url_endswith_slash:
+        :param append_slash:
         """
         # 全局的唯一 id, 用于标识一个APP
         # 可以用于在 AppContext.get(id) 处获取应用的 Context
         self.id = str(uuid.uuid4())
-        self.context = AppContext(self.id, app_root, debug_mode, url_endswith_slash)
+        self.context = AppContext(self.id, app_root, debug_mode, append_slash)
         # 暴露的 wsgi 接口，在部署时通过此接口与 wsgi 服务器通信
-        self.wsgi = WsgiApp(self.context, api_prefix, url_endswith_slash)
+        self.wsgi = WsgiApp(self.context, api_prefix, append_slash)
 
     def update_debug_mode(self, debug_mode: bool):
         """
