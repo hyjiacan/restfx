@@ -8,4 +8,6 @@ def get(**kwargs):
     :param foo: adsad
     :return:
     """
-    return kwargs
+    return {
+        'data': kwargs
+    }
