@@ -17,7 +17,7 @@ class MiddlewareManager:
 
     def handle_request(self):
         for middleware in self.context.middlewares:
-            result = middleware.process_request(self.request, self.meta)
+            result = middleware.process_request(middleware, self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
             # 返回 None 以阻止后续中间件执行
@@ -30,7 +30,7 @@ class MiddlewareManager:
         :return:
         """
         for middleware in self.context.middlewares:
-            result = middleware.process_invoke(self.request, self.meta)
+            result = middleware.process_invoke(middleware, self.request, self.meta)
             if isinstance(result, HttpResponse):
                 return result
             # 返回 None 以阻止后续中间件执行
@@ -44,8 +44,7 @@ class MiddlewareManager:
         :return:
         """
         for middleware in self.context.reversed_middlwares:
-            result = middleware.process_return(self.request, self.meta, data=data)
-
+            result = middleware.process_return(middleware, self.request, self.meta, data=data)
             # 返回 HttpResponse 终止
             if result is HttpResponse:
                 return result
@@ -66,8 +65,7 @@ class MiddlewareManager:
         """
         # 对 response 进行处理
         for middleware in self.context.reversed_middlwares:
-            new_response = middleware.process_response(self.request, self.meta, response=response)
-
+            new_response = middleware.process_response(middleware, self.request, self.meta, response=response)
             if new_response is not None:
                 response = new_response
 
