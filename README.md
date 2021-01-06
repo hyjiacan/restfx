@@ -430,6 +430,16 @@ app.register_routes(restfx_map.routes)
 
 ## 高级用法
 
+### wsgi
+
+`App` 本身即是 `wsgi` 入口。
+
+```python
+from restfx import App
+# app 就是 wsgi 入口
+app = App(...)
+```
+
 ### 分发前的处理
 
 有的时候，需要在分发前对请求参数进行处理。此时可以使用 `restfx.set_intercepter` 来进行一些预处理。

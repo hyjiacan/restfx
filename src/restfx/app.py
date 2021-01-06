@@ -2,12 +2,16 @@ import os
 import uuid
 from types import FunctionType
 
+from werkzeug.exceptions import NotFound
+from werkzeug.middleware.shared_data import SharedDataMiddleware
+from werkzeug.routing import Map, Rule
 from werkzeug.serving import run_simple
 
 from . import __meta__
 from .app_context import AppContext
+from .http import HttpServerError, HttpNotFound, HttpResponse, HttpRequest
+from .routes.router import Router
 from .util.func_util import FunctionDescription
-from .wsgi_app import WsgiApp
 
 
 class App:
@@ -28,8 +32,71 @@ class App:
         # 可以用于在 AppContext.get(id) 处获取应用的 Context
         self.id = str(uuid.uuid4())
         self.context = AppContext(self.id, app_root, debug_mode, append_slash)
-        # 暴露的 wsgi 接口，在部署时通过此接口与 wsgi 服务器通信
-        self.wsgi = WsgiApp(self.context, api_prefix, append_slash)
+
+        self.api_prefix = api_prefix
+        self.router = Router(self.context)
+
+        self.url_map = Map([
+            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_list'),
+            Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
+        ])
+
+    def handle_wsgi_request(self, environ, start_response):
+        """
+        接收并处理来自 wsgi 的请求
+        :param environ:
+        :param start_response:
+        :return:
+        """
+        request = None
+        try:
+            request = HttpRequest(environ, self.context.app_id)
+            adapter = self.url_map.bind_to_environ(environ)
+
+            # 仅在调试时重定向
+            if self.context.DEBUG and request.path == '/':
+                response = HttpResponse(status=302, headers={
+                    'Location': '/' + self.api_prefix
+                })
+            else:
+                endpoint, values = adapter.match()
+                if endpoint == 'api_list':
+                    response = self.router.api_list(request)
+                elif endpoint == 'entry_only':
+                    response = self.router.dispatch(request, values['entry'])
+                else:
+                    response = HttpNotFound()
+        except Exception as e:
+            if isinstance(e, NotFound):
+                response = HttpNotFound()
+            elif self.context.DEBUG:
+                raise e
+            else:
+                response = HttpServerError()
+
+            msg = repr(e)
+            if request:
+                msg += ':' + request.path
+            self.context.logger.warning(msg)
+
+        return response(environ, start_response)
+
+    def __call__(self, environ, start_response):
+        """
+        wsgi 入口
+        :param environ:
+        :param start_response:
+        :return:
+        """
+        if not self.context.static_map:
+            return self.handle_wsgi_request(environ, start_response)
+
+        return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
+            environ, start_response)
+
+    def close(self):
+        for middleware in self.context.middlewares:
+            middleware.dispose()
 
     def update_debug_mode(self, debug_mode: bool):
         """
@@ -50,8 +117,8 @@ class App:
         """
         print("Powered by %s %s" % (__meta__.name, __meta__.version))
         debug_mode = self.context.DEBUG
-        run_simple(host, port, self.wsgi,
-                   use_debugger=debug_mode, use_reloader=debug_mode, **kwargs)
+        run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, **kwargs)
+        self.close()
 
     def collect(self, *global_classes):
         """
@@ -77,7 +144,7 @@ class App:
         :param intercepter:
         :return:
         """
-        self.wsgi.router.intercepter = intercepter
+        self.router.intercepter = intercepter
         return self
 
     def set_logger(self, logger):
@@ -151,11 +218,11 @@ class App:
         :return:
         """
         rid = '%s#%s' % (path, method.lower())
-        if rid in self.wsgi.router.production_routes:
+        if rid in self.router.production_routes:
             self.context.logger.warning('%s %s exists' % (method, path))
 
         desc = FunctionDescription(handler)
-        self.wsgi.router.production_routes[rid] = {
+        self.router.production_routes[rid] = {
             'func': handler,
             'args': desc.arguments
         }
