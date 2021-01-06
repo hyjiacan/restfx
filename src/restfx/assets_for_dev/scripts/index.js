@@ -152,6 +152,10 @@
                   'data-api': id
                 }, '测试')
               ]),
+              route.addition_info ? el('div', {
+                class: 'addition-info',
+                html: true
+              }, route.addition_info) : null,
               renderArgs(route.handler_info.arguments),
               renderReturn(route)
             ])
@@ -305,15 +309,25 @@
 
   function el (tag, attrs, children) {
     const element = document.createElement(tag)
+    let isHTML = false
     if (attrs) {
       for (const name in attrs) {
         let val = attrs[name]
         if (val === undefined) {
           continue
         }
+        if (name === 'html') {
+          isHTML = !!val
+          continue
+        }
         element.setAttribute(name, val)
       }
     }
+    if (isHTML) {
+      element.innerHTML = children
+      return element
+    }
+
     if (children) {
       if (!Array.isArray(children)) {
         children = [children]

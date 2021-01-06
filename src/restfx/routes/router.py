@@ -6,7 +6,6 @@ from ..app_context import AppContext
 from ..http import HttpNotFound, HttpServerError, HttpResponse, JsonResponse
 from ..http.request import HttpRequest
 from ..util.func_util import FunctionDescription
-from ..util.utils import get_func_info
 
 
 class Router:
@@ -52,13 +51,22 @@ class Router:
 
             modules = {}
 
+            if 'api_list_addition' in self.context.dev_options:
+                addition_func = self.context.dev_options['api_list_addition']
+            else:
+                addition_func = None
             for route in routes:
+                # 附加信息
+                if addition_func is not None:
+                    route['addition_info'] = addition_func(route)
+
                 module = route['module']
 
                 if module in modules:
                     modules[module].append(route)
                 else:
                     modules[module] = [route]
+
             self.modules_cache = modules
 
         return JsonResponse(self.modules_cache, encoder=FunctionDescription.JSONEncoder)
@@ -102,6 +110,5 @@ class Router:
         try:
             return func(request, args)
         except Exception as e:
-            message = '\t%s' % get_func_info(func)
-            self.context.logger.error(message, e)
-            return HttpServerError('%s: %s' % (message, str(e)))
+            self.context.logger.error(e)
+            return HttpServerError('%s: %s' % (repr(e)))

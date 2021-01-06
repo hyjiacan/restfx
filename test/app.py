@@ -1,14 +1,10 @@
 import os
 
-import pymysql
-from dbutils.pooled_db import PooledDB
-
 from restfx import App
 from restfx.http import HttpRequest
-from restfx.middleware.middlewares import SessionMiddleware, HttpAuthMiddleware
+from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MysqlSessionProvider, MemorySessionProvider
 
 root = os.path.dirname(__file__)
 
@@ -75,6 +71,15 @@ app.register_middleware(
     # MiddlewareB(),
     # MiddlewareC()
 )
+
+
+def api_list_addition(route):
+    if 'auth' not in route['kwargs'] or route['kwargs'] is False:
+        return '<span style="color: red">[需要身份校验]</span>'
+    return '<span style="color: lightblue">[不需要身份校验]</span>'
+
+
+app.set_dev_options(api_list_addition=api_list_addition)
 # app.persist('./routes_map.py')
 if __name__ == '__main__':
     app.startup()

@@ -32,6 +32,7 @@ class App:
         # 可以用于在 AppContext.get(id) 处获取应用的 Context
         self.id = str(uuid.uuid4())
         self.context = AppContext(self.id, app_root, debug_mode, append_slash)
+        self.dev_options = {}
 
         self.api_prefix = api_prefix
         self.router = Router(self.context)
@@ -249,3 +250,13 @@ class App:
             self.context.middlewares.append(middleware)
             self.context.reversed_middlwares.insert(0, middleware)
         return self
+
+    def set_dev_options(self,
+                        api_list_addition=None
+                        ):
+        """
+
+        :param api_list_addition: 用于附加展示在 api 列表的信息
+        :return: 返回的信息会被展示在 api 列表上（可以返回 html）
+        """
+        self.context.dev_options['api_list_addition'] = api_list_addition

@@ -148,6 +148,10 @@ details[open] summary {
     margin: 15px 0;
 }
 
+.addition-info {
+    margin: 15px 5px;
+}
+
 .info {
     padding: 5px 0;
     background-color: #fffff8;

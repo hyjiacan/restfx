@@ -35,4 +35,6 @@ class TimetickMiddleware(MiddlewareBase):
 
     @staticmethod
     def _get_time(request, from_, to):
+        if from_ not in request.timetick or to not in request.timetick:
+            return '0ms'
         return '%sms' % (request.timetick[to] - request.timetick[from_])

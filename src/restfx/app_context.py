@@ -37,6 +37,8 @@ class AppContext:
 
         self.static_map = {}
 
+        self.dev_options = {}
+
         if debug_mode:
             self.static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
 

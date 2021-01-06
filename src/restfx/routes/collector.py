@@ -187,6 +187,8 @@ class Collector:
             define['is_package'] = is_package
             # 是否是扩展模式
             define['ext_mode'] = ext_mode
+            # 自定义的装饰器参数
+            define['kwargs'] = define['kwargs']
 
             yield define
 
