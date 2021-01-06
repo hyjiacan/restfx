@@ -3,7 +3,7 @@ from collections import OrderedDict
 from functools import wraps
 
 from ..app_context import AppContext
-from ..http import HttpRequest
+from ..http import HttpRequest, HttpServerError
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
 from ..routes.meta import RouteMeta
@@ -40,7 +40,7 @@ def route(module=None, name=None, **kwargs):
             # 此时直接将原参数传给 func 进行调用
             if not isinstance(request, HttpRequest) or not isinstance(func_args, OrderedDict):
                 return func(*args)
-            
+
             context = AppContext.get(request.app_id)
 
             meta = RouteMeta(
@@ -108,8 +108,12 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
 
     if isinstance(actual_args, HttpResponse):
         return mgr.handle_response(actual_args)
-
-    result = func(**actual_args)
+    try:
+        result = func(**actual_args)
+    except Exception as e:
+        message = '\t%s' % get_func_info(func)
+        context.logger.error(message, e)
+        return mgr.handle_response(HttpServerError('%s: %s' % (message, str(e))))
 
     return mgr.handle_response(_wrap_http_response(mgr, result))
 
