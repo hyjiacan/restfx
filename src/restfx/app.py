@@ -1,5 +1,4 @@
 import os
-import uuid
 from types import FunctionType
 
 from werkzeug.exceptions import NotFound
@@ -16,6 +15,7 @@ from .util.func_util import FunctionDescription
 
 class App:
     def __init__(self,
+                 app_id: str,
                  app_root: str,
                  api_prefix='api',
                  debug_mode=False,
@@ -23,14 +23,14 @@ class App:
                  ):
         """
 
+        :param app_id: 全局的唯一 id, 用于标识一个APP。可以通过 AppContext.get(id) 获取应用的 Context
         :param app_root:
         :param api_prefix:
         :param debug_mode:
         :param append_slash:
         """
-        # 全局的唯一 id, 用于标识一个APP
-        # 可以用于在 AppContext.get(id) 处获取应用的 Context
-        self.id = str(uuid.uuid4())
+
+        self.id = app_id
         self.context = AppContext(self.id, app_root, debug_mode, append_slash)
         self.dev_options = {}
 

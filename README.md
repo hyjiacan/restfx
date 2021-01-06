@@ -18,6 +18,14 @@ Python3 的 restful 多应用自动路由框架。
 pip install restfx
 ```
 
+安装后，可以通过以下命令创建基本项目结构:
+
+```shell script
+restfx create projectname
+```
+
+> 使用此命令，可能需要将 `restfx` 安装到全局环境中。
+
 ## 使用
 
 此组件提供的包（package）名称为 `restfx`。
@@ -26,7 +34,8 @@ pip install restfx
 
 - 路由处理函数名称均使用 **小写**
 - 路由处理函数名称使用 **下划线风格**
-- 当使用路径 `GET /path/to/route` 的时候，如果 `to.py` 文件存在，
+- 当使用路径 `GET /path/to/route` 的时候，
+    如果 `to.py` 和 `route.py` 文件同时存在，
     则会加载 `to.py` 中的 `get_route` 而不是 `route.py`
 
 ### 名词说明

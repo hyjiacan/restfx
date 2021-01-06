@@ -1,3 +1,2 @@
-include src/restfx/assets_for_dev/**/*
-include requirements/*.txt
+recursive-include src/restfx/assets_for_dev *
 global-exclude *.pyc
