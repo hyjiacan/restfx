@@ -411,6 +411,13 @@
     testPanel.querySelector('.method').textContent = api.method
     testPanel.querySelector('.url').textContent = `${rootURL}${api.path}`
 
+    if(api.addition_info){
+      testPanel.querySelector('.addition-info').innerHTML = api.addition_info
+      testPanel.querySelector('.addition-info').style.display = 'block'
+    } else {
+      testPanel.querySelector('.addition-info').style.display = 'none'
+    }
+
     let table = testPanel.querySelector('table')
     const tableContainer = table.parentElement
 

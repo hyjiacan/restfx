@@ -75,8 +75,8 @@ app.register_middleware(
 
 def api_list_addition(route):
     if 'auth' not in route['kwargs'] or route['kwargs'] is False:
-        return '<span style="color: red">[需要身份校验]</span>'
-    return '<span style="color: lightblue">[不需要身份校验]</span>'
+        return '<span style="color: #ff7d7d">[需要身份校验]</span>'
+    return '<span style="color: #66c0de">[不需要身份校验]</span>'
 
 
 app.set_dev_options(api_list_addition=api_list_addition)
