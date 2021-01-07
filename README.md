@@ -18,7 +18,7 @@ Python3 的 restful 多应用自动路由框架。
 pip install restfx
 ```
 
-安装后，可以通过以下命令创建基本项目结构:
+安装后，可以通过 CLI 工具 (`0.7.1`) `restfx` 命令创建基本项目结构:
 
 ```shell script
 restfx create projectname
@@ -99,6 +99,7 @@ if __name__ == '__main__':
 - `app.collect(*global_classes)->list` 收集路由信息。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
 - `app.persist(filename: str = '', encoding='utf8', *global_classes)->str` 获取持久化的路由串(生成的 python 代码)，
     用于写入持久化文件。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
+- `app.set_dev_options(**kwargs)->App` 设置一些开发选项。见 [开发选项](#开发选项) 
 
 > `->App` 表示返回了实例本身，也就是说这些接口可以通过链式调用
 
@@ -441,13 +442,16 @@ app.register_routes(restfx_map.routes)
 
 ### wsgi
 
-`App` 本身即是 `wsgi` 入口。
+`App` 实例本身即是 `wsgi` 入口。
 
+_main.py_
 ```python
 from restfx import App
 # app 就是 wsgi 入口
 app = App(...)
 ```
+
+在部署到 wsgi 容器时，将 `main:app` 暴露给容器作为入口。
 
 ### 分发前的处理
 
@@ -749,6 +753,43 @@ app.register_middleware(
 ```
 
 > 一般来说，此中间件应该被第一个注册，以防止越权操作。
+
+### 开发选项
+
+通过 `app.set_dev_options(api_list_addition: FunctionType)->App` 设置一些开发选项。
+
+目前仅支持参数 `api_list_addition`。
+
+#### api_list_addition
+
+用于自定义API列表中的附加信息渲染。其声明如下：
+
+```python
+def api_list_addition(route_info):
+    pass
+```
+
+其返回值将作为附加信息（支持使用 html）。
+
+此功能一般在 `@route` 上有自定义的参数时，给用户提示使用，如：
+
+```python
+from restfx import App, route
+
+def api_list_addition(route_info):
+    if 'auth' not in route_info['kwargs'] or route_info['kwargs'] is False:
+        return '<span style="color: #ff7d7d">[需要身份校验]</span>'
+    return '<span style="color: #66c0de">[不需要身份校验]</span>'
+
+
+App(...).set_dev_options(api_list_addition=api_list_addition)
+
+@route('module', 'name', auth=False)
+def get():
+    pass
+```
+
+以上代码演示了在装饰器 `@route` 上添加了自定义参数 `auth`，用于表示接口是否需要校验。
 
 ## 截图
 
