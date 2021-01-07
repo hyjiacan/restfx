@@ -260,3 +260,4 @@ class App:
         :return: 返回的信息会被展示在 api 列表上（可以返回 html）
         """
         self.context.dev_options['api_list_addition'] = api_list_addition
+        return self
