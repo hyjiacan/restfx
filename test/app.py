@@ -42,7 +42,8 @@ root = os.path.dirname(__file__)
 #     autocommit=True
 # )
 # session_provider = MysqlSessionProvider(db_pool)
-app = App(root, debug_mode=True)
+app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
+app = App(app_id, root, debug_mode=True)
 
 app.map_routes({
     'test': 'test.api'

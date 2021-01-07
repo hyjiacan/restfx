@@ -134,8 +134,9 @@ class Collector:
         for (router_str, other_lines, func) in defines:
             # 解析出请求的方法(method)与请求的指定函数名称
             method, name = self.resolve_func(func)
+            # 将函数名称由 route 替换为 _fake_route
+            router_str = '_fake_route' + router_str[5:]
             # 利用 eval 解析出路由的定义（在这个文件中定义了与装饰器相同的函数，以便于读取装饰器的参数）
-            router_str = router_str.replace('route', '_fake_route')
             define = eval(router_str, route_env)
 
             # 构造http请求的地址(将 路径分隔符号 \/ 替换成 . 符号)
