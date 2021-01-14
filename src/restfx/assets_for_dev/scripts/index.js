@@ -107,7 +107,7 @@
 
   function renderModule (data, module) {
     let index = 0
-    return el('details', { open: true }, [
+    return el('details', null, [
       el('summary', null, [
         el(
           'a',
@@ -262,8 +262,13 @@
   }
 
   function renderArgs (args, editable, append) {
-    if (!args) {
-      return el('span', { class: 'tip' }, '无参数')
+    if (!args || !args.length) {
+      return el('table', { class: 'args-table' }, [
+        el('tr', null, el('td', null, [
+          el('span', null, '参数信息: '),
+          el('span', { class: 'tip' }, '无')
+        ]))
+      ])
     }
 
     const rows = args.map(arg => renderArg(arg, editable))
@@ -462,6 +467,14 @@
     testPanel.querySelector('textarea.response-content').value = content
     testPanel.querySelector('textarea.response-content').style.display = 'block'
   }
+
+  document.querySelector('#btn-fullscreen').addEventListener('click', function() {
+    if (testPanel.classList.contains('fullscreen')) {
+      testPanel.classList.remove('fullscreen')
+    } else {
+      testPanel.classList.add('fullscreen')
+    }
+  })
 })()
 
 var all

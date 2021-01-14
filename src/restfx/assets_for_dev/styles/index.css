@@ -219,14 +219,40 @@ footer {
     width: 80%;
     background-color: #ffffff;
     border-radius: 4px;
-    max-height: 80%;
+    min-height: 600px;
     display: grid;
     grid-template-rows: 45px 1fr;
+}
+
+#test-panel.fullscreen .panel {
+    max-width: unset;
+    width: 100%;
+    height: 100%;
 }
 
 .panel-heading {
     padding: 10px;
     border-bottom: 1px solid #dddddd;
+}
+
+.panel-heading--buttons {
+    float: right;
+}
+
+.panel-heading--buttons button {
+    color: blue;
+    border: none;
+    background: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.panel-heading--buttons button:hover {
+    color: red;
+}
+
+.panel-heading--buttons button:active {
+    text-shadow: 0 0 2px #123;
 }
 
 .panel-body {
@@ -263,18 +289,6 @@ textarea.arg-value:focus,
 textarea.arg-value:active {
     height: 80px;
     width: 400px;
-}
-
-#btn-close-test {
-    float: right;
-    color: blue;
-    border: none;
-    background: none;
-    cursor: pointer;
-}
-
-#btn-close-test:hover {
-    color: red;
 }
 
 #btn-send-test {
