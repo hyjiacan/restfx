@@ -81,7 +81,7 @@ def api_list_addition(route):
 
 
 app.set_dev_options(
-    # app_name='restfx 测试项目',
+    app_name='restfx 测试项目',
     api_list_addition=api_list_addition,
     api_list_expanded=True
 )
