@@ -80,7 +80,11 @@ def api_list_addition(route):
     return '<span style="color: #66c0de">[不需要身份校验]</span>'
 
 
-app.set_dev_options(api_list_addition=api_list_addition)
+app.set_dev_options(
+    # app_name='restfx 测试项目',
+    api_list_addition=api_list_addition,
+    api_list_expanded=True
+)
 # app.persist('./routes_map.py')
 if __name__ == '__main__':
     app.startup()

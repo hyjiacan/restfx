@@ -108,17 +108,18 @@ class App:
         self.context.update_debug_mode(debug_mode)
         return self
 
-    def startup(self, host='127.0.0.1', port=9127, **kwargs):
+    def startup(self, host='127.0.0.1', port=9127, threaded=True, **kwargs):
         """
         开发时使用的服务器，一般来说，应仅用于开发
         :param host:
         :param port:
+        :param threaded:
         :param kwargs: 适用于 werkzueg 的 run_simple 函数的其它参数
         :return:
         """
         print("Powered by %s %s" % (__meta__.name, __meta__.version))
         debug_mode = self.context.DEBUG
-        run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, **kwargs)
+        run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
         self.close()
 
     def collect(self, *global_classes):
@@ -251,13 +252,8 @@ class App:
             self.context.reversed_middlwares.insert(0, middleware)
         return self
 
-    def set_dev_options(self,
-                        api_list_addition=None
-                        ):
+    def set_dev_options(self, **kwargs):
         """
-
-        :param api_list_addition: 用于附加展示在 api 列表的信息
-        :return: 返回的信息会被展示在 api 列表上（可以返回 html）
         """
-        self.context.dev_options['api_list_addition'] = api_list_addition
+        self.context.dev_options.update(**kwargs)
         return self

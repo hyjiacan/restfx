@@ -1,347 +1,441 @@
-html, body {
-    padding: 0 !important;
-    margin: 0 !important;
-    height: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
-    text-align: left !important;
-    font-size: 14px !important;
+html,
+body {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  font-size: 14px !important;
 }
 
 .container {
-    height: 100%;
-    width: 100%;
-    color: #333333;
-    overflow: auto;
+  height: 100%;
+  width: 100%;
+  color: #333333;
+  overflow: auto;
 }
 
 .scroll-proxy {
-    min-width: 800px;
-    max-width: 1200px;
-    margin: 0 auto;
+  min-width: 800px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 header h1 {
-    float: left;
+  float: left;
 }
 
-.tools {
-    float: right;
-    margin-top: 24px;
+#app-name {
+  font-weight: normal;
+  margin-left: 20px;
+}
+
+#tools {
+  float: right;
+  margin-top: 24px;
+  display: none;
 }
 
 .buttons {
-    text-align: right;
+  text-align: right;
 }
 
 .filters {
-    margin-top: 5px;
+  margin-top: 5px;
 }
 
 hr {
-    clear: both;
-    border-width: 5px;
-    border-style: solid;
-    border-color: white green;
-    height: 1px;
-    background-color: green;
-    border-radius: 4px;
+  clear: both;
+  border-width: 5px 10px;
+  border-style: solid;
+  border-color: white #086cca;
+  height: 1px;
+  background-color: #086cca;
+  border-radius: 5px;
+}
+
+#api-list {
+  min-height: 200px;
 }
 
 .method {
-    text-transform: uppercase;
-    color: #e90588;
-    padding: 0 5px;
+  text-transform: uppercase;
+  color: #e90588;
+  padding: 0 5px;
+  user-select: all;
+}
+
+.url-path {
+  user-select: all;
 }
 
 .tip {
-    color: #88888888;
-    font-size: 14px;
+  color: #88888888;
+  font-size: 14px;
 }
 
 .args-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
 .args-table caption {
-    text-align: left;
+  text-align: left;
+  padding-bottom: 5px;
 }
 
 .btn-open-test {
-    margin-left: 20px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.btn-open-test:hover {
-    color: blue;
+  margin-left: 20px;
+  font-size: 13px;
+  opacity: 0.2;
+  will-change: opacity;
+  transition: opacity 200ms;
 }
 
 .args-table tr:nth-child(2n) {
-    background-color: #f9f9f5;
+  background-color: #f9fbfc;
 }
 
-.args-table tr:hover {
-    background-color: #f9f9e8;
+.args-table tr:hover td {
+  border-bottom-color: rgb(172, 210, 248);
 }
-
 .args-table th {
-    background-color: #f6f8fb;
+  font-weight: normal;
 }
-
 .args-table th,
 .args-table td {
-    border: 1px solid #cfd7de;
-    padding: 5px;
+  border: 1px solid #f0f6fc;
+  padding: 10px;
+}
+
+.arg-name {
+  user-select: all;
+  padding: 2px 3px;
 }
 
 details {
-    margin-bottom: 20px;
-    border-left: 1px dotted transparent;
-    clear: both;
+  clear: both;
 }
 
 details summary {
-    cursor: default;
-    outline: none;
-    font-weight: bold;
+  cursor: defaolt;
+  outline: none;
+  font-size: large;
+  color: #444;
+  display: block;
+  padding: 10px;
+}
+
+details summary span:before,
+.route-name:before {
+  padding: 2px 5px;
+  border-radius: 2px;
+  margin: 0 5px;
+  vertical-align: 1px;
+  background: #ececec;
+  color: #636363;
+}
+
+details summary span:before {
+  content: '模块';
+  font-size: 13px;
+}
+
+.route-name:before {
+  content: '路由';
+  font-size: 12px;
 }
 
 .anchor {
-    visibility: hidden;
-    text-decoration: none;
-    font-size: large;
-    font-weight: bold;
+  opacity: 0.2;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #086cca;
+  will-change: opacity;
+  transition: opacity 200ms;
+}
+
+.anchor:hover {
+  color: #ff0000;
+}
+
+.api-items li.module-item {
+  list-style: simp-chinese-informal;
+}
+
+.api-items li.module-item::marker {
+  color: #0787fd;
+  font-weight: bold;
 }
 
 details summary:hover {
-    background-color: #eeeeee;
+  background-color: #eeeeee;
 }
 
-details:hover summary .anchor,
-details li:hover .anchor {
-    visibility: visible;
+details summary:hover .anchor,
+details ol li:hover .anchor {
+  opacity: 1;
 }
 
-details:hover {
-    border-left-color: #888888;
+details ol li {
+  border-left: 1px dotted transparent;
+  list-style: decimal-leading-zero;
+  padding-left: 5px;
+  padding-top: 10px;
 }
 
-details li {
-    margin-bottom: 40px;
+details ol li::marker {
+  color: #0787fd;
+}
+
+details ol li:hover {
+  border-left-color: #539fdd;
+}
+
+details ol li:hover .btn-open-test {
+  opacity: 1;
+}
+
+details ol li {
+  margin-bottom: 40px;
+}
+
+details[open] {
+  margin-bottom: 20px;
 }
 
 details[open] summary {
-    border-bottom: 1px solid #b9b6b6;
-    padding: 5px 0;
-    position: sticky;
-    top: 0;
-    background-color: #ffffff;
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ccc;
 }
 
 .url-info {
-    display: grid;
-    grid-template-columns: 1fr 80px;
-    gap: 10px;
-    margin: 15px 0;
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 10px;
+  margin: 15px 0;
 }
 
 .addition-info {
-    margin: 15px 5px;
+  margin: 15px 5px;
 }
 
 .info {
-    padding: 5px 0;
-    background-color: #fffff8;
-    border: 1px solid #faf8d5;
+  padding: 5px 0;
+  border-radius: 2px;
+  transition: background-color 200ms;
+  will-change: background-color;
+}
+
+.info:hover {
+  background-color: #fdf4ff;
 }
 
 code {
-    color: #006fff;
-    font-size: 12px;
-}
-
-code.url {
-    border: none;
-    background: none;
+  color: #006fff;
+  font-size: 12px;
 }
 
 footer {
-    text-align: center;
-    font-size: 14px;
+  text-align: center;
+  font-size: 14px;
+  padding-bottom: 20px;
+}
+
+footer a {
+  color: #086cca;
+}
+
+footer a:hover {
+  color: red;
 }
 
 .hide {
-    display: none;
+  display: none;
 }
 
 #loading {
-    text-align: center;
-    font-size: 3em;
-    color: #888888;
+  text-align: center;
+  font-size: 3em;
+  color: #888888;
+  display: none;
 }
 
 .comment {
-    font-size: 12px;
-    color: #555555;
+  font-size: 12px;
+  color: #555555;
 }
 
 .route-name {
-    font-size: larger;
-    margin-right: 10px;
+  font-size: 15px;
+  margin-right: 10px;
 }
 
 .return-info {
-    font-size: 1em;
+  font-size: 1em;
 }
 
 .return-info code {
-    margin-right: 5px;
+  margin-right: 5px;
 }
 
 #test-panel {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, .2);
-    align-items: center;
-    justify-content: center;
-    display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  align-items: center;
+  justify-content: center;
+  display: none;
 }
 
 .panel {
-    min-width: 720px;
-    max-width: 1080px;
-    width: 80%;
-    background-color: #ffffff;
-    border-radius: 4px;
-    min-height: 600px;
-    display: grid;
-    grid-template-rows: 45px 1fr;
+  min-width: 720px;
+  max-width: 1080px;
+  width: 80%;
+  background-color: #ffffff;
+  border-radius: 4px;
+  min-height: 600px;
+  display: grid;
+  grid-template-rows: 45px 1fr;
 }
 
-#test-panel.fullscreen .panel {
-    max-width: unset;
-    width: 100%;
-    height: 100%;
+#test-panel.follscreen .panel {
+  max-width: unset;
+  width: 100%;
+  height: 100%;
 }
 
 .panel-heading {
-    padding: 10px;
-    border-bottom: 1px solid #dddddd;
+  padding: 10px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.test-lead {
+  background-color: #bebdbd;
+  color: #fff;
+  border-radius: 2px;
+  padding: 2px 3px;
+  margin-right: 5px;
+  font-size: 12px;
 }
 
 .panel-heading--buttons {
-    float: right;
+  float: right;
 }
 
 .panel-heading--buttons button {
-    color: blue;
-    border: none;
-    background: none;
-    cursor: pointer;
-    outline: none;
-}
-
-.panel-heading--buttons button:hover {
-    color: red;
-}
-
-.panel-heading--buttons button:active {
-    text-shadow: 0 0 2px #123;
+  border: none;
+  background: none;
 }
 
 .panel-body {
-    padding: 5px 10px;
-    overflow: auto;
-}
-
-.arg-editor {
+  padding: 5px 10px;
+  overflow: auto;
 }
 
 .arg-value {
-    outline: none;
-    width: 100%;
-    height: 32px;
-    padding: 5px;
-    box-sizing: border-box;
-    border-width: 0 0 1px 0;
-    border-color: #888888;
+  outline: none;
+  width: 100%;
+  height: 32px;
+  padding: 5px;
+  box-sizing: border-box;
+  border-width: 0 0 1px 0;
+  border-color: #888888;
 }
 
 .arg-value:focus,
 .arg-value:hover,
 .arg-value:active {
-    border-width: 1px;
-    box-shadow: 0 0 3px 2px #bab9b9;
+  border-width: 1px;
+  box-shadow: 0 0 3px 2px #bab9b9;
 }
 
 textarea.arg-value {
-    resize: horizontal;
-    transition: height 200ms, width 200ms;
+  resize: horizontal;
+  transition: height 200ms, width 200ms;
 }
 
 textarea.arg-value:focus,
 textarea.arg-value:active {
-    height: 80px;
-    width: 400px;
+  height: 80px;
+  width: 400px;
 }
 
 #btn-send-test {
-    cursor: pointer;
-    font-size: 16px;
-    background-color: #f4591f;
-    color: #fafafa;
-    border: 1px solid orange;
-    letter-spacing: 5px;
-    border-radius: 2px;
-}
-
-#btn-send-test:hover {
-    background-color: orangered;
-    color: white;
-}
-
-.response {
-
+  font-size: 16px;
+  letter-spacing: 5px;
 }
 
 .response p {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .response-content {
-    background: #fffff8;
-    padding: 5px;
-    border: 1px solid #faf8d5;
-    width: 100%;
-    min-height: 200px;
-    box-sizing: border-box;
-    outline: none;
-    overflow: auto;
-    resize: vertical;
+  background: #fffff8;
+  padding: 5px;
+  border: 1px solid #faf8d5;
+  width: 100%;
+  min-height: 200px;
+  box-sizing: border-box;
+  outline: none;
+  overflow: auto;
+  resize: vertical;
+  font-size: 12px;
 }
 
 .required {
-    border-color: red;
+  border-color: red;
 }
 
 .response-status {
-    margin-left: 20px;
+  margin-left: 20px;
 }
 
 .status-success {
-    color: green;
+  color: green;
 }
 
 .status-failed {
-    color: orange;
+  color: orange;
 }
 
 .response-time {
-    margin-left: 20px;
+  margin-left: 20px;
+}
+button {
+  border: 1px solid #86b2db;
+  color: #086cca;
+  background: #e8f0f8;
+  padding: 3px 5px;
+  cursor: pointer;
+  font-size: 12px;
+  outline: none;
+  border-radius: 2px;
+  transition: border 200ms, background-color 200ms;
+}
+
+button:hover {
+  box-shadow: 0 0 3px 1px #086cca;
+}
+
+button:active {
+  background-color: #086cca;
+  color: #fff;
+}
+
+#ie-tip {
+  color: #cc0000;
+  background-color: #faf1f1;
+  text-align: center;
+  padding: 10px 0;
+  display: none;
+  cursor: help;
 }

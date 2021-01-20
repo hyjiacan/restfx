@@ -36,7 +36,7 @@ class Router:
                 'API list is disabled in production, use "App(..., debug_mode=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
-        if not self.api_list_html_cache:
+        if not self.api_list_html_cache or True:
             with open(os.path.join(os.path.dirname(__file__), '../assets_for_dev/templates/api_list.html'),
                       encoding='utf-8') as fp:
                 lines = fp.readlines()
@@ -69,7 +69,16 @@ class Router:
 
             self.modules_cache = modules
 
-        return JsonResponse(self.modules_cache, encoder=FunctionDescription.JSONEncoder)
+        from restfx import __meta__
+        return JsonResponse({
+            'meta': {
+                'name': __meta__.name,
+                'version': __meta__.version
+            },
+            'app_name': self.context.dev_options['app_name'],
+            'expanded': self.context.dev_options['api_list_expanded'],
+            'apis': self.modules_cache,
+        }, encoder=FunctionDescription.JSONEncoder)
 
     def dispatch(self, request: HttpRequest, entry):
         """

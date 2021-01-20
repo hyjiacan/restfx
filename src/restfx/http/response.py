@@ -14,7 +14,7 @@ class HttpResponse(Response):
 
 class JsonResponse(HttpResponse):
     def __init__(self, obj, encoder=None):
-        content = json.dumps(obj, ensure_ascii=False, cls=encoder)
+        content = json.dumps(obj, ensure_ascii=True, cls=encoder)
         super().__init__(content, content_type='application/json;charset=utf8')
 
 

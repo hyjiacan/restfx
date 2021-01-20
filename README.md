@@ -756,9 +756,13 @@ app.register_middleware(
 
 ### 开发选项
 
-通过 `app.set_dev_options(api_list_addition: FunctionType)->App` 设置一些开发选项。
+通过 `app.set_dev_options(**kwargs)->App` 设置一些开发选项。
 
-目前仅支持参数 `api_list_addition`。
+支持的配置项:
+ 
+- `app_name: str` 在 API 列表上展示的应用名称。
+- `api_list_addition: FunctionType` 指定API列表的附加项。一般用于展示一些自定义的路由字段。
+- `api_list_expanded: bool` 在API列表加载后，是否默认展开所有项。
 
 #### api_list_addition
 

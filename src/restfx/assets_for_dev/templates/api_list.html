@@ -1,93 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Table of APIs - restfx</title>
-    <link type="text/css" rel="stylesheet" href="/restfx_assets_for_dev/styles/index.css"/>
-</head>
-<body>
-<div class="container">
-    <div class="scroll-proxy">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="viewport"
+    />
+    <title>Table of APIs</title>
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="/restfx_assets_for_dev/styles/index.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="scroll-proxy">
         <header>
-            <h1>
-                <span>Table of APIs</span>
-                <span>-</span>
-                <small>restfx</small>
-            </h1>
-            <div class="tools">
-                <div class="buttons">
-                    <button onclick="collapseAll()">全部收起</button>
-                    <button onclick="expandAll()">全部展开</button>
-                </div>
+          <h1>
+            <span>Table of APIs</span>
+            <small id="app-name">restfx</small>
+          </h1>
+          <div id="tools">
+            <div class="buttons">
+              <button onclick="collapseAll()">全部收起</button>
+              <button onclick="expandAll()">全部展开</button>
             </div>
+          </div>
         </header>
         <hr/>
+        <div id="ie-tip"></div>
         <div id="api-list">
             <p id="loading">正在加载 API 数据...</p>
         </div>
-        <hr/>
+        <div id="api-list"></div>
+        <hr />
         <footer>
-            <span>Powered by</span>
-            <a href="http://gitee.com/hyjiacan/restfx">restfx</a>
+          <span>Powered by</span>
+          <a
+            href="http://gitee.com/hyjiacan/restfx?from=dist"
+            id="fx-name"
+            target="_blank"
+          >restfx</a>
         </footer>
+      </div>
     </div>
-</div>
-<div id="test-panel">
-    <div class="panel">
+    <div id="test-panel">
+      <div class="panel">
         <div class="panel-heading">
-            <span>接口测试-</span>
-            <span class="module"></span>
-            <span class="name"></span>
+          <span class="test-lead">接口测试</span>
+          <span class="module"></span>
+          <span class="name"></span>
 
-            <div class="panel-heading--buttons">
-                <button id="btn-fullscreen">全屏</button>
-                <button id="btn-close-test">关闭</button>
-            </div>
+          <div class="panel-heading--buttons">
+            <button id="btn-fullscreen">全屏</button>
+            <button id="btn-close-test">关闭</button>
+          </div>
         </div>
         <div class="panel-body">
-            <div class="url-info">
-                <div class="info">
-                    <span class="method"></span>
-                    <code class="url"></code>
-                </div>
-                <button id="btn-send-test">发送</button>
+          <div class="url-info">
+            <div class="info">
+              <span class="method"></span>
+              <code class="url"></code>
             </div>
-            <div class="addition-info"></div>
-            <table class="args-table">
-                <caption>参数信息</caption>
-                <colgroup>
-                    <col style="width: 200px">
-                    <col style="width: 200px">
-                    <col style="width: 200px">
-                    <col style="width: auto">
-                </colgroup>
-                <thead>
-                <tr>
-                    <th>名称</th>
-                    <th>类型</th>
-                    <th>值</th>
-                    <th>描述</th>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-            <div class="response">
-                <p>
-                    <span>响应</span>
-                    <span class="response-status">
-                        <span class="status-code"></span>
-                        <span class="status-text"></span>
-                    </span>
-                    <span class="response-time"></span>
-                </p>
-                <div class="response-content"></div>
-                <textarea class="response-content" readonly></textarea>
-            </div>
+            <button id="btn-send-test">发送</button>
+          </div>
+          <div class="addition-info"></div>
+          <table class="args-table">
+            <caption>
+              参数信息
+            </caption>
+            <colgroup>
+              <col style="width: 200px" />
+              <col style="width: 200px" />
+              <col style="width: 200px" />
+              <col style="width: auto" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>类型</th>
+                <th>值</th>
+                <th>描述</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="response">
+            <p>
+              <span>响应</span>
+              <span class="response-status">
+                <span class="status-code"></span>
+                <span class="status-text"></span>
+              </span>
+              <span class="response-time"></span>
+            </p>
+            <div class="response-content"></div>
+            <textarea class="response-content" readonly></textarea>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-<script src="/restfx_assets_for_dev/scripts/index.js"></script>
-</body>
+    <script src="/restfx_assets_for_dev/scripts/index.js"></script>
+  </body>
 </html>

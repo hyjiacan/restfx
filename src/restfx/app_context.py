@@ -1,5 +1,7 @@
 import os
 
+from restfx import __meta__
+
 from .routes.collector import Collector
 from .util.logger import Logger
 
@@ -37,7 +39,10 @@ class AppContext:
 
         self.static_map = {}
 
-        self.dev_options = {}
+        self.dev_options = {
+            'app_name': 'An awesome %s project' % __meta__.name,
+            'api_list_expanded': False
+        }
 
         if debug_mode:
             self.static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
