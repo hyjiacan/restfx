@@ -1,4 +1,3 @@
-import inspect
 import os
 from typing import Dict, Optional
 
@@ -34,9 +33,16 @@ class RouteResolver:
         return None
 
     def resolve(self) -> [FunctionDescription, HttpResponse]:
+        # entry 可能包含扩展名
+        temp = self.entry.split('.')
+        entry = temp[0]
+        if len(temp) > 1:
+            extname = temp[1]
+        else:
+            extname = None
         # 处理映射
         # 对应的模块(包或模块路径，使用 . 分隔）
-        module_name = self.get_route_map(self.entry)
+        module_name = self.get_route_map(entry)
 
         func_name = self.method
 
@@ -74,6 +80,13 @@ class RouteResolver:
         except Exception as e:
             message = 'Load entry "%s" failed: %s' % (self.entry, fullname)
             self.context.logger.error(message, e)
+            return HttpNotFound()
+
+        # 检查 extname 是否一致
+        if desc.decorator['extname'] != extname:
+            message = 'Load entry "%s" failed: extname "%s" is not exactly match with "%s"' % (
+                self.entry, extname, desc.decorator['extname'])
+            self.context.logger.warning(message)
             return HttpNotFound()
 
         return desc
@@ -116,7 +129,9 @@ class RouteResolver:
         # 模块中有这个函数
         # 通过反射从模块加载函数
         func = getattr(entry_define, func_name)
-        if not self.is_valid_route(func):
+        decorator = self.context.collector.get_route_decorator(func)
+
+        if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (
                 utils.get_func_info(func),
                 fullname
@@ -126,20 +141,8 @@ class RouteResolver:
             self.entry_cache[func_name] = None
             return HttpNotFound()
 
-        self.entry_cache[fullname] = FunctionDescription(func)
+        func_desc = FunctionDescription(func)
+        func_desc.decorator = decorator
+        self.entry_cache[fullname] = func_desc
 
         return self.entry_cache[fullname]
-
-    @staticmethod
-    def is_valid_route(func):
-        source = inspect.getsource(func)
-        lines = source.split('\n')
-        for line in lines:
-            if line.startswith('def '):
-                # 已经查找到了函数定义部分了，说明没有找到
-                return False
-
-            if line.startswith('@route('):
-                # 是 @route 装饰器行
-                return True
-        return False

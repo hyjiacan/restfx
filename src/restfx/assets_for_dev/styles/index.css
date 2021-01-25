@@ -303,11 +303,12 @@ footer a:hover {
   background-color: #ffffff;
   border-radius: 4px;
   min-height: 600px;
+  max-height: 100%;
   display: grid;
   grid-template-rows: 45px 1fr;
 }
 
-#test-panel.follscreen .panel {
+#test-panel.fullscreen .panel {
   max-width: unset;
   width: 100%;
   height: 100%;
@@ -383,7 +384,7 @@ textarea.arg-value:active {
   padding: 5px;
   border: 1px solid #faf8d5;
   width: 100%;
-  min-height: 200px;
+  min-height: 295px;
   box-sizing: border-box;
   outline: none;
   overflow: auto;

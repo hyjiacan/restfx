@@ -1,7 +1,7 @@
 # coding: utf-8
 
 # 此模块用于收集路由
-
+import inspect
 import os
 import re
 from os import path
@@ -27,7 +27,7 @@ routes = [
 """
 
 
-def _fake_route(module=None, name=None, **kwargs):
+def _fake_route(module=None, name=None, extname=None, **kwargs):
     """
     此函数用于帮助读取装饰器的参数
     :param module:
@@ -39,6 +39,7 @@ def _fake_route(module=None, name=None, **kwargs):
     return {
         'module': module,
         'name': name,
+        'extname': extname,
         'kwargs': kwargs
     }
 
@@ -48,7 +49,7 @@ class Collector:
         self.project_root = project_root
         self.append_slash = append_slash
         # 全局类列表
-        self.global_classes = []
+        self.global_classes = [_fake_route]
 
     def _get_env(self, *args):
         env = {}
@@ -70,7 +71,7 @@ class Collector:
         """
         # 为 route 提供的执行环境
         # 读取在 settings.py 中配置的环境
-        route_env = self._get_env(_fake_route, *global_classes)
+        route_env = self._get_env(*global_classes)
 
         # 所有路由的集合
         routes = []
@@ -105,6 +106,18 @@ class Collector:
             if define is None:
                 continue
             routes.append(define)
+
+    def get_route_decorator(self, func):
+        match = re.findall(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
+        if match is None:
+            return None
+
+        router_str = match[0][0]
+
+        # 将函数名称由 route 替换为 _fake_route
+        router_str = '_fake_route' + router_str[5:]
+        # 利用 eval 解析出路由的定义（在这个文件中定义了与装饰器相同的函数，以便于读取装饰器的参数）
+        return eval(router_str, self._get_env())
 
     def resolve_file(self, route_define, fullname, http_prefix, pkg_prefix, route_env: dict):
         """
@@ -153,13 +166,18 @@ class Collector:
             # 当 map_routes 指定的 http_prefix 为空时，前导的 . 符号是多余的
             # 当路由文件为根目录下的 __init__.py 时，没有可访问的文件名
             # 此时会出现得到的路由为  xxx. 的情况
-            # 所以在此移除末尾的 . 符号
+            # 所以在此移除末尾FunctionDescription的 . 符号
             http_path = '/' + http_path.strip('.').replace('.', '/')
 
             # 如果指定了名称，就追加到地址后
             ext_mode = name is not None
             if ext_mode:
                 http_path += '/' + name
+
+            # 指定的 url 扩展名
+            extname = define['extname']
+            if extname is not None:
+                http_path += '.' + extname
 
             if self.append_slash:
                 http_path += '/'

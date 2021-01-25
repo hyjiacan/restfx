@@ -4,6 +4,7 @@ import sys
 import uuid
 
 from restfx import __meta__
+from restfx.util import helper
 
 _COMMANDS = {}
 
@@ -17,12 +18,7 @@ def register(command_name: str, handler, description: str = None):
 
 
 def run_command(working_dir: str, command_name: str, *args):
-    info = '{name} {version} *{command}*'.format(name=__meta__.name,
-                                                 version=__meta__.version,
-                                                 command=command_name)
-    info_len = len(info) + 8
-    info_line = '-' * info_len
-    print("┌{line}┐\n|    {info}    |\n└{line}┘\n".format(line=info_line, info=info))
+    helper.print_meta(command_name)
 
     command = get_command(command_name)
     if command is None:

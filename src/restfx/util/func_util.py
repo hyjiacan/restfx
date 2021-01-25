@@ -86,12 +86,18 @@ class ArgumentSpecification:
 
 
 class FunctionDescription:
+    node_iter = None
+    """
+    :type: NodeVisitor
+    """
+
     def __init__(self, func: FunctionType):
         self.func = func
         self.description = ''
         self.return_description = ''
         self.return_type = ''
         self.arguments = self._get_func_args()
+        self.decorator = None
 
     def _get_func_args(self):
         """

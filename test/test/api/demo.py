@@ -2,7 +2,7 @@ from restfx import route
 from restfx.http import HttpRequest
 
 
-@route(module='测试名称-模块', name='测试名称-GET')
+@route(module='测试名称-模块', name='测试名称-GET', extname='jsp')
 def get(request, param1, param2=None, param3: int = 5):
     """
 

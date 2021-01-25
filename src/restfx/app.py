@@ -6,7 +6,6 @@ from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.serving import run_simple
 
-from . import __meta__
 from .app_context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpResponse, HttpRequest
 from .routes.router import Router
@@ -37,6 +36,8 @@ class App:
         self.api_prefix = api_prefix
         self.router = Router(self.context)
 
+        self.custom_url_map = {}
+
         self.url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_list'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
@@ -65,6 +66,8 @@ class App:
                     response = self.router.api_list(request)
                 elif endpoint == 'entry_only':
                     response = self.router.dispatch(request, values['entry'])
+                elif endpoint in self.custom_url_map:
+                    response = self.custom_url_map[endpoint](request, **values)
                 else:
                     response = HttpNotFound()
         except Exception as e:
@@ -117,8 +120,14 @@ class App:
         :param kwargs: 适用于 werkzueg 的 run_simple 函数的其它参数
         :return:
         """
-        print("Powered by %s %s" % (__meta__.name, __meta__.version))
+        from restfx.util import helper
         debug_mode = self.context.DEBUG
+
+        if debug_mode:
+            helper.print_meta('dev-server *DEBUG MODE*')
+        else:
+            helper.print_meta('dev-server')
+
         run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
         self.close()
 
@@ -156,6 +165,17 @@ class App:
         :return:
         """
         self.context.logger.custom_logger = logger
+        return self
+
+    def map_urls(self, urls_map: dict):
+        """
+        自定义的 url 映射，这些映射不会经过路由处理，而是直接来自 werkzeug
+        :param urls_map:
+        :return:
+        """
+        for url in urls_map:
+            self.custom_url_map[url] = urls_map[url]
+            self.url_map.add(Rule(url, endpoint=url))
         return self
 
     def map_routes(self, routes_map: dict):

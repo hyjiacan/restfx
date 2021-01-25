@@ -3,13 +3,10 @@ import json
 from werkzeug.exceptions import InternalServerError
 from werkzeug.wrappers import Response
 
-from .. import __meta__
-
 
 class HttpResponse(Response):
     def __init__(self, content=None, content_type='text/html;charset=utf8', status=200, headers=None, **kwargs):
         super().__init__(content, content_type=content_type, status=status, headers=headers, **kwargs)
-        self.headers.set('x-powered-by', '%s %s' % (__meta__.name, __meta__.version))
 
 
 class JsonResponse(HttpResponse):

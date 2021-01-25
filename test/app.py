@@ -1,12 +1,14 @@
+import json
 import os
 
 from restfx import App
-from restfx.http import HttpRequest
+from restfx.http import HttpRequest, HttpResponse
 from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
 
 root = os.path.dirname(__file__)
+
 
 # db_pool = PooledDB(
 #     # 使用链接数据库的模块
@@ -42,6 +44,11 @@ root = os.path.dirname(__file__)
 #     autocommit=True
 # )
 # session_provider = MysqlSessionProvider(db_pool)
+
+def test_id(request: HttpRequest, **kwargs):
+    return HttpResponse(json.dumps(kwargs))
+
+
 app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
 app = App(app_id, root, debug_mode=True)
 
@@ -49,6 +56,8 @@ app.map_routes({
     'test': 'test.api'
 }).map_static({
     '/static': os.path.join(root, 'static')
+}).map_urls({
+    '/test/<param>': lambda request, param: HttpResponse(param)
 })
 
 
@@ -85,6 +94,7 @@ app.set_dev_options(
     api_list_addition=api_list_addition,
     api_list_expanded=True
 )
+
 # app.persist('./routes_map.py')
 if __name__ == '__main__':
     app.startup()

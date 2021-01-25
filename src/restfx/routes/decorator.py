@@ -10,15 +10,16 @@ from ..routes.meta import RouteMeta
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
-def route(module=None, name=None, **kwargs):
+def route(module=None, name=None, extname=None, **kwargs):
     """
     用于控制路由的访问权限，路由均需要添加此装饰器，若未添加，则不可访问
-    :param module: str 路由所属模块，一般在查询权限时会用到
-    :param name: str 路由名称，一般在查询权限时会用到
     用法：
     @route('用户管理', '编辑用户')
     def get(req):
         pass
+    :param module: str 路由所属模块，一般在查询权限时会用到
+    :param name: str 路由名称，一般在查询权限时会用到
+    :param extname: 给路径指定一个扩展名，不能包含 . 符号
     """
 
     def invoke_route(func):
@@ -49,6 +50,7 @@ def route(module=None, name=None, **kwargs):
                 route_id='%s_%s' % (func.__module__.replace('_', '__').replace('.', '_'), func.__name__),
                 module=module,
                 name=name,
+                extname=extname,
                 method=request.method,
                 path=request.path,
                 kwargs=kwargs,

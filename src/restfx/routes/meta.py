@@ -12,6 +12,7 @@ class RouteMeta:
                  route_id=None,
                  module=None,
                  name=None,
+                 extname=None,
                  method=None,
                  path=None,
                  kwargs=None):
@@ -22,14 +23,16 @@ class RouteMeta:
         :param route_id: 路由ID，此ID由路由相关信息组合而成
         :param module: 装饰器上指定的 module 值
         :param name: 装饰器上指定的 name 值
+        :param extname: 装饰器上指定的 name 值
         :param kwargs: 装饰器上指定的其它参数
         """
         self.handler = handler
         self.func_args = func_args
         self.id = route_id
         self.module = module
-        self.method = method
         self.name = name
+        self.extname = extname
+        self.method = method
         self.path = path
         self.kwargs = {} if kwargs is None else kwargs
 

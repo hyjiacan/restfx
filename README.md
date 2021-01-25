@@ -85,11 +85,12 @@ if __name__ == '__main__':
 
 应用 `app` 暴露了以下接口:
 
-- `app.startup(host: str, port: int, **kwargs)` 启动调试服务器
+- `app.startup(host: str, port: int, threaded=True, **kwargs)` 启动调试服务器
 - `app.update_debug_mode(debug_mode: bool)->App` 改变当前的 debug 状态
 - `app.set_intercepter(intercepter: FunctionType)->App` 指定请求拦截器，其会在分发路由前调用
 - `app.set_logger(logger: FunctionType)->App` 指定日志记录函数，不指定时仅仅会在控制台输出日志
 - `app.map_routes(routes_map: dict)->App` 指定路由映射表，此表用于重写请求路径
+- `app.map_urls(urls_map: dict)->App` 指定 url 映射表，用于使用原始的 url 映射进行处理 `0.7.4`
 - `app.map_static(static_map: dict)->App` 指定静态资源映射表，此表用于描述静态资源路径
 - `app.register_routes(routes: list)->App` 注册路由列表，此函数应该在线上模式时被调用，
     其参数为通过 persist 生成的文件中的 `routes` 字段
@@ -283,12 +284,13 @@ ajax.delete('/test/demo?param1=1&from_=2&param3=3&param4=4')
 声明为：
 
 ```python
-def route(module=None, name=None, **kwargs):
+def route(module=None, name=None, extname=None, **kwargs):
     pass
 ```
 
 - `module` 此路由所属的业务/功能模块名称
 - `name` 此路由的名称
+- `extname` 自定义此路由的扩展名 **不要包含 `.` 符号** (可能需要指定响应的 `content-type`) `Since 0.7.4`
 - `**kwargs` *用户自定义参数*
 
 > 这些参数都会被传递给中间件的各个函数的参数 `meta`。详细见 [RouteMeta](#RouteMeta)
@@ -452,6 +454,32 @@ app = App(...)
 ```
 
 在部署到 wsgi 容器时，将 `main:app` 暴露给容器作为入口。
+
+### 映射URL
+
+`Since 0.7.4`
+
+在某些情况下，可能会用到更原始的路由映射（比如 url 中的参数支持），而不是使用自动路由，
+此时可以使用 `map_urls` 来实现：
+
+```python
+from restfx import App
+from restfx.http import HttpResponse, HttpRequest
+app = App(...)
+
+def test_handler(request: HttpRequest, param: str):
+    return HttpResponse('Got param: ' + param)
+
+app.map_urls({
+    '/test/<str:param>': test_handler
+})
+```
+
+此时，可以访问地址 `/test/<str:param>` ，并使用 `test_handler` 来处理请求。
+
+> 注意，路径前的 `/` 符号不可缺少。
+
+> 此处的映射，不会展示在 API 列表中。
 
 ### 分发前的处理
 
@@ -685,6 +713,7 @@ class MiddlewareClass(MiddlewareBase):
 - `id: str` 路由ID，此ID由路由相关信息组合而成
 - `module: str` 装饰器上指定的 module 值
 - `name: str` 装饰器上指定的 name 值
+- `extname: str` 装饰器上指定的 extname 值
 - `method: str` 路由的请求方法 **大写格式**
 - `path: str` 路由的请求路径
 - `handler: FunctionType` 路由处理函数对象
@@ -817,3 +846,10 @@ def get():
 
 - [ ] 添加严格模式支持。在严格模式下，不允许传入未声明的参数。
 - [ ] 参数类型支持上传文件
+
+## 更新日志
+
+### 0.7.4
+
+- 添加装饰器上 `extname` 参数支持
+- 优化 API 列表
