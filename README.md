@@ -448,7 +448,7 @@ app.register_routes(restfx_map.routes)
 
 ## 高级用法
 
-### 创建应用的完整参数列表
+### 应用的完整参数列表
 
 通过 `App(...)` 新建一个应用，此构造接收以下参数:
 
@@ -460,6 +460,8 @@ app.register_routes(restfx_map.routes)
 - `strict_mode=False` 是否启用严格模式 `Since 0.7.5`
 
 ### 使用路由处理函数的参数接收文件上传
+
+> `Since 0.7.5`
 
 当需要接收文件上传时，只需要将参数类型指定为 `FileStorage`。
 
@@ -476,7 +478,7 @@ def post(file: FileStorage):
     pass
 ```
 
-参考: [werkzeug.datastructures.FileStorage](https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage)
+参考 [werkzeug.datastructures.FileStorage](https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage)
 
 ### wsgi
 
