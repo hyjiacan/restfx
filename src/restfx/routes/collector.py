@@ -136,7 +136,7 @@ class Collector:
 
         # 解析路由的定义
         # defines = re.compile(r'^@(route\(.+?\)).*(\n.*?)+^def (.+?)\(', re.M).findall(source)
-        defines = re.compile(r'^@(route\(.+?\))(.*?)^def (.+?)\(', re.M | re.S).findall(source)
+        defines = re.compile(r'^@(route\(.*?\))(.*?)^def (.+?)\(', re.M | re.S).findall(source)
         # 没有找到定义，返回 None
         if len(defines) == 0:
             yield None

@@ -40,8 +40,8 @@ function render (list, data) {
   document.title = 'Table of API_LIST - ' + data.app_name
   document.querySelector('#app-name').innerHTML = data.app_name
 
-  var apis = data.apis
-  if (!apis || !Object.keys(apis).length) {
+  var routes = data.routes
+  if (!routes || !routes.length) {
     document.querySelector('#loading').innerHTML = '未找到接口信息'
     return
   }
@@ -50,12 +50,28 @@ function render (list, data) {
     'class': 'api-items'
   })
 
-  var modules = Object.keys(apis)
-  modules.sort()
-  modules.forEach(function(module){
+  var modules = {}
+  var moduleNames = []
+  for (var i = 0; i < routes.length; i++) {
+    var route = routes[i];
+    // if (!route.module) {
+    //   route.module = '<未命名模块>'
+    // }
+    // if (!route.name) {
+    //   route.name = '<未命名路由>'
+    // }
+    if (!modules[route.module]) {
+      modules[route.module] = []
+      moduleNames.push(route.module)
+    }
+    modules[route.module].push(route)
+  }
+
+  moduleNames.sort()
+  moduleNames.forEach(function(moduleName){
     apiList.appendChild(el('li', {
       'class': 'module-item'
-    }, renderModule(apis[module], module, data.expanded)))
+    }, renderModule(modules[moduleName], moduleName, data.expanded)))
   })
 
   list.innerHTML = ''
@@ -69,8 +85,10 @@ function padStart(str, width, fill) {
   return str
 }
 
-function renderModule (data, module, expanded) {
-  var encodedModuleName = module.split('').map(function(ch) {return padStart(ch.charCodeAt(0).toString(32), 4, '0')}).join('')
+function renderModule (data, moduleName, expanded) {
+  var encodedModuleName = moduleName ? moduleName.split('').map(function(ch) {
+    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
+  }).join('') : '00000000000000000000000000000000'
   return el('details',  {
     open: expanded ? 'open' : undefined
   }, [
@@ -84,7 +102,9 @@ function renderModule (data, module, expanded) {
         },
         '#'
       ),
-      el('span', null, module)
+      el('span', {
+        'class': moduleName ? '' : 'unnamed-item'
+      }, moduleName || '<未命名>')
     ]),
     el(
       'ol',
@@ -103,7 +123,9 @@ function renderModule (data, module, expanded) {
                 },
                 '#'
               ),
-              el('span', { 'class': 'route-name' }, route.name),
+              el('span', {
+                'class': 'route-name' + (route.name ? '' : ' unnamed-item')
+               }, route.name || '<未命名>'),
               el('span', { 'class': 'comment', html: true }, route.handler_info.description)
             ]),
             el('div', {

@@ -17,7 +17,7 @@ class Router:
         :type:Dict[str, Optional[FunctionDescription]]
         """
         # 开发模式的模块缓存，用于API列表
-        self.modules_cache = {}
+        self.routes_cache = {}
         # 线上模式时，使用固定路由
         self.production_routes = {}
         # API列表页面缓存
@@ -37,7 +37,7 @@ class Router:
                 'use "App(..., debug_mode=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
-        if not self.api_list_html_cache or True:
+        if not self.api_list_html_cache:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../assets_for_dev/templates/api_list.html'),
                       encoding='utf-8') as fp:
@@ -48,10 +48,8 @@ class Router:
         if request.method != 'POST':
             return HttpResponse(self.api_list_html_cache, content_type='text/html')
 
-        if not self.modules_cache:
+        if not self.routes_cache:
             routes = self.context.collector.collect(self.context.routes_map)
-
-            modules = {}
 
             if 'api_list_addition' in self.context.dev_options:
                 addition_func = self.context.dev_options['api_list_addition']
@@ -62,14 +60,7 @@ class Router:
                 if addition_func is not None:
                     route['addition_info'] = addition_func(route)
 
-                module = route['module']
-
-                if module in modules:
-                    modules[module].append(route)
-                else:
-                    modules[module] = [route]
-
-            self.modules_cache = modules
+            self.routes_cache = routes
 
         from restfx import __meta__
         return JsonResponse({
@@ -79,7 +70,7 @@ class Router:
             },
             'app_name': self.context.dev_options['app_name'],
             'expanded': self.context.dev_options['api_list_expanded'],
-            'apis': self.modules_cache,
+            'routes': self.routes_cache,
         }, encoder=FunctionDescription.JSONEncoder)
 
     def dispatch(self, request: HttpRequest, entry):
@@ -97,7 +88,7 @@ class Router:
             return self.route_for_production(request, entry)
 
         resolver = RouteResolver(self.context,
-                                 self.modules_cache,
+                                 self.routes_cache,
                                  self.entry_cache,
                                  request.method, entry)
 

@@ -118,6 +118,10 @@ button:active {
   cursor: help;
 }
 
+.unnamed-item {
+  color: #aaaaaa;
+}
+
 /* ----------------- header ------------------------ */
 
 header {
