@@ -217,10 +217,12 @@ function renderArgEditor (arg) {
   }
 
   var editor
-
-  if (['bool', 'int', 'float'].indexOf(arg.annotation_name) === -1) {
+  if (arg.annotation_name === 'FileStorage') {
+    attrs.type = 'file'
+    editor = el('input', attrs)
+  } else if (['bool', 'int', 'float'].indexOf(arg.annotation_name) === -1) {
     editor = el('textarea', attrs, arg.has_default ? arg['default'] : '')
-  } else {
+  } else  {
     attrs.value = arg.has_default ? arg['default'] : ''
     editor = el('input', attrs)
   }

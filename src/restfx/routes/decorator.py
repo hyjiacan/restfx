@@ -145,7 +145,7 @@ def _get_parameter_str(args: OrderedDict):
     return ', '.join([str(args[arg]) for arg in args])
 
 
-def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup=None):
+def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, backup2):
     """
 
     :param data:
@@ -161,12 +161,19 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup=No
     if alias is not None and alias in data:
         return False, data[alias]
 
-    if isinstance(backup, dict):
-        if name in backup:
-            return False, backup[name]
+    if isinstance(backup1, dict):
+        if name in backup1:
+            return False, backup1[name]
 
-        if alias is not None and alias in backup:
-            return False, backup[alias]
+        if alias is not None and alias in backup1:
+            return False, backup1[alias]
+
+    if isinstance(backup2, dict):
+        if name in backup2:
+            return False, backup2[name]
+
+        if alias is not None and alias in backup2:
+            return False, backup2[alias]
 
     # 使用默认值
     if arg_spec.has_default:
@@ -209,7 +216,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             continue
 
         # noinspection PyUnresolvedReferences
-        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec, request.BODY)
+        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec, request.BODY, request.FILES)
 
         # 未找到参数
         if use_default is None:

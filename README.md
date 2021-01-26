@@ -458,6 +458,25 @@ app.register_routes(restfx_map.routes)
 - `append_slash=False` 是否在 url 末尾强制添加 `/`
 - `strict_mode=False` 是否启用严格模式 `Since 0.7.5`
 
+### 使用路由处理函数的参数接收文件上传
+
+当需要接收文件上传时，只需要将参数类型指定为 `FileStorage`。
+
+类型 `FileStorage` 可以通过 `restfx.http.FileStorage`
+或 `from werkzeug.datastructures import FileStorage` 导入。
+前者只是后者的一个导出代理(为了便于记忆)，其根本上是同一个类型。
+
+```python
+from restfx import route
+from restfx.http import FileStorage
+
+@route('测试', '测试文件上传')
+def post(file: FileStorage):
+    pass
+```
+
+参考: [werkzeug.datastructures.FileStorage](https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage)
+
 ### wsgi
 
 `App` 实例本身即是 `wsgi` 入口。
@@ -853,11 +872,4 @@ def get():
 
 ## 待办事项
 
-- [ ] 参数类型支持上传文件
-
-## 更新日志
-
-### 0.7.4
-
-- 添加装饰器上 `extname` 参数支持
-- 优化 API 列表
+无

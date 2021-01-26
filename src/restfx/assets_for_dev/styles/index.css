@@ -513,6 +513,7 @@ details[open] summary {
   box-sizing: border-box;
   border-width: 0 0 1px 0;
   border-color: #888888;
+  border-style: solid;
 }
 
 .arg-value:focus,

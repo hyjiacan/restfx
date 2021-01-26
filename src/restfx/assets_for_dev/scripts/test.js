@@ -18,7 +18,12 @@
         return
       }
       field.classList.remove('required')
-      fields[field.name] = field.value
+
+      if (field.type === 'file') {
+        fields[field.name] = field.files[0]
+      } else {
+        fields[field.name] = field.value
+      }
     }
     temp = testPanel.querySelectorAll('textarea.arg-value')
     for (var index = 0; index < temp.length; index++) {
@@ -40,8 +45,11 @@
       }
     }
 
-    if (['get', 'devare'].indexOf(method) === -1) {
-      option.data = fields
+    if (['get', 'delete'].indexOf(method) === -1) {
+      option.data = new FormData()
+      for (var name in fields) {
+        option.data.append(name, fields[name])
+      }
     } else {
       option.param = fields
     }

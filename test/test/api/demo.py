@@ -1,5 +1,6 @@
 from restfx import route
 from restfx.http import HttpRequest
+from restfx.http import FileStorage
 
 
 @route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False)
@@ -38,22 +39,21 @@ def get_param(param1, req: HttpRequest, from_=None, param3=5):
     }
 
 
-@route(module='测试名称-模块', name='测试名称-PUT_PARAM')
-def put(request: str, param1, from_=None, param3=5):
+@route(module='测试名称-模块', name='测试名称-PUT_PARAM', auth=False)
+def put(request: str, param1: FileStorage):
     """
 
     :param request:第1个参数
-    :param param1:第2个参数
-    :param from_:第3个参数
-    :param param3:第4个参数
+    :param param1:需要上传一个文件
     :return: 返回值为参数字典
     """
     # request 会是请求参数，参数列表中没有 HttpRequest
     return {
         'request': request,
-        'param1': param1,
-        'from': from_,
-        'param3': param3,
+        'param1': {
+            'filename': param1.filename,
+            'type': param1.mimetype
+        }
     }
 
 
