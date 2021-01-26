@@ -826,21 +826,14 @@ def get():
 
 ## 截图
 
-### 路由声明
+以下截图为API列表，对应的路由声明源码见
 
-![get](./assets/a1.png)
+- [test/test/api/__init__.py](test/test/api/__init__.py)
+- [test/test/api/demo.py](test/test/api/demo.py)
 
-![post](./assets/a2.png)
+![list](assets/1.png)
 
-![delete](./assets/a3.png)
-
-### API列表
-
-![list](./assets/b1.png)
-
-![test](./assets/b2.png)
-
-![test](./assets/b3.png)
+![test](assets/2.png)
 
 ## 待办事项
 

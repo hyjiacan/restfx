@@ -1,25 +1,128 @@
+/* ----------------- layout ------------------------ */
 html,
 body {
   padding: 0 !important;
   margin: 0 !important;
-  height: 100% !important;
+  /* height: 100% !important; */
   width: 100% !important;
-  overflow: hidden !important;
+  /* overflow: hidden !important; */
   text-align: left !important;
   font-size: 14px !important;
 }
 
-.container {
-  height: 100%;
+#app {
+  /* height: 100%; */
   width: 100%;
   color: #333333;
-  overflow: auto;
+  /* overflow: auto; */
 }
+
+hr {
+  clear: both;
+  border-width: 5px 10px;
+  border-style: solid;
+  border-color: white #086cca;
+  height: 1px;
+  background-color: #086cca;
+  border-radius: 5px;
+}
+
+footer {
+  text-align: center;
+  font-size: 14px;
+  padding-bottom: 20px;
+}
+
+footer a {
+  color: #086cca;
+}
+
+footer a:hover {
+  color: red;
+}
+
+/* ----------------- common ------------------------ */
 
 .scroll-proxy {
   min-width: 800px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.select-all {
+  user-select: all;
+}
+
+.tip {
+  color: #88888888;
+  font-size: 14px;
+}
+
+.anchor {
+  opacity: 0.2;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #086cca;
+  will-change: opacity;
+  transition: opacity 200ms;
+}
+
+.anchor:hover {
+  color: #ff0000;
+}
+
+code {
+  color: #006fff;
+  font-size: 12px;
+}
+
+.hide {
+  display: none;
+}
+
+#loading {
+  text-align: center;
+  font-size: 3em;
+  color: #888888;
+  display: none;
+}
+button {
+  border: 1px solid #86b2db;
+  color: #086cca;
+  background: #e8f0f8;
+  padding: 3px 5px;
+  cursor: pointer;
+  font-size: 12px;
+  outline: none;
+  border-radius: 2px;
+  transition: border 200ms, background-color 200ms;
+  user-select: none;
+}
+
+button:hover {
+  box-shadow: 0 0 3px 1px #086cca;
+}
+
+button:active {
+  background-color: #086cca;
+  color: #fff;
+}
+
+#ie-tip {
+  color: #cc0000;
+  background-color: #faf1f1;
+  text-align: center;
+  padding: 10px 0;
+  display: none;
+  cursor: help;
+}
+
+/* ----------------- header ------------------------ */
+
+header {
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
 header h1 {
@@ -43,54 +146,167 @@ header h1 {
 
 .options select {
   width: 140px;
+  height: 26px;
   margin-right: 20px;
+  border-width: 0 0 1px 0;
 }
 
-.filters {
-  margin-top: 5px;
+.options {
+  font-size: 12px;
 }
 
-hr {
-  clear: both;
-  border-width: 5px 10px;
-  border-style: solid;
-  border-color: white #086cca;
-  height: 1px;
-  background-color: #086cca;
-  border-radius: 5px;
-}
+/* ----------------- api list ------------------------ */
 
 #api-list {
   min-height: 200px;
+  padding: 0 10px;
+  box-sizing: border-box;
 }
 
-#api-list[data-select-type="1"] > ol > li > details > ol > li > div:nth-child(2) > div > code,
-#api-list[data-select-type="2"] > ol > li > details > ol > li > div:nth-child(2) > div > code > span:nth-child(2),
-#api-list[data-select-type="3"] > ol > li > details > ol > li > div:nth-child(2) > div > code > span:nth-child(2) > span:nth-child(2),
-#api-list[data-select-type="4"] > ol > li > details > ol > li > div:nth-child(2) > div > code > span:nth-child(2) > span:nth-child(2) > span:nth-child(2),
-#api-list[data-select-type="5"] > ol > li > details > ol > li > div:nth-child(2) > div > code > span:nth-child(2) > span:nth-child(2) > span:nth-child(2) > span:nth-child(2),
-#test-panel[data-select-type="1"] > div > div:nth-child(2) > div:nth-child(1) > div > div > code,
-#test-panel[data-select-type="2"] > div > div:nth-child(2) > div:nth-child(1) > div > div > code > span:nth-child(2),
-#test-panel[data-select-type="3"] > div > div:nth-child(2) > div:nth-child(1) > div > div > code > span:nth-child(2) > span:nth-child(2),
-#test-panel[data-select-type="4"] > div > div:nth-child(2) > div:nth-child(1) > div > div > code > span:nth-child(2) > span:nth-child(2) > span:nth-child(2),
-#test-panel[data-select-type="5"] > div > div:nth-child(2) > div:nth-child(1) > div > div > code > span:nth-child(2) > span:nth-child(2) > span:nth-child(2) > span:nth-child(2) {
+details {
+  clear: both;
+}
+
+details summary {
+  cursor: default;
+  outline: none;
+  font-size: large;
+  color: #444;
+  display: block;
+  padding: 10px;
+  background-color: #ffffff;
+}
+
+details summary span:before,
+.route-name:before {
+  padding: 2px 5px;
+  border-radius: 2px;
+  margin: 0 5px;
+  vertical-align: 1px;
+  background: #ececec;
+  color: #636363;
+}
+
+details summary span:before {
+  content: '模块';
+  font-size: 13px;
+}
+
+.route-name:before {
+  content: '路由';
+  font-size: 12px;
+}
+
+/* ----------------- api item ------------------------ */
+
+#api-list[data-select-type='1']
+  > ol
+  > li
+  > details
+  > ol
+  > li
+  > div:nth-child(2)
+  > div
+  > code,
+#api-list[data-select-type='2']
+  > ol
+  > li
+  > details
+  > ol
+  > li
+  > div:nth-child(2)
+  > div
+  > code
+  > span:nth-child(2),
+#api-list[data-select-type='3']
+  > ol
+  > li
+  > details
+  > ol
+  > li
+  > div:nth-child(2)
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2),
+#api-list[data-select-type='4']
+  > ol
+  > li
+  > details
+  > ol
+  > li
+  > div:nth-child(2)
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2),
+#api-list[data-select-type='5']
+  > ol
+  > li
+  > details
+  > ol
+  > li
+  > div:nth-child(2)
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2),
+#test-panel[data-select-type='1']
+  > div
+  > div:nth-child(2)
+  > div:nth-child(1)
+  > div
+  > div
+  > code,
+#test-panel[data-select-type='2']
+  > div
+  > div:nth-child(2)
+  > div:nth-child(1)
+  > div
+  > div
+  > code
+  > span:nth-child(2),
+#test-panel[data-select-type='3']
+  > div
+  > div:nth-child(2)
+  > div:nth-child(1)
+  > div
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2),
+#test-panel[data-select-type='4']
+  > div
+  > div:nth-child(2)
+  > div:nth-child(1)
+  > div
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2),
+#test-panel[data-select-type='5']
+  > div
+  > div:nth-child(2)
+  > div:nth-child(1)
+  > div
+  > div
+  > code
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2)
+  > span:nth-child(2) {
   user-select: all;
   border-bottom: 1px dotted;
-}
-
-.select-all {
-  user-select: all;
 }
 
 .method {
   text-transform: uppercase;
   color: #e90588;
   padding: 0 5px;
-}
-
-.tip {
-  color: #88888888;
-  font-size: 14px;
 }
 
 .args-table {
@@ -130,54 +346,6 @@ hr {
 
 .arg-name {
   padding: 2px 3px;
-}
-
-details {
-  clear: both;
-}
-
-details summary {
-  cursor: default;
-  outline: none;
-  font-size: large;
-  color: #444;
-  display: block;
-  padding: 10px;
-  background-color: #ffffff;
-}
-
-details summary span:before,
-.route-name:before {
-  padding: 2px 5px;
-  border-radius: 2px;
-  margin: 0 5px;
-  vertical-align: 1px;
-  background: #ececec;
-  color: #636363;
-}
-
-details summary span:before {
-  content: '模块';
-  font-size: 13px;
-}
-
-.route-name:before {
-  content: '路由';
-  font-size: 12px;
-}
-
-.anchor {
-  opacity: 0.2;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: bold;
-  color: #086cca;
-  will-change: opacity;
-  transition: opacity 200ms;
-}
-
-.anchor:hover {
-  color: #ff0000;
 }
 
 .api-items li.module-item {
@@ -253,36 +421,6 @@ details[open] summary {
   background-color: #fdf4ff;
 }
 
-code {
-  color: #006fff;
-  font-size: 12px;
-}
-
-footer {
-  text-align: center;
-  font-size: 14px;
-  padding-bottom: 20px;
-}
-
-footer a {
-  color: #086cca;
-}
-
-footer a:hover {
-  color: red;
-}
-
-.hide {
-  display: none;
-}
-
-#loading {
-  text-align: center;
-  font-size: 3em;
-  color: #888888;
-  display: none;
-}
-
 .comment {
   font-size: 12px;
   color: #555555;
@@ -300,6 +438,8 @@ footer a:hover {
 .return-info code {
   margin-right: 5px;
 }
+
+/* ----------------- test panel ------------------------ */
 
 #test-panel {
   position: fixed;
@@ -429,34 +569,4 @@ textarea.arg-value:active {
 
 .response-time {
   margin-left: 20px;
-}
-button {
-  border: 1px solid #86b2db;
-  color: #086cca;
-  background: #e8f0f8;
-  padding: 3px 5px;
-  cursor: pointer;
-  font-size: 12px;
-  outline: none;
-  border-radius: 2px;
-  transition: border 200ms, background-color 200ms;
-  user-select: none;
-}
-
-button:hover {
-  box-shadow: 0 0 3px 1px #086cca;
-}
-
-button:active {
-  background-color: #086cca;
-  color: #fff;
-}
-
-#ie-tip {
-  color: #cc0000;
-  background-color: #faf1f1;
-  text-align: center;
-  padding: 10px 0;
-  display: none;
-  cursor: help;
 }

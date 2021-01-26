@@ -6,8 +6,8 @@ from restfx.http import HttpRequest
 def get(request, param1, param2=None, param3: int = 5):
     """
 
-    :param request:第1个参数
-    :param param1:第2个参数
+    :param request:第1个参数 内置类型 <i>HttpRequest</i>
+    :param param1:第2个参数 <span style="color:red">必填</span>
     :param param2:第3个参数
     :param param3:第4个参数
     :return: 返回值为参数字典

@@ -14,7 +14,7 @@
     />
   </head>
   <body>
-    <div class="container">
+    <div id="app">
       <div class="scroll-proxy">
         <header>
           <h1>
@@ -111,6 +111,15 @@
         </div>
       </div>
     </div>
+    <script>
+      var urlRoot = window.location.protocol + '//' + window.location.host
+      var apiPrefix = window.location.pathname.substring(1)
+      var API_LIST = {}
+      var testPanel = document.querySelector('#test-panel')
+    </script>
+    <script src="/restfx_assets_for_dev/scripts/xhr.js"></script>
+    <script src="/restfx_assets_for_dev/scripts/renderers.js"></script>
     <script src="/restfx_assets_for_dev/scripts/index.js"></script>
+    <script src="/restfx_assets_for_dev/scripts/test.js" defer></script>
   </body>
 </html>

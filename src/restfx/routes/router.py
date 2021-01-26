@@ -33,11 +33,13 @@ class Router:
         """
         if not self.context.DEBUG:
             self.context.logger.info(
-                'API list is disabled in production, use "App(..., debug_mode=True, ...)" to enable it.')
+                'API list is disabled in production, '
+                'use "App(..., debug_mode=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
         if not self.api_list_html_cache or True:
-            with open(os.path.join(os.path.dirname(__file__), '../assets_for_dev/templates/api_list.html'),
+            with open(os.path.join(os.path.dirname(__file__),
+                                   '../assets_for_dev/templates/api_list.html'),
                       encoding='utf-8') as fp:
                 lines = fp.readlines()
                 self.api_list_html_cache = ''.join(lines)
