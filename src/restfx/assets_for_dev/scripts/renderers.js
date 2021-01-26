@@ -200,7 +200,10 @@ function getArgDefaultValue (arg) {
 
 function renderArgDefaultValue (arg) {
   if (!arg.has_default) {
-    return el('span', null, '-')
+    return el('span', {
+      'class': 'required-field',
+      title: '必填项'
+    }, '*')
   }
   return el('code', null, getArgDefaultValue(arg))
 }

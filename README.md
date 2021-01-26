@@ -7,6 +7,7 @@ Python3 的 restful 多应用自动路由框架。
 - 没有繁锁的路由配置
 - 便捷的 restful 编码体验
 - 自动解析/校验请求参数，并填充到路由处理函数
+- 便捷的 API 列表页面以及接口测试支持 见[截图](#截图)
 
 ## 安装
 
@@ -852,7 +853,7 @@ def api_list_addition(route_info):
 
 App(...).set_dev_options(api_list_addition=api_list_addition)
 
-@route('module', 'name', auth=False)
+@route('module', 'name', auth=False)~~~~
 def get():
     pass
 ```

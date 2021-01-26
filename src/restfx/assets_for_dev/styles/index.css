@@ -352,6 +352,10 @@ details summary span:before {
   padding: 2px 3px;
 }
 
+.required-field {
+  color: rgb(211, 5, 5);
+}
+
 .api-items li.module-item {
   list-style: simp-chinese-informal;
 }
