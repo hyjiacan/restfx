@@ -142,7 +142,7 @@ def _process_json_params(request: HttpRequest, context: AppContext):
 
 
 def _get_parameter_str(args: OrderedDict):
-    return '\n\t\t'.join([str(args[arg]) for arg in args])
+    return ', '.join([str(args[arg]) for arg in args])
 
 
 def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup=None):
@@ -219,6 +219,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                 _get_parameter_str(args)
             )
             context.logger.warning(msg)
+            if not context.DEBUG:
+                msg = 'Missing required argument'
             return HttpBadRequest(msg)
 
         # 使用默认值
@@ -287,10 +289,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", signature: (%s)' \
                   % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
             context.logger.warning(msg)
+            if not context.DEBUG:
+                msg = 'Argument type mismatch'
             return HttpBadRequest(msg)
-
-    if not has_variable_args:
-        return actual_args
 
     # 填充可变参数
     variable_args = {}
@@ -307,9 +308,30 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             # noinspection PyUnresolvedReferences
             variable_args[item] = request.BODY[item]
 
-    actual_args.update(variable_args)
+    variable_arg_keys = variable_args.keys()
 
-    return actual_args
+    # 没有可变参数
+    if not variable_arg_keys:
+        return actual_args
+
+    # 有可变参数，并且指定了 kwargs
+    if has_variable_args:
+        actual_args.update(variable_args)
+        return actual_args
+
+    # 有可变参数，并且未指定 kwargs
+    # 未启用严格模式
+    if context.strict_mode is not True:
+        return actual_args
+
+    # 启用了严格模式
+    # 返回 400 响应
+    msg = 'Unknown argument(s) found: "%s", signature: (%s)' \
+          % (','.join(variable_arg_keys), _get_parameter_str(args))
+    context.logger.warning(msg)
+    if not context.DEBUG:
+        msg = 'Unknown argument(s)'
+    return HttpBadRequest(msg)
 
 
 def _wrap_http_response(mgr, data):

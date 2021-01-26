@@ -77,7 +77,7 @@ class Router:
         """
         路由分发入口
         :param request: 请求
-        :param entry: 入口文件，包名使用 . 符号分隔
+        :param entry: 入口地址
         :return:
         """
         if self.intercepter is not None:
@@ -85,7 +85,7 @@ class Router:
             entry = self.intercepter(request, entry)
 
         if not self.context.DEBUG:
-            return self.route_for_production(request, entry)
+            return self.route_for_production(request, '/' + entry)
 
         resolver = RouteResolver(self.context,
                                  self.routes_cache,
@@ -113,4 +113,4 @@ class Router:
             return func(request, args)
         except Exception as e:
             self.context.logger.error(e)
-            return HttpServerError('%s: %s' % (repr(e)))
+            return HttpServerError(repr(e))

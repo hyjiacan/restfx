@@ -18,7 +18,8 @@ class App:
                  app_root: str,
                  api_prefix='api',
                  debug_mode=False,
-                 append_slash=False
+                 append_slash=False,
+                 strict_mode=False
                  ):
         """
 
@@ -27,10 +28,11 @@ class App:
         :param api_prefix:
         :param debug_mode:
         :param append_slash:
+        :param strict_mode:
         """
 
         self.id = app_id
-        self.context = AppContext(self.id, app_root, debug_mode, append_slash)
+        self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode)
         self.dev_options = {}
 
         self.api_prefix = api_prefix

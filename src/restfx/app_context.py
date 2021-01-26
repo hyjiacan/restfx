@@ -12,7 +12,8 @@ class AppContext:
     def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
-                 append_slash: bool):
+                 append_slash: bool,
+                 strict_mode: bool):
         """
 
         """
@@ -24,6 +25,7 @@ class AppContext:
         # 工作目录
         self.ROOT = app_root
         self.append_slash = append_slash
+        self.strict_mode = strict_mode
         # 注册的中间件实例集合
         self.middlewares = []
         """

@@ -2,8 +2,8 @@ from restfx import route
 from restfx.http import HttpRequest
 
 
-@route(module='测试名称-模块', name='测试名称-GET', extname='jsp')
-def get(request, param1, param2=None, param3: int = 5):
+@route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False)
+def get(request, param1, param3: int = 5):
     """
 
     :param request:第1个参数 内置类型 <i>HttpRequest</i>
@@ -15,7 +15,7 @@ def get(request, param1, param2=None, param3: int = 5):
     # request 会是 HttpRequest
     return {
         'param1': param1,
-        'param2': param2,
+        # 'param2': param2,
         'param3': param3,
     }
 

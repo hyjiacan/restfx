@@ -34,9 +34,11 @@ restfx create projectname
 
 - 路由处理函数名称均使用 **小写**
 - 路由处理函数名称使用 **下划线风格**
-- 当使用路径 `GET /path/to/route` 的时候，
+- 就近原则
+    当使用路径 `GET /path/to/route` 的时候，
     如果 `to.py` 和 `route.py` 文件同时存在，
-    则会加载 `to.py` 中的 `get_route` 而不是 `route.py`
+    则会加载 `to.py` 中的 `get_route`，
+    而不是 `route.py` 中的 `get`。
 
 ### 名词说明
 
@@ -277,6 +279,9 @@ ajax.delete('/test/demo?param1=1&from_=2&param3=3&param4=4')
 此时可以省略参数类型，如: `param3: int =5` 省略为 `param3=5`
 - `param4` 会出现在 `delete` 请求的 `kwargs` 中
 
+> 在严格模式(`strict_mode=True`)时，若路由处理函数未指定 `**kwargs` 参数，
+> 那么在请求时，只能携带参数列表中声明的参数，否则会收到响应码 `400` 。 
+
 ### 装饰器
 
 装饰器 `route` 用于声明某个函数是一个路由处理函数。通过添加此装饰器以限制非路由函数被非法访问。
@@ -441,6 +446,17 @@ app.register_routes(restfx_map.routes)
     并调用 `restfx.register_routes(restfx_map.routes)` 注册路由。
 
 ## 高级用法
+
+### 创建应用的完整参数列表
+
+通过 `App(...)` 新建一个应用，此构造接收以下参数:
+
+- `app_id: str` 指定唯一的应用ID
+- `app_root: str` 指定应用的根目录
+- `api_prefix='api'` 指定API接口的前缀
+- `debug_mode=False` 是否启用调试模式
+- `append_slash=False` 是否在 url 末尾强制添加 `/`
+- `strict_mode=False` 是否启用严格模式 `Since 0.7.5`
 
 ### wsgi
 
@@ -837,7 +853,6 @@ def get():
 
 ## 待办事项
 
-- [ ] 添加严格模式支持。在严格模式下，不允许传入未声明的参数。
 - [ ] 参数类型支持上传文件
 
 ## 更新日志

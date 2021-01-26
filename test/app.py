@@ -50,7 +50,7 @@ def test_id(request: HttpRequest, **kwargs):
 
 
 app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
-app = App(app_id, root, debug_mode=True)
+app = App(app_id, root, debug_mode=True, strict_mode=True)
 
 app.map_routes({
     'test': 'test.api'
@@ -95,6 +95,13 @@ app.set_dev_options(
     api_list_expanded=True
 )
 
-# app.persist('./routes_map.py')
+def load_routes_map():
+    pass
+
 if __name__ == '__main__':
+    if not app.context.DEBUG:
+        if not os.path.exists('./routes_map.py'):
+            app.persist('./routes_map.py')
+        import routes_map
+        app.register_routes(routes_map.routes)
     app.startup()
