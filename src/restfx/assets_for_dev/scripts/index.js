@@ -71,11 +71,12 @@ function loadPage() {
   }
 
   var list = document.querySelector('#api-list')
-  var rootURL = window.location.protocol + '//' + window.location.host + window.location.pathname
+  var urlRoot = window.location.protocol + '//' + window.location.host
+  var apiPrefix = window.location.pathname.substring(1)
 
   // 请求数据
   document.querySelector('#loading').style.display = 'block'
-  request('post', rootURL, {
+  request('post', urlRoot + '/' + apiPrefix, {
     callback: function(response) {
       if (response.status !== 200) {
         list.innerHTML = response.data
@@ -155,17 +156,7 @@ function loadPage() {
               el('div', {
                 'class': 'url-info'
               }, [
-                el('div', { 'class': 'info' }, [
-                  el('span', { 'class': 'method' }, route.method),
-                  el('code', { 'class': 'url' }, [
-                    el('span', {
-                      'class': 'url-prefix'
-                    }, rootURL),
-                    el('span', {
-                      'class': 'url-path'
-                    }, route.path)
-                  ])
-                ]),
+                renderUrlInfo(route),
                 el('button', {
                   'class': 'btn-open-test',
                   'data-api': id
@@ -181,6 +172,33 @@ function loadPage() {
           }
         )
       )
+    ])
+  }
+
+  function renderUrlInfo(route) {
+    return el('div', { 'class': 'info' }, [
+      el('span', { 'class': 'method select-all' }, route.method),
+      el('code', { 'class': 'url' }, [
+        el('span', {
+          'class': 'url-root'
+        }, urlRoot),
+        el('span', {'class': 'url-prefix-with-slash'}, [
+          el('span', null, '/'),
+          el('span', {
+            'class': 'url-prefix'
+          },  [
+            el('span', null, apiPrefix),
+            el('span', {
+              'class': 'url-path-with-slash'
+            }, [
+              el('span', null, '/'),
+              el('span', {
+                'class': 'url-path'
+              }, route.path.substring(1)),
+            ])
+          ])
+        ])
+      ])
     ])
   }
 
@@ -253,7 +271,7 @@ function loadPage() {
 
     return el('tr', null, [
       el('td', null, el('span', {
-        'class': 'arg-name'
+        'class': 'arg-name select-all'
       }, argName)),
       el(
         'td',
@@ -438,8 +456,8 @@ function loadPage() {
     var api = apis[id]
     testPanel.querySelector('.module').textContent = api.module
     testPanel.querySelector('.name').textContent = api.name
-    testPanel.querySelector('.method').textContent = api.method
-    testPanel.querySelector('.url').textContent = rootURL + api.path
+    testPanel.querySelector('.info').innerHTML = ''
+    testPanel.querySelector('.info').appendChild(renderUrlInfo(api))
 
     if(api.addition_info){
       testPanel.querySelector('.addition-info').innerHTML = api.addition_info
@@ -493,13 +511,38 @@ function loadPage() {
     testPanel.querySelector('textarea.response-content').style.display = 'block'
   }
 
-  document.querySelector('#btn-fullscreen').addEventListener('click', function() {
+  function toggleFullscreen() {
     if (testPanel.classList.contains('fullscreen')) {
       testPanel.classList.remove('fullscreen')
     } else {
       testPanel.classList.add('fullscreen')
     }
+  }
+
+  document.querySelector('#btn-fullscreen').addEventListener('click', toggleFullscreen)
+  var lastClick = 0
+  testPanel.querySelector('.panel-heading').addEventListener('click', function (e) {
+    var now = new Date()
+    if (now - lastClick > 200) {
+      lastClick = now
+      return
+    }
+    toggleFullscreen()
   })
+
+  var selectType = document.querySelector('#option-select-type')
+  var optionsSelectType = localStorage.getItem('options-select-type')
+  if(!optionsSelectType) {
+    optionsSelectType = '0'
+  }
+selectType.value = optionsSelectType
+  list.setAttribute('data-select-type',  optionsSelectType)
+  testPanel.setAttribute('data-select-type',  optionsSelectType)
+  selectType.onchange = function() {
+    list.setAttribute('data-select-type',  selectType.value)
+    testPanel.setAttribute('data-select-type',  selectType.value)
+    localStorage.setItem('options-select-type', selectType.value)
+  }
 
   document.querySelector('#tools').style.display = 'block'
 }
