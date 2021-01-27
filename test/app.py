@@ -95,13 +95,16 @@ app.set_dev_options(
     api_list_expanded=True
 )
 
+
 def load_routes_map():
-    pass
+    if not os.path.exists('./routes_map.py'):
+        app.persist('./routes_map.py')
+    import routes_map
+    app.register_routes(routes_map.routes)
+
 
 if __name__ == '__main__':
     if not app.context.DEBUG:
-        if not os.path.exists('./routes_map.py'):
-            app.persist('./routes_map.py')
-        import routes_map
-        app.register_routes(routes_map.routes)
+        load_routes_map()
+
     app.startup()

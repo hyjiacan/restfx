@@ -220,7 +220,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
         # 未找到参数
         if use_default is None:
-            msg = '%s\n\tMissing required argument "%s":\n\t\t%s' % (
+            msg = '%s\n\tMissing required argument "%s": %s' % (
                 get_func_info(func),
                 arg_name,
                 _get_parameter_str(args)

@@ -108,11 +108,11 @@ class Collector:
             routes.append(define)
 
     def get_route_decorator(self, func):
-        match = re.findall(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
+        match = re.match(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
         if match is None:
             return None
 
-        router_str = match[0][0]
+        router_str = match.group(1)
 
         # 将函数名称由 route 替换为 _fake_route
         router_str = '_fake_route' + router_str[5:]
@@ -135,8 +135,7 @@ class Collector:
         source = ''.join(lines)
 
         # 解析路由的定义
-        # defines = re.compile(r'^@(route\(.+?\)).*(\n.*?)+^def (.+?)\(', re.M).findall(source)
-        defines = re.compile(r'^@(route\(.*?\))(.*?)^def (.+?)\(', re.M | re.S).findall(source)
+        defines = re.findall(r'^@(route\(.*?\))(.*?)^def (.+?)\(', source, re.M | re.S)
         # 没有找到定义，返回 None
         if len(defines) == 0:
             yield None
@@ -157,6 +156,7 @@ class Collector:
             pkg = re.sub(r'[/\\]', '.', path.relpath(fullname, route_define))[0:-3]
 
             is_package = path.basename(fullname) == '__init__.py'
+
             # 当是包时，移除 __init__ 部分
             if is_package:
                 http_path = '%s.%s' % (http_prefix, pkg[0:-len('__init__')])
@@ -182,7 +182,13 @@ class Collector:
             if self.append_slash:
                 http_path += '/'
 
-            pkg = '%s.%s' % (pkg_prefix, pkg)
+            # 当是包时，移除 .__init__ 部分
+            if is_package:
+                pkg = '%s.%s' % (pkg_prefix, pkg[0:-len('__init__')])
+            else:
+                pkg = '%s.%s' % (pkg_prefix, pkg)
+
+            pkg = pkg.rstrip('.')
 
             module = utils.load_module(pkg)
             handler_obj = getattr(module, func)
