@@ -2,6 +2,8 @@
 
 Python3 的 restful 多应用自动路由框架。
 
+> 底层基于 [werkzeug](https://werkzeug.palletsprojects.com/)
+
 此框架解决的问题：
 
 - 没有繁锁的路由配置
