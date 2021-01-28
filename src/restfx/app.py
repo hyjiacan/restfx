@@ -126,6 +126,11 @@ class App:
         else:
             helper.print_meta('dev-server')
 
+        if self.context.enable_api_page:
+            print(' * Table of APIs: http://%s:%s/%s%s' % (
+                host, port, self.api_prefix, '/' if self.context.append_slash else ''
+            ))
+
         run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
         self.close()
 

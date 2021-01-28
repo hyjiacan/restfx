@@ -37,7 +37,7 @@ class Router:
                 'use "App(..., enable_api_page=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
-        if not self.api_list_html_cache:
+        if not self.api_list_html_cache or not self.context.dev_options['api_page_cache']:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../assets_for_dev/templates/api_list.html'),
                       encoding='utf-8') as fp:
@@ -48,7 +48,7 @@ class Router:
         if request.method != 'POST':
             return HttpResponse(self.api_list_html_cache, content_type='text/html')
 
-        if not self.routes_cache:
+        if not self.routes_cache or not self.context.dev_options['api_page_cache']:
             routes = self.context.collector.collect(self.context.routes_map)
 
             if 'api_list_addition' in self.context.dev_options:

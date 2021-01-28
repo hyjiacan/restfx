@@ -45,7 +45,9 @@ class AppContext:
 
         self.dev_options = {
             'app_name': 'An awesome %s project' % __meta__.name,
-            'api_list_expanded': False
+            'api_list_expanded': False,
+            # 是否缓存API页面的 html 文件 和 接口数据
+            'api_page_cache': True
         }
 
         if debug_mode:

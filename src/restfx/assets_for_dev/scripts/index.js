@@ -11,6 +11,26 @@ function loadPage() {
       render(list, typeof data === 'string' ? JSON.parse(data) : data)
     }
   })
+
+  var app = document.querySelector('#app')
+  var btBtn = document.querySelector('#btn-back-to-top')
+  var toggleTimer = -1
+
+  app.addEventListener('scroll', function() {
+    clearTimeout(toggleTimer)
+
+    toggleTimer = setTimeout(function() {
+      if (app.scrollTop === 0) {
+        btBtn.style.display = 'none'
+      } else {
+        btBtn.style.display = 'flex'
+      }
+    }, 300)
+  })
+
+  btBtn.addEventListener('click', function() {
+    app.scrollTop = 0
+  })
 }
 
 var all
