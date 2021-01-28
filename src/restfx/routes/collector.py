@@ -108,7 +108,7 @@ class Collector:
             routes.append(define)
 
     def get_route_decorator(self, func):
-        match = re.match(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
+        match = re.search(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
         if match is None:
             return None
 

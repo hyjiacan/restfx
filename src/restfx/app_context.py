@@ -1,7 +1,6 @@
 import os
 
 from restfx import __meta__
-
 from .routes.collector import Collector
 from .util.logger import Logger
 
@@ -13,7 +12,8 @@ class AppContext:
                  app_root: str,
                  debug_mode: bool,
                  append_slash: bool,
-                 strict_mode: bool):
+                 strict_mode: bool,
+                 enable_api_page: bool):
         """
 
         """
@@ -22,6 +22,8 @@ class AppContext:
         self.app_id = app_id
         # 是否启用DEBUG模式
         self.DEBUG = debug_mode
+        # 是否启用 API 列表
+        self.enable_api_page = debug_mode if enable_api_page is None else enable_api_page
         # 工作目录
         self.ROOT = app_root
         self.append_slash = append_slash

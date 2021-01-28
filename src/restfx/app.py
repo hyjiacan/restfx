@@ -19,7 +19,8 @@ class App:
                  api_prefix='api',
                  debug_mode=False,
                  append_slash=False,
-                 strict_mode=False
+                 strict_mode=False,
+                 enable_api_page=None
                  ):
         """
 
@@ -29,10 +30,11 @@ class App:
         :param debug_mode:
         :param append_slash:
         :param strict_mode:
+        :param enable_api_page:
         """
 
         self.id = app_id
-        self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode)
+        self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode, enable_api_page)
         self.dev_options = {}
 
         self.api_prefix = api_prefix
@@ -57,21 +59,15 @@ class App:
             request = HttpRequest(environ, self.context.app_id)
             adapter = self.url_map.bind_to_environ(environ)
 
-            # 仅在调试时重定向
-            if self.context.DEBUG and request.path == '/':
-                response = HttpResponse(status=302, headers={
-                    'Location': '/' + self.api_prefix
-                })
+            endpoint, values = adapter.match()
+            if endpoint == 'api_list':
+                response = self.router.api_list(request)
+            elif endpoint == 'entry_only':
+                response = self.router.dispatch(request, values['entry'])
+            elif endpoint in self.custom_url_map:
+                response = self.custom_url_map[endpoint](request, **values)
             else:
-                endpoint, values = adapter.match()
-                if endpoint == 'api_list':
-                    response = self.router.api_list(request)
-                elif endpoint == 'entry_only':
-                    response = self.router.dispatch(request, values['entry'])
-                elif endpoint in self.custom_url_map:
-                    response = self.custom_url_map[endpoint](request, **values)
-                else:
-                    response = HttpNotFound()
+                response = HttpNotFound()
         except Exception as e:
             if isinstance(e, NotFound):
                 response = HttpNotFound()

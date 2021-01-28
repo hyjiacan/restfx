@@ -31,10 +31,10 @@ class Router:
         :param request:
         :return:
         """
-        if not self.context.DEBUG:
+        if not self.context.enable_api_page:
             self.context.logger.info(
-                'API list is disabled in production, '
-                'use "App(..., debug_mode=True, ...)" to enable it.')
+                'API list is disabled, '
+                'use "App(..., enable_api_page=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
         if not self.api_list_html_cache:

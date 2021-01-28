@@ -4,12 +4,26 @@ Python3 的 restful 多应用自动路由框架。
 
 > 底层基于 [werkzeug](https://werkzeug.palletsprojects.com/)
 
-此框架解决的问题：
+## 为什么要使用此框架
 
-- 没有繁锁的路由配置
-- 便捷的 restful 编码体验
-- 自动解析/校验请求参数，并填充到路由处理函数
-- 便捷的 API 列表页面以及接口测试支持 见[截图](#截图)
+开发此框架的目标是 **提升开发效率**。
+
+我也曾使用过 **Django**，**Flask**。
+但其繁琐的路由注册，以及参数声明，让人难以接受，简单的功能，却要写一大段代码。
+
+此框架的前身是 [restful-dj](https://gitee.com/hyjiacan/restful-dj)，
+这是一个为 Django 开发的框架。
+
+在使用中慢慢发现，在 restful 接口上，Django 给了我太多我用不到的东西，
+臃肿不堪，于是才决定基于 `werkzeug` 开发。
+
+以框架解决了以下问题：
+
+1. 没有繁锁的路由配置，免去路由注册。仅仅需要对模块根进行注册，模块下的所有路由都会自动被收集调用。 
+2. 自动解析/校验请求参数，并填充到路由处理函数，省去枯燥的参数获取/校验。需要做的仅仅是编写一个函数，并添加函数参数的类型声明。 
+3. 提供 **接口列表页面** 以及接口测试支持，让接口随码更新，不用手动维护API文档。 见[截图](#截图)
+
+**此框架的弊端: 不支持将参数作为 url 路径的一部分**
 
 ## 安装
 
@@ -43,6 +57,7 @@ restfx create projectname
     则会加载 `to.py` 中的 `get_route`，
     而不是 `route.py` 中的 `get`。
 
+
 ### 名词说明
 
 - **应用** 使用 `App()` 初始化得到的实例
@@ -68,6 +83,10 @@ if __name__ == '__main__':
 ```
 
 - `api_prefix` 用于指定 api 接口 url 的根路径，即所有接口都是以此项指定的值开始(默认值为 `api`)。
+    ```
+    http://127.0.0.1:8000/any/prefix
+    ```
+    当启用了 [接口列表页面](#应用的完整参数列表) 时，可以通过以上地址访问接口列表页面，以及对接口进行简单的测试 
 - `map_static` 用于指定静态资源与目录映射关系。
   ```python
   import os
@@ -77,8 +96,6 @@ if __name__ == '__main__':
   ```
   此配置会允许通过url `/static` 访问静态目录 `{root}/path/to/static`。
   指定的静态目录可以是绝对路径，也可以是相对 `root` 的相对路径。
-
-如：http://127.0.0.1:8000/any/prefix 。
 
 > 多应用模式：每次调用 `restfx.App(...)` 都会启动一个新的应用服务器。
 > 每个应用中的路由/中间件等都是独立的。
@@ -460,6 +477,9 @@ app.register_routes(restfx_map.routes)
 - `debug_mode=False` 是否启用调试模式
 - `append_slash=False` 是否在 url 末尾强制添加 `/`
 - `strict_mode=False` 是否启用严格模式 `Since 0.7.5`
+- `enable_api_page=None` 是否启用接口列表页面 `Since 0.7.6`
+
+> `enable_api_page` 的值在默认情况下(值为 `None` 时)与 `debug_mode` 一致。 
 
 ### 使用路由处理函数的参数接收文件上传
 
@@ -519,7 +539,7 @@ app.map_urls({
 
 > 注意，路径前的 `/` 符号不可缺少。
 
-> 此处的映射，不会展示在 API 列表中。
+> 此处的映射，不会展示在 接口列表中。
 
 ### 分发前的处理
 
@@ -829,13 +849,13 @@ app.register_middleware(
 
 支持的配置项:
  
-- `app_name: str` 在 API 列表上展示的应用名称。
-- `api_list_addition: FunctionType` 指定API列表的附加项。一般用于展示一些自定义的路由字段。
-- `api_list_expanded: bool` 在API列表加载后，是否默认展开所有项。
+- `app_name: str` 在 接口列表上展示的应用名称。
+- `api_list_addition: FunctionType` 指定接口列表的附加项。一般用于展示一些自定义的路由字段。
+- `api_list_expanded: bool` 在接口列表加载后，是否默认展开所有项。
 
 #### api_list_addition
 
-用于自定义API列表中的附加信息渲染。其声明如下：
+用于自定义接口列表中的附加信息渲染。其声明如下：
 
 ```python
 def api_list_addition(route_info):
@@ -850,14 +870,14 @@ def api_list_addition(route_info):
 from restfx import App, route
 
 def api_list_addition(route_info):
-    if 'auth' not in route_info['kwargs'] or route_info['kwargs'] is False:
+    if 'auth' not in route_info['kwargs'] or route_info['kwargs']['auth'] is False:
         return '<span style="color: #ff7d7d">[需要身份校验]</span>'
     return '<span style="color: #66c0de">[不需要身份校验]</span>'
 
 
 App(...).set_dev_options(api_list_addition=api_list_addition)
 
-@route('module', 'name', auth=False)~~~~
+@route('module', 'name', auth=False)
 def get():
     pass
 ```
@@ -866,7 +886,7 @@ def get():
 
 ## 截图
 
-以下截图为API列表，对应的路由声明源码见
+以下截图为接口列表，对应的路由声明源码见
 
 - [test/test/api/__init__.py](test/test/api/__init__.py)
 - [test/test/api/demo.py](test/test/api/demo.py)
