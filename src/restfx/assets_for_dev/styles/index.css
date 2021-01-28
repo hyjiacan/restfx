@@ -143,9 +143,17 @@ header h1 {
   margin-top: 24px;
   display: none;
 }
-.options,
+
 .buttons {
   display: inline-block;
+}
+
+.buttons i {
+  display: inline-block;
+  vertical-align: middle;
+  height: 14px;
+  border-left: 1px solid #aaa;
+  margin: 0 5px;
 }
 
 .options select {
@@ -449,7 +457,8 @@ details[open] summary {
 
 /* ----------------- test panel ------------------------ */
 
-#test-panel {
+#test-panel,
+#option-panel {
   position: fixed;
   left: 0;
   top: 0;
@@ -462,21 +471,25 @@ details[open] summary {
 }
 
 .panel {
-  min-width: 720px;
-  max-width: 1080px;
-  width: 80%;
   background-color: #ffffff;
   border-radius: 4px;
-  min-height: 600px;
-  max-height: 100%;
+  transition: width 200ms, height 200ms;
   display: grid;
   grid-template-rows: 45px 1fr;
 }
 
-#test-panel.fullscreen .panel {
+#test-panel .panel {
+  min-width: 720px;
+  max-width: 1080px;
+  width: 80%;
+  min-height: 600px;
+  max-height: 100%;
+}
+
+.fullscreen.panel {
   max-width: unset;
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .panel-heading {
@@ -501,7 +514,6 @@ details[open] summary {
 
 .panel-heading--buttons button {
   border: none;
-  background: none;
 }
 
 .panel-body {
@@ -578,4 +590,45 @@ textarea.arg-value:active {
 
 .response-time {
   margin-left: 20px;
+}
+
+/* ---------------option panal --------------------------*/
+
+.option-tip {
+  padding: 10px;
+  color: #555555;
+  font-size: 12px;
+  text-align: right;
+}
+
+.option-tip:before {
+  content: '!';
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  background: #888;
+  color: #fff;
+  display: inline-block;
+  border-radius: 50%;
+  text-align: center;
+  overflow: hidden;
+  font-family: '黑体';
+  vertical-align: middle;
+}
+
+#option-panel .panel {
+  width: 600px;
+  height: 300px;
+}
+
+#option-panel .options {
+  padding: 10px 60px;
+}
+
+#option-panel .options > div {
+  margin: 10px 0;
+}
+
+#option-panel input[type=checkbox] {
+  vertical-align: -2px;
 }

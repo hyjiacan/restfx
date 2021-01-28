@@ -115,19 +115,7 @@
     testPanel.querySelector('textarea.response-content').value = content
     testPanel.querySelector('textarea.response-content').style.display = 'block'
   }
-
-  function toggleFullscreen() {
-    if (testPanel.classList.contains('fullscreen')) {
-      testPanel.classList.remove('fullscreen')
-    } else {
-      testPanel.classList.add('fullscreen')
-    }
-  }
-
-  document.querySelector('#btn-close-test').addEventListener('click', function () {
-    testPanel.style.display = 'none'
-  })
-  document.querySelector('#btn-send-test').addEventListener('click', function () {
+  testPanel.querySelector('#btn-send-test').addEventListener('click', function () {
     var method = testPanel.querySelector('.method').textContent.trim()
     var url = testPanel.querySelector('.url').textContent.trim()
     sendTest(method, url)
@@ -137,16 +125,5 @@
       openTestPanel(e)
     }
   })
-
-  document.querySelector('#btn-fullscreen').addEventListener('click', toggleFullscreen)
-
-  var lastClick = 0
-  testPanel.querySelector('.panel-heading').addEventListener('click', function (e) {
-    var now = new Date()
-    if (now - lastClick > 200) {
-      lastClick = now
-      return
-    }
-    toggleFullscreen()
-  })
+  initPanel(testPanel)
 })();

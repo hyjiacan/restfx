@@ -39,6 +39,11 @@ function render (list, data) {
   document.querySelector('#fx-name').innerHTML = data.meta.name + '@' + data.meta.version
   document.title = 'Table of API_LIST - ' + data.app_name
   document.querySelector('#app-name').innerHTML = data.app_name
+  var s = localStorage.getItem('options-expanded')
+  if (s !== undefined) {
+    data.expanded = s === '1'
+  }
+  document.querySelector('#expanded-on-load').checked = data.expanded
 
   var routes = data.routes
   if (!routes || !routes.length) {

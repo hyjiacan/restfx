@@ -1,6 +1,4 @@
 function loadPage() {
-  var list = document.querySelector('#api-list')
-
   // 请求数据
   document.querySelector('#loading').style.display = 'block'
   xhr('post', urlRoot + '/' + apiPrefix, {
@@ -13,21 +11,6 @@ function loadPage() {
       render(list, typeof data === 'string' ? JSON.parse(data) : data)
     }
   })
-
-  var selectType = document.querySelector('#option-select-type')
-  var optionsSelectType = localStorage.getItem('options-select-type')
-  if(!optionsSelectType) {
-    optionsSelectType = '0'
-  }
-  selectType.value = optionsSelectType
-  list.setAttribute('data-select-type',  optionsSelectType)
-  testPanel.setAttribute('data-select-type',  optionsSelectType)
-  selectType.onchange = function() {
-    list.setAttribute('data-select-type',  selectType.value)
-    testPanel.setAttribute('data-select-type',  selectType.value)
-    localStorage.setItem('options-select-type', selectType.value)
-  }
-  document.querySelector('#tools').style.display = 'block'
 }
 
 var all
