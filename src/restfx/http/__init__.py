@@ -1,4 +1,4 @@
-from werkzeug.datastructures import FileStorage
+from werkzeug.datastructures import FileStorage as HttpFile
 
 from .request import HttpRequest
 from .response import (
@@ -10,7 +10,7 @@ from .response import (
 )
 
 __all__ = [
-    'FileStorage',
+    'HttpFile',
     'HttpRequest',
     'HttpResponse',
     'HttpServerError',

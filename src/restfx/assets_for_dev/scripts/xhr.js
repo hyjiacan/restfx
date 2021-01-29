@@ -30,7 +30,7 @@
    */
   function getResponse (xhr) {
     var data = xhr.responseText
-    var headers = {}
+    var headers = Object.create(null)
     xhr
       .getAllResponseHeaders()
       .split('\r\n')

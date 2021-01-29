@@ -9,7 +9,7 @@
     testPanel.querySelector('.status-text').textContent = ''
     testPanel.querySelector('.response-time').textContent = ''
 
-    var fields = {}
+    var fields = Object.create(null)
     var temp = testPanel.querySelectorAll('input.arg-value')
     for (var index = 0; index < temp.length; index++) {
       var field = temp[index]
@@ -18,12 +18,16 @@
         return
       }
       field.classList.remove('required')
-
       if (field.type === 'file') {
-        fields[field.name] = field.files[0]
+        fields[field.name] = {
+          value: field.files[0]
+        }
       } else {
-        fields[field.name] = field.value
+        fields[field.name] = {
+          value: field.value
+        }
       }
+      fields[field.name].type = field.dataset.type
     }
     temp = testPanel.querySelectorAll('textarea.arg-value')
     for (var index = 0; index < temp.length; index++) {
@@ -33,7 +37,10 @@
         return
       }
       field.classList.remove('required')
-      fields[field.name] = field.value
+      fields[field.name] = {
+        value: field.value,
+        type: field.dataset.type
+      }
     }
     testPanel.querySelector('.response-time').textContent = 'Loading...'
     var start = new Date().getTime()
@@ -45,17 +52,97 @@
       }
     }
 
+    // 处理数据格式
+    var formData = Object.create(null)
+    for (var name in fields) {
+      // 忽略空的字段
+      if (!name || /^\s*$/.test(name)) {
+        continue
+      }
+
+      var fieldType = fields[name].type
+      var fieldValue = fields[name].value
+
+      switch(fieldType) {
+        case 'int':
+          fieldValue = parseInt(fieldValue)
+          break
+        case 'float':
+          fieldValue = parseFloat(fieldValue)
+        case 'bool':
+          fieldValue = fieldValue === 'true'
+          break
+      }
+      formData[name] = fieldValue
+    }
+
     if (['get', 'delete'].indexOf(method) === -1) {
       option.data = new FormData()
-      for (var name in fields) {
-        option.data.append(name, fields[name])
+      for (var name in formData) {
+        option.data.append(name, formData[name])
       }
     } else {
-      option.param = fields
+      option.param = formData
     }
 
     xhr(method, url, option)
   }
+
+  function addTestField(toolRow) {
+    var rowParent = toolRow.parentElement
+
+    var nameField = el('input', {placeholder: '填写字段名称', 'class': 'arg-name'})
+    var typeField = el('select', {'class': 'arg-type'}, [
+      el('option', null, 'int'),
+      el('option', null, 'float'),
+      el('option', null, 'str'),
+      el('option', null, 'bool'),
+      el('option', null, 'list'),
+      el('option', null, 'HttpFile'),
+    ])
+
+    var valueField = el('input', {
+      type: 'text',
+      'data-type': 'int',
+      'class': 'arg-value'
+    })
+
+    var removeButton = el('a', {
+      href: 'javascript:',
+      'class': 'btn-remove-test-field'
+    }, '移除')
+
+    var newRow = el('tr', {
+        'class': 'test-row--tool'
+      }, [
+        el('td', null, nameField),
+        el('td', null, typeField),
+        el('td', null, valueField),
+        el('td', null, removeButton)
+      ])
+
+    rowParent.insertBefore(newRow, toolRow)
+
+    nameField.addEventListener('input', function() {
+      valueField.name = nameField.value
+    })
+
+    typeField.addEventListener('change', function() {
+      valueField.setAttribute('data-type', typeField.value)
+      if (typeField.value === 'HttpFile') {
+        valueField.type = 'file'
+      } else {
+        valueField.type = 'text'
+      }
+    })
+
+    removeButton.addEventListener('click', function() {
+      rowParent.removeChild(newRow)
+    })
+
+    nameField.focus()
+  }
+
   function openTestPanel (e) {
     var id = e.target.getAttribute('data-api')
     var api = API_LIST[id]
@@ -74,7 +161,26 @@
     var table = testPanel.querySelector('table')
     var tableContainer = table.parentElement
 
-    tableContainer.replaceChild(renderArgs(api.handler_info.arguments, true), table)
+    var toolRow = null
+    if (api.handler_info.arguments.some(function(item) {
+      return item.is_variable
+    })) {
+      var button = el('a', {href: 'javascript:', id: 'btn-add-test-field'}, '添加字段')
+      // 有可变参数，添加字段工具行
+      toolRow = el('tr', {
+        'class': 'test-row--tool'
+      }, [
+        el('td', null, button),
+        el('td'),
+        el('td'),
+        el('td')
+      ])
+      button.addEventListener('click', function() {
+        addTestField(toolRow)
+      })
+    }
+
+    tableContainer.replaceChild(renderArgs(api.handler_info.arguments, true, toolRow), table)
 
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''

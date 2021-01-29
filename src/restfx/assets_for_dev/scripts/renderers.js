@@ -55,7 +55,7 @@ function render (list, data) {
     'class': 'api-items'
   })
 
-  var modules = {}
+  var modules = Object.create(null)
   var moduleNames = []
   for (var i = 0; i < routes.length; i++) {
     var route = routes[i];
@@ -182,30 +182,49 @@ function renderUrlInfo(route) {
   ])
 }
 
-function getArgDefaultValue (arg) {
+function getArgValueString(value, editable) {
+  if (value === null || value === undefined) {
+    return editable ? '' : 'None'
+  }
+
+  if (typeof value === 'number') {
+    return value.toString()
+  }
+
+  if (typeof value === 'boolean') {
+    if (editable) {
+      return value ? 'true' : 'false'
+    }
+    return value ? 'True' : 'False'
+  }
+
+  if (typeof value === 'string') {
+    return '"' + value + '"'
+  }
+
+  return value
+}
+
+function getArgDefaultValue (arg, editable) {
   var defaultValue = arg['default']
-  if (defaultValue === null) {
-    return 'None'
+
+  // 将元组和列表视作同种类型
+  // 事实上，后台已经处理过这个类型，此处并不会接收到 tuple 类型
+  if (arg.annotation_name !== 'list') {
+    return getArgValueString(defaultValue, editable)
   }
 
-  if (defaultValue === '') {
-    return '""'
-  }
+  var listValue = defaultValue.map(function(item) {
+    return getArgValueString(item, editable)
+  }).join(',')
 
-  if (typeof defaultValue === 'number') {
-    return defaultValue.toString()
-  }
-
-  if (typeof defaultValue === 'boolean') {
-    return defaultValue ? 'True' : 'False'
-  }
-
-  return defaultValue
+  // 使用 逗号 分隔开
+  return '[' + listValue + ']'
 }
 
 function renderArgDefaultValue (arg) {
   if (!arg.has_default) {
-    return el('span', {
+    return arg.annotation_name === 'HttpRequest' ? el('span', null , '-') : el('span', {
       'class': 'required-field',
       title: '必填项'
     }, '*')
@@ -225,13 +244,13 @@ function renderArgEditor (arg) {
   }
 
   var editor
-  if (arg.annotation_name === 'FileStorage') {
+  if (arg.annotation_name === 'HttpFile') {
     attrs.type = 'file'
     editor = el('input', attrs)
   } else if (['bool', 'int', 'float'].indexOf(arg.annotation_name) === -1) {
-    editor = el('textarea', attrs, arg.has_default ? arg['default'] : '')
+    editor = el('textarea', attrs, arg.has_default ? getArgDefaultValue(arg, true) : '')
   } else  {
-    attrs.value = arg.has_default ? arg['default'] : ''
+    attrs.value = arg.has_default ? getArgDefaultValue(arg, true) : ''
     editor = el('input', attrs)
   }
 
@@ -295,7 +314,14 @@ function renderArgs (args, editable, append) {
     ])
   }
 
-  var rows = args.map(function(arg){return renderArg(arg, editable)})
+  var rows = args.filter(function(arg) {
+    // 编辑时不渲染 可变参数
+    if (editable && arg.is_variable) {
+      return false
+    }
+    // 始终不显示 HttpRequest 参数
+    return arg.annotation_name !== 'HttpRequest'
+  }).map(function(arg){return renderArg(arg, editable)})
 
   if (append) {
     rows.push(append)

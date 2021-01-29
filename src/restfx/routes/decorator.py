@@ -287,7 +287,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
                 # 类型一致，直接使用
                 if isinstance(arg_value, arg_spec.annotation):
-                    actual_args[arg_name] = arg_value
+                    # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
+                    actual_args[arg_name] = tuple(arg_value) if arg_spec.is_tuple else arg_value
                     used_args.append(arg_name)
                     continue
             actual_args[arg_name] = arg_spec.annotation(arg_value)

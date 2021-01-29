@@ -19,9 +19,10 @@ Python3 的 restful 多应用自动路由框架。
 
 以框架解决了以下问题：
 
-1. 没有繁锁的路由配置，免去路由注册。仅仅需要对模块根进行注册，模块下的所有路由都会自动被收集调用。 
-2. 自动解析/校验请求参数，并填充到路由处理函数，省去枯燥的参数获取/校验。需要做的仅仅是编写一个函数，并添加函数参数的类型声明。 
-3. 提供 **接口列表页面** 以及接口测试支持，让接口随码更新，不用手动维护API文档。 见[截图](#截图)
+- 没有繁锁的路由配置，免去路由注册。仅仅需要对模块根进行注册，模块下的所有路由都会自动被收集调用
+- 不需要对路由 url 进行显示配置，完全自动解析 
+- 自动解析/校验请求参数，并填充到路由处理函数，省去枯燥的参数获取/校验。需要做的仅仅是编写一个函数，并添加函数参数的类型声明 
+- 提供 **接口列表页面** 以及接口测试支持，让接口随码更新，不用手动维护API文档。 见[截图](#截图)
 
 **此框架的弊端: 不支持将参数作为 url 路径的一部分**
 
@@ -58,7 +59,7 @@ restfx create projectname
     而不是 `route.py` 中的 `get`。
 
 
-### 名词说明
+### 概念
 
 - **应用** 使用 `App()` 初始化得到的实例
 - **装饰器** 类型 `restfx.route`，这是一个装饰器 `@route`
@@ -485,22 +486,21 @@ app.register_routes(restfx_map.routes)
 
 > `Since 0.7.5`
 
-当需要接收文件上传时，只需要将参数类型指定为 `FileStorage`。
+当需要接收文件上传时，只需要将参数类型指定为 `HttpFile`。
 
-类型 `FileStorage` 可以通过 `restfx.http.FileStorage`
-或 `from werkzeug.datastructures import FileStorage` 导入。
-前者只是后者的一个导出代理(为了便于记忆)，其根本上是同一个类型。
+类型 `HttpFile` 需要通过 `restfx.http.HttpFile` 导入。
+事实上，这只是 [werkzeug.datastructures.FileStorage][FileStorage] 的一个别名。
 
 ```python
 from restfx import route
-from restfx.http import FileStorage
+from restfx.http import HttpFile
 
 @route('测试', '测试文件上传')
-def post(file: FileStorage):
+def post(file: HttpFile):
     pass
 ```
 
-参考 [werkzeug.datastructures.FileStorage](https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage)
+[FileStorage]: https://werkzeug.palletsprojects.com/en/1.0.x/datastructures/#werkzeug.datastructures.FileStorage
 
 ### wsgi
 

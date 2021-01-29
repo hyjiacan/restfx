@@ -521,6 +521,7 @@ details[open] summary {
   overflow: auto;
 }
 
+#test-panel input.arg-name,
 .arg-value {
   outline: none;
   width: 100%;
@@ -530,8 +531,12 @@ details[open] summary {
   border-width: 0 0 1px 0;
   border-color: #888888;
   border-style: solid;
+  color: rgb(10, 105, 189);
 }
 
+#test-panel input.arg-name:focus,
+#test-panel input.arg-name:hover,
+#test-panel input.arg-name:active,
 .arg-value:focus,
 .arg-value:hover,
 .arg-value:active {
@@ -539,9 +544,13 @@ details[open] summary {
   box-shadow: 0 0 3px 2px #bab9b9;
 }
 
+#test-panel select.arg-type {
+  height: 26px;
+}
+
 textarea.arg-value {
-  resize: horizontal;
-  transition: height 200ms, width 200ms;
+  /* resize: horizontal; */
+  /* transition: height 200ms, width 200ms; */
 }
 
 textarea.arg-value:focus,
@@ -560,11 +569,11 @@ textarea.arg-value:active {
 }
 
 .response-content {
-  background: #fffff8;
-  padding: 5px;
-  border: 1px solid #faf8d5;
+  background: #494949;
+  color: #00e901;
+  padding: 15px;
   width: 100%;
-  min-height: 295px;
+  min-height: 200px;
   box-sizing: border-box;
   outline: none;
   overflow: auto;
@@ -590,6 +599,24 @@ textarea.arg-value:active {
 
 .response-time {
   margin-left: 20px;
+}
+
+tr.test-row--tool {
+  background-color: #fff !important;
+}
+
+#btn-add-test-field,
+.btn-remove-test-field {
+  font-size: 12px;
+  color: #333;
+}
+
+#btn-add-test-field:hover {
+  color:rgb(17, 136, 237);
+}
+
+.btn-remove-test-field:hover {
+  color:rgb(235, 90, 90);
 }
 
 /* ---------------option panal --------------------------*/
@@ -654,7 +681,7 @@ textarea.arg-value:active {
 
 #btn-back-to-top:hover {
   opacity: 0.8;
-  box-shadow: 0 0 10px 1px rgba(17, 136, 237, .8);
+  box-shadow: 0 0 10px 1px rgba(17, 136, 237, 0.8);
 }
 
 #btn-back-to-top:active {

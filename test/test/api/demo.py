@@ -1,10 +1,10 @@
 from restfx import route
+from restfx.http import HttpFile
 from restfx.http import HttpRequest
-from restfx.http import FileStorage
 
 
 @route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False)
-def get(request, param1, param3: int = 5):
+def get(request, param1, param2=(1, 2), param3=5):
     """
 
     :param request:第1个参数 内置类型 <i>HttpRequest</i>
@@ -16,7 +16,7 @@ def get(request, param1, param3: int = 5):
     # request 会是 HttpRequest
     return {
         'param1': param1,
-        # 'param2': param2,
+        'param2': param2,
         'param3': param3,
     }
 
@@ -40,7 +40,7 @@ def get_param(param1, req: HttpRequest, from_=None, param3=5):
 
 
 @route(module='测试名称-模块', name='测试名称-PUT_PARAM', auth=False)
-def put(request: str, file: FileStorage):
+def put(request: str, file: HttpFile):
     """
 
     :param request:第1个参数

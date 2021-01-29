@@ -2,10 +2,15 @@ import os
 import sys
 
 from restfx.commands.commands import (
-    run_command, register, command_help, command_create
+    run_command,
+    register,
+    command_help,
+    command_create,
+    command_version
 )
 
 register('help', command_help, 'Show this help message')
+register('version', command_version, 'Print the installed version')
 register('create', command_create, 'Create restfx project structure')
 
 

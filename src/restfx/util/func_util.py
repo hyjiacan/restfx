@@ -29,6 +29,9 @@ class ArgumentSpecification:
         self.has_default = False
         # 类型声明
         self.annotation = None
+        # 类型是否是 tuple
+        # 因为在处理类型时，会将 tuple 当作 list 对待
+        self.is_tuple = False
         # 默认值
         self.default = None
         # 注释
@@ -42,10 +45,10 @@ class ArgumentSpecification:
 
     @property
     def annotation_name(self):
-        return self.annotation.__name__ if self.has_annotation else 'any'
+        return self.annotation.__name__ if self.has_annotation else None
 
     def __str__(self):
-        arg_type = self.annotation.__name__ if self.has_annotation else 'any'
+        arg_type = self.annotation.__name__ if self.has_annotation else None
 
         name = self.name
 
@@ -164,6 +167,10 @@ class FunctionDescription:
                 spec.annotation = annotation
                 spec.has_annotation = True
 
+            # 如果声明的是元组，那么当成 list 来传
+            if spec.has_annotation and spec.annotation == tuple:
+                spec.annotation = list
+                spec.is_tuple = True
             args[p] = spec
 
         return args
