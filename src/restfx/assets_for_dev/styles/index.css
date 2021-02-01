@@ -21,9 +21,9 @@ hr {
   clear: both;
   border-width: 5px 10px;
   border-style: solid;
-  border-color: white #086cca;
+  border-color: white #9abddd;
   height: 1px;
-  background-color: #086cca;
+  background: #9abddd;
   border-radius: 5px;
 }
 
@@ -412,7 +412,7 @@ details[open] {
 details[open] summary {
   position: sticky;
   top: 0;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #eee;
 }
 
 .url-info {
@@ -569,8 +569,8 @@ textarea.arg-value:active {
 }
 
 .response-content {
-  background: #494949;
-  color: #00e901;
+  background: #ececeb;
+  border: none;
   padding: 15px;
   width: 100%;
   min-height: 200px;

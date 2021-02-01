@@ -1,6 +1,7 @@
 import json
 import os
 
+from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.middleware.middlewares import HttpAuthMiddleware
@@ -77,7 +78,7 @@ app.register_middleware(
     TimetickMiddleware(),
     HttpAuthMiddleware(on_auth),
     # SessionMiddleware(MemorySessionProvider(20)),
-    # MiddlewareA(),
+    MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
 )
@@ -95,6 +96,8 @@ app.set_dev_options(
     api_list_expanded=True,
     api_page_cache=False
 )
+
+app.inject(injection='try1try')
 
 
 def load_routes_map():

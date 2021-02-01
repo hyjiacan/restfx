@@ -4,6 +4,7 @@ from restfx.middleware import MiddlewareBase
 class MiddlewareA(MiddlewareBase):
     def process_request(self, request, meta, **kwargs):
         print('process_request A')
+        request.inject(injection="injection value from middleware")
 
     def process_invoke(self, request, meta, **kwargs):
         print('process_invoke A')

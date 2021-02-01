@@ -83,7 +83,7 @@ class RouteResolver:
             return HttpNotFound()
 
         # 检查 extname 是否一致
-        if desc.decorator['extname'] != extname:
+        if isinstance(desc, FunctionDescription) and desc.decorator['extname'] != extname:
             message = 'Load entry "%s" failed: extname "%s" is not exactly match with "%s"' % (
                 self.entry, extname, desc.decorator['extname'])
             self.context.logger.warning(message)

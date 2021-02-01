@@ -21,6 +21,9 @@ class ArgumentSpecification:
         """
         self.name = name
         self.index = index
+        # 是否是注入参数
+        # 注入参数名称以 __ 开头
+        self.is_injected = name.startswith('__')
         # 是否是可变参数
         self.is_variable = False
         # 是否有类型声明
@@ -48,11 +51,11 @@ class ArgumentSpecification:
         return self.annotation.__name__ if self.has_annotation else None
 
     def __str__(self):
-        arg_type = self.annotation.__name__ if self.has_annotation else None
-
         name = self.name
 
         name = name if self.alias is None else '%s/%s' % (name, self.alias)
+
+        arg_type = self.annotation.__name__ if self.has_annotation else None
 
         if self.has_default:
             default_value = "'%s'" % self.default if isinstance(self.default, str) else self.default
@@ -67,6 +70,7 @@ class ArgumentSpecification:
             return {
                 'name': o.name,
                 'index': o.index,
+                'is_injected': o.is_injected,
                 'is_variable': o.is_variable,
                 'has_annotation': o.has_annotation,
                 'has_default': o.has_default,
@@ -122,6 +126,7 @@ class FunctionDescription:
         for p in parameters.keys():
             parameter = parameters.get(p)
             spec = ArgumentSpecification(p, index)
+
             spec.is_variable = parameter.kind == parameter.VAR_KEYWORD
 
             if p in documatation:

@@ -30,7 +30,7 @@ class HttpNotFound(HttpResponse):
         super().__init__(content, status=404)
 
 
-class HttpServerError(InternalServerError, HttpResponse):
+class HttpServerError(HttpResponse, InternalServerError):
     def __init__(self, content=None):
         e = None
         if isinstance(content, Exception):

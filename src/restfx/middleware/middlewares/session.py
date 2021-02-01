@@ -149,5 +149,5 @@ class SessionMiddleware(MiddlewareBase):
                             samesite=self.cookie_samesite,
                             )
 
-    def dispose(self):
-        self.session_provider.dispose()
+    def __del__(self):
+        del self.session_provider

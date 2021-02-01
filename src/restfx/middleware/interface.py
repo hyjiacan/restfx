@@ -10,7 +10,7 @@ class MiddlewareBase(ABC):
     def __int__(self, *args, **kwargs):
         pass
 
-    def dispose(self):
+    def __del__(self):
         pass
 
     @abstractmethod

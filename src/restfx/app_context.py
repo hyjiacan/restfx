@@ -4,10 +4,14 @@ from restfx import __meta__
 from .routes.collector import Collector
 from .util.logger import Logger
 
+# 所有应用的上下文集合
+_CONTEXTS = {}
+
 
 class AppContext:
-    contexts = {}
-
+    """
+    应用的上下文环境
+    """
     def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
@@ -17,8 +21,7 @@ class AppContext:
         """
 
         """
-
-        self.contexts[app_id] = self
+        _CONTEXTS[app_id] = self
         self.app_id = app_id
         # 是否启用DEBUG模式
         self.DEBUG = debug_mode
@@ -43,6 +46,10 @@ class AppContext:
 
         self.static_map = {}
 
+        # 注入数据/函数集合
+        # 其中存放将被注入到路由函数参数列表上的数据/函数
+        self.injections = {}
+
         self.dev_options = {
             'app_name': 'An awesome %s project' % __meta__.name,
             'api_list_expanded': False,
@@ -57,6 +64,10 @@ class AppContext:
         self.logger = Logger(debug_mode)
         # debug 状态变化时的处理函数
         self.debug_changed_handlers = [self.logger.on_debug_mode_changed]
+
+    def __del__(self):
+        del _CONTEXTS[self.app_id]
+        del self.middlewares
 
     def update_debug_mode(self, debug_mode: bool):
         if debug_mode == self.DEBUG:
@@ -76,4 +87,4 @@ class AppContext:
         :return:
         :rtype: AppContext
         """
-        return AppContext.contexts.get(app_id)
+        return _CONTEXTS.get(app_id)

@@ -319,8 +319,8 @@ function renderArgs (args, editable, append) {
     if (editable && arg.is_variable) {
       return false
     }
-    // 始终不显示 HttpRequest 参数
-    return arg.annotation_name !== 'HttpRequest'
+    // 始终不显示 HttpRequest 参数 和 注入参数
+    return arg.annotation_name !== 'HttpRequest' && !arg.is_injected
   }).map(function(arg){return renderArg(arg, editable)})
 
   if (append) {

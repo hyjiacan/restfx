@@ -124,6 +124,7 @@ if __name__ == '__main__':
 - `app.persist(filename: str = '', encoding='utf8', *global_classes)->str` 获取持久化的路由串(生成的 python 代码)，
     用于写入持久化文件。通过 `register_globals` 指定过的全局类型，此处不用重新指定。
 - `app.set_dev_options(**kwargs)->App` 设置一些开发选项。见 [开发选项](#开发选项) 
+- `app.inject(**kwargs)->App` 向路由函数注入额外参数。见 [路由注入](#路由注入) 
 
 > `->App` 表示返回了实例本身，也就是说这些接口可以通过链式调用
 
@@ -883,6 +884,65 @@ def get():
 ```
 
 以上代码演示了在装饰器 `@route` 上添加了自定义参数 `auth`，用于表示接口是否需要校验。
+
+### 路由注入
+
+`Since 0.7.6`
+
+**路由注入** 用于路由函数注入一些额外的数据/函数作为参数，以简化某些频繁的操作。
+
+未使用注入：
+
+```python
+from restfx import route, App
+from foo import bar
+from glob import config
+
+app = App(...)
+
+@route()
+def get(request):
+    action = config.foobar
+    bar.test(request)
+```
+
+使用注入:
+
+```python
+from restfx import route, App
+from restfx.middleware import MiddlewareBase
+from foo import bar
+from glob import config
+
+class MiddlewareFoo(MiddlewareBase):
+    def process_request(self, request, meta, **kwargs):
+        request.inject(test=bar.test)
+
+app = App(...)
+app.inject(config=config)
+app.register_middleware(MiddlewareFoo())
+
+@route()
+def get(__config, __test):
+    action = __config.foobar
+    # test 的参数可以在中间件中就填写，不再需要在路由函数中填写了 
+    __test()
+```
+
+为了方便地表示路由函数的某个参数是一个注入参数，在此框架中，约定：
+
+若某个路由函数的参数名称是以两个连续的下划线开头 `__foobar` ，那么就认为这是一个注入参数。
+其可以是一个数据项，也可以是函数或其它任意类型。
+需要注意的是，在调用 `app.inject` 或 `request.inject` 时，指定这些注入的名称不需要 `__` 头，
+仅仅在路由函数中声明时需要。
+
+在路由函数中，注入参数的声明是可选的，
+也就是说，这些参数是按需声明的。
+
+路由注入有两个途径：
+
+- 应用注入 指通过 `app.inject()` 注入，这种注入一般是一些全局的东西，也就是与具体的某个请求无关
+- 中间件注入 在中间件的 `process_request` 方法中，调用 `request.inject()` 注入，这种注入一般都与 `request` 的数据有关。
 
 ## 截图
 

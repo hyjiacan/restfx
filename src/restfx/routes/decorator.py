@@ -195,8 +195,16 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
     # noinspection PyUnresolvedReferences
     arg_source = request.GET if method in ['delete', 'get'] else request.POST
 
+    # 声明的注入参数集合
+    injection_args = []
+
     for arg_name in args.keys():
         arg_spec = args.get(arg_name)
+
+        if arg_spec.is_injected:
+            injection_args.append(arg_name)
+            used_args.append(arg_name)
+            continue
 
         # 如果是可变参数：如: **kwargs
         # 设置标记，以在后面进行填充
@@ -300,6 +308,18 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             if not context.DEBUG:
                 msg = 'Argument type mismatch'
             return HttpBadRequest(msg)
+
+    # 填充注入参数
+    for arg_name in injection_args:
+        injection_name = arg_name[2:]
+        if injection_name in request.injections:
+            actual_args[arg_name] = request.injections[injection_name]
+        elif injection_name in context.injections:
+            actual_args[arg_name] = context.injections[injection_name]
+        else:
+            msg = 'Injection name "%s" not found' % injection_name
+            context.logger.warning(msg)
+            return HttpServerError(msg) if context.DEBUG else HttpServerError()
 
     # 填充可变参数
     variable_args = {}

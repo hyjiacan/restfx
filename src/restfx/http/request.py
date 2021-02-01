@@ -27,3 +27,7 @@ class HttpRequest(Request):
         self.FILES = self.files
         self.COOKIES = self.cookies
         self.session = None
+        self.injections = {}
+
+    def inject(self, **kwargs):
+        self.injections.update(kwargs)

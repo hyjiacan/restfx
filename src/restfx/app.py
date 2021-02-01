@@ -7,7 +7,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.serving import run_simple
 
 from .app_context import AppContext
-from .http import HttpServerError, HttpNotFound, HttpResponse, HttpRequest
+from .http import HttpServerError, HttpNotFound, HttpRequest
 from .routes.router import Router
 from .util.func_util import FunctionDescription
 
@@ -35,6 +35,7 @@ class App:
 
         self.id = app_id
         self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode, enable_api_page)
+
         self.dev_options = {}
 
         self.api_prefix = api_prefix
@@ -96,10 +97,6 @@ class App:
         return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
             environ, start_response)
 
-    def close(self):
-        for middleware in self.context.middlewares:
-            middleware.dispose()
-
     def update_debug_mode(self, debug_mode: bool):
         """
         更新调试模式
@@ -132,7 +129,6 @@ class App:
             ))
 
         run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
-        self.close()
 
     def collect(self, *global_classes):
         """
@@ -280,3 +276,17 @@ class App:
         """
         self.context.dev_options.update(**kwargs)
         return self
+
+    def inject(self, **kwargs):
+        self.context.injections.update(**kwargs)
+        return self
+
+    @staticmethod
+    def get(app_id: str):
+        """
+
+        :param app_id:
+        :return:
+        :rtype: AppContext
+        """
+        return App.contexts.get(app_id)
