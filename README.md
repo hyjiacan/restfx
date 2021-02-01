@@ -941,8 +941,8 @@ def get(__config, __test):
 
 路由注入有两个途径：
 
-- 应用注入 指通过 `app.inject()` 注入，这种注入一般是一些全局的东西，也就是与具体的某个请求无关
-- 中间件注入 在中间件的 `process_request` 方法中，调用 `request.inject()` 注入，这种注入一般都与 `request` 的数据有关。
+- 全局注入 指通过 `app.inject()` 注入，这种注入一般是一些全局的东西，也就是与具体的某个请求无关
+- 请求注入 在中间件的 `process_request` 方法中，调用 `request.inject()` 注入，这种注入一般都与 `request` 的数据有关。
 
 ## 截图
 
