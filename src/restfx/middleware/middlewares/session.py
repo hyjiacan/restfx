@@ -1,7 +1,7 @@
 import string
 import time
 
-from ...app_context import AppContext
+from ...context import AppContext
 from ...middleware.interface import MiddlewareBase
 from ...session.interfaces import ISessionProvider
 from ...util import md5, b64

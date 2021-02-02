@@ -2,7 +2,7 @@ import os
 from types import FunctionType
 
 from .route_resolver import RouteResolver
-from ..app_context import AppContext
+from ..context import AppContext
 from ..http import HttpNotFound, HttpServerError, HttpResponse, JsonResponse
 from ..http.request import HttpRequest
 from ..util.func_util import FunctionDescription

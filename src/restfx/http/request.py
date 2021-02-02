@@ -1,5 +1,5 @@
 from werkzeug import Request
-from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict
+from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage
 
 
 def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
@@ -31,3 +31,7 @@ class HttpRequest(Request):
 
     def inject(self, **kwargs):
         self.injections.update(kwargs)
+
+
+class HttpFile(FileStorage):
+    pass

@@ -206,7 +206,7 @@ class Collector:
             define['method'] = method
             # 路由的请求路径
             define['path'] = http_path
-            # 路由处理函数的描述
+            # 路由函数的描述
             define['handler_info'] = handler_info
             # 是否是包
             define['is_package'] = is_package

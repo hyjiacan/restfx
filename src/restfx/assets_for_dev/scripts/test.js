@@ -13,10 +13,10 @@
     var temp = testPanel.querySelectorAll('input.arg-value')
     for (var index = 0; index < temp.length; index++) {
       var field = temp[index]
-      if (field.required && !field.value) {
-        field.classList.add('required')
-        return
-      }
+//      if (field.required && !field.value) {
+//        field.classList.add('required')
+//        return
+//      }
       field.classList.remove('required')
       if (field.type === 'file') {
         fields[field.name] = {
@@ -32,10 +32,10 @@
     temp = testPanel.querySelectorAll('textarea.arg-value')
     for (var index = 0; index < temp.length; index++) {
       var field = temp[index]
-      if (field.required && !field.value) {
-        field.classList.add('required')
-        return
-      }
+//      if (field.required && !field.value) {
+//        field.classList.add('required')
+//        return
+//      }
       field.classList.remove('required')
       fields[field.name] = {
         value: field.value,
@@ -63,12 +63,18 @@
       var fieldType = fields[name].type
       var fieldValue = fields[name].value
 
+      // 忽略值为空的字段
+      if (!fieldValue) {
+        continue
+      }
+
       switch(fieldType) {
         case 'int':
           fieldValue = parseInt(fieldValue)
           break
         case 'float':
           fieldValue = parseFloat(fieldValue)
+          break
         case 'bool':
           fieldValue = fieldValue === 'true'
           break
@@ -88,18 +94,27 @@
     xhr(method, url, option)
   }
 
-  function addTestField(toolRow) {
+  function addTestField(toolRow, allowForm) {
     var rowParent = toolRow.parentElement
 
     var nameField = el('input', {placeholder: '填写字段名称', 'class': 'arg-name'})
-    var typeField = el('select', {'class': 'arg-type'}, [
-      el('option', null, 'int'),
-      el('option', null, 'float'),
-      el('option', null, 'str'),
-      el('option', null, 'bool'),
-      el('option', null, 'list'),
-      el('option', null, 'HttpFile'),
-    ])
+
+    var types = [
+      el('option', {value: 'str'}, '字符串')
+    ]
+
+    // 是否允许表单，部分数据类型只有在允许表单时才能传输
+    if (allowForm) {
+      types = types.concat([
+        el('option', {value: 'int'}, '整数'),
+        el('option', {value: 'float'}, '小数'),
+        el('option', {value: 'bool'}, '布尔值'),
+        el('option', {value: 'list'}, '数组'),
+        el('option', {value: 'HttpFile'}, '文件'),
+      ])
+    }
+
+    var typeField = el('select', {'class': 'arg-type'}, types)
 
     var valueField = el('input', {
       type: 'text',
@@ -176,7 +191,7 @@
         el('td')
       ])
       button.addEventListener('click', function() {
-        addTestField(toolRow)
+        addTestField(toolRow, ['post', 'put'].indexOf(api.method) !== -1)
       })
     }
 

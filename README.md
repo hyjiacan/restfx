@@ -17,11 +17,11 @@ Python3 的 restful 多应用自动路由框架。
 在使用中慢慢发现，在 restful 接口上，Django 给了我太多我用不到的东西，
 臃肿不堪，于是才决定基于 `werkzeug` 开发。
 
-以框架解决了以下问题：
+此框架解决了以下问题：
 
 - 没有繁锁的路由配置，免去路由注册。仅仅需要对模块根进行注册，模块下的所有路由都会自动被收集调用
 - 不需要对路由 url 进行显示配置，完全自动解析 
-- 自动解析/校验请求参数，并填充到路由处理函数，省去枯燥的参数获取/校验。需要做的仅仅是编写一个函数，并添加函数参数的类型声明 
+- 自动解析/校验请求参数，并填充到路由函数，省去枯燥的参数获取/校验。需要做的仅仅是编写一个函数，并添加函数参数的类型声明 
 - 提供 **接口列表页面** 以及接口测试支持，让接口随码更新，不用手动维护API文档。 见[截图](#截图)
 - 提供 [路由注入](#路由注入) 支持，以通过参数方式向路由指定请求参数外的数据/函数，从而避免一些频繁的 `import` 和重复代码
 
@@ -37,7 +37,7 @@ Python3 的 restful 多应用自动路由框架。
 pip install restfx
 ```
 
-安装后，可以通过 CLI 工具 (`0.7.1`) `restfx` 命令创建基本项目结构:
+`Since 0.7.1` 安装后，可以通过 CLI 工具 `restfx` 命令创建基本项目结构:
 
 ```shell script
 restfx create projectname
@@ -49,25 +49,27 @@ restfx create projectname
 
 此组件提供的包（package）名称为 `restfx`。
 
-此框架遵循约定优于编码，我们作出以下约定：
+此框架遵循 **约定优于编码**，我们的约定如下：
 
-- 路由处理函数名称均使用 **小写**
-- 路由处理函数名称使用 **下划线风格**
-- 就近原则
-    当使用路径 `GET /path/to/route` 的时候，
+- 路由函数名称均使用 **小写**
+- 路由函数名称使用 **下划线风格**
+- 路由匹配的就近原则
+    当使用url `GET /path/to/route` 的时候，
     如果 `to.py` 和 `route.py` 文件同时存在，
     则会加载 `to.py` 中的 `get_route`，
     而不是 `route.py` 中的 `get`。
-
+- 路由参数名称与 Python 的关键字/保留字/模块名称相同时，在变量名称后添加 `_` 符号
+- 注入参数使用 `_` 开头
 
 ### 概念
 
 - **应用** 使用 `App()` 初始化得到的实例
 - **装饰器** 类型 `restfx.route`，这是一个装饰器 `@route`
-- **路由处理函数** 由装饰器 `@route` 装饰的函数，用于处理请求
+- **路由函数** 由装饰器 `@route` 装饰的函数，用于处理请求
 - **中间件** 继承 `restfx.middleware.MiddlewareBase` 的类，用于对请求和响应进行自定义处理
-- **扩展路由** 一般的路由处理函数名称为请求的 `method`，如: `get/post`，扩展指具有扩展名称的路由: `get_test/post_test`
+- **扩展路由** 一般的路由函数名称为请求的 `method`，如: `get/post`，扩展指具有扩展名称的路由: `get_test/post_test`
 - **全局类型** 当在装饰器 `@route()` 的参数中使用的自定义数据类型，需要通过 `app.register_globals()` 进行注册
+- **注入** 通过 `app.inject()` 或  `request.inject()` 向路由添加自定义参数 
 
 ### 创建应用
 
@@ -142,7 +144,7 @@ def get(req):
     pass
 ```
 
-装饰器 [@route](#装饰器) 用于标记路由处理函数。`RouteTypes` 是自定义的路由数据(可选项)。
+装饰器 [@route](#装饰器) 用于标记路由函数。`RouteTypes` 是自定义的路由数据(可选项)。
 
 `restfx` 包含以下几个部分：
 
@@ -159,7 +161,7 @@ def get(req):
 `restfx` 的使用流程如下：
 
 1. [注册路由映射](#注册路由映射)
-2. [编写路由处理函数](#编写路由处理函数)
+2. [编写路由函数](#编写路由函数)
 3. [注册中间件](#注册中间件)
 4. [发布](#发布)
 
@@ -183,7 +185,7 @@ app.map_routes({
 
 > 路径应为基于项目根目录的相对路径。
 
-### 编写路由处理函数
+### 编写路由函数
 
 路由文件位置没有要求，只要配置好就可以了。
 
@@ -195,7 +197,7 @@ app.map_routes({
 
 此配置表示，所有请求中以 `test` 开头的地址，都会交由 `test.api` 下的模块进行处理。
 
-使用装饰器 [route](#装饰器) 标记路由处理函数。
+使用装饰器 [route](#装饰器) 标记路由函数。
 
 *test/api/demo.py*
 
@@ -249,12 +251,13 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 
 一些需要注意的地方：
 
-- 当代码中需要使用关键字作为名称时，请在名称后添加 `_`，此时前端请求时，`_` 符号可省略，
+- 当代码中需要使用关键字作为名称时，请在名称 **后** 添加 `_`，此时前端请求时，`_` 符号可省略，
     如: `from_` 在请求时可写作 `from=test` （`from_=test` 亦可）。
-- 对于语言间的命令差异，可以自动兼容 `下划线命名法` 与 `驼峰命名法`，如：请求参数中的 `pageIndex`，
-    在处理函数中可以写作 `page_index`或`_page_index_` ，
-    也就是说，在前后添加 `_` 符号都不会影响参数的解析。
-- 路由处理函数可以添加一个可变参数(如：`**kwargs**`)，用于接收未在参数列表中列出的请求项。
+- 对于语言间的命令差异，可以自动兼容 _下划线命名法_ 与 _驼峰命名法_，如：请求参数中的 `pageIndex`，
+    路由参数可以写作 `page_index` 或 `page_index_` ，
+    也就是说，在路由参数名称后添加 `_` 符号不会影响参数的解析。
+- 路由参数 **不要使用 `_` 开头**，因为这会被解析成 [注入参数](#路由注入)。
+- 路由函数可以添加一个可变参数(如：`**kwargs**`)，用于接收未在参数列表中列出的请求项。
     当然，`kwargs`和普通函数一样，可以是任何其它名称。
 - `request` 参数(与参数位置无关)，可能被解析成三种结果(`1`和`2`均会将其作为 `HttpRequest` 参数处理)：
     1. 参数名称为 `request`，并且未指定参数类型(或指定类型为 `HttpRequest`)
@@ -302,12 +305,12 @@ ajax.delete('/test/demo?param1=1&from_=2&param3=3&param4=4')
 此时可以省略参数类型，如: `param3: int =5` 省略为 `param3=5`
 - `param4` 会出现在 `delete` 请求的 `kwargs` 中
 
-> 在严格模式(`strict_mode=True`)时，若路由处理函数未指定 `**kwargs` 参数，
+> 在严格模式(`strict_mode=True`)时，若路由函数未指定 `**kwargs` 参数，
 > 那么在请求时，只能携带参数列表中声明的参数，否则会收到响应码 `400` 。 
 
 ### 装饰器
 
-装饰器 `route` 用于声明某个函数是一个路由处理函数。通过添加此装饰器以限制非路由函数被非法访问。
+装饰器 `route` 用于声明某个函数是一个路由函数。通过添加此装饰器以限制非路由函数被非法访问。
 
 声明为：
 
@@ -327,7 +330,7 @@ def route(module=None, name=None, extname=None, **kwargs):
 处理成 JSON 格式(仅在 `content-type=application/json` 时)，
 并且分别添加到 `request.BODY`，`request.GET` 和 `request.POST` 属性上。
 
-注意：一般情况下，使用路由处理函数就能完全操作请求参数，应该尽量减少使用 `BODY/POST/GET`，以避免代码的不明确性。
+注意：一般情况下，使用路由函数就能完全操作请求参数，应该尽量减少使用 `BODY/POST/GET`，以避免代码的不明确性。
 
 ### 注册中间件
 
@@ -434,9 +437,9 @@ routes = app.collect()
 - handler # 路由请求的处理函数
 - method # 路由的请求方法
 - path # 路由的请求路径
-- handler_info # 路由处理函数描述，这些信息从参数和注释收集而来
-- is_package # 路由处理函数是否存在于包 `__init__.py` 文件中
-- ext_mode # 是否为扩展路由。扩展路由处理函数的命名方式为 `get_xxx/post_xxx`
+- handler_info # 路由函数描述，这些信息从参数和注释收集而来
+- is_package # 路由函数是否存在于包 `__init__.py` 文件中
+- ext_mode # 是否为扩展路由。扩展路由函数的命名方式为 `get_xxx/post_xxx`
 
 ### 生成路由映射文件
 
@@ -484,7 +487,7 @@ app.register_routes(restfx_map.routes)
 
 > `enable_api_page` 的值在默认情况下(值为 `None` 时)与 `debug_mode` 一致。 
 
-### 使用路由处理函数的参数接收文件上传
+### 使用路由函数的参数接收文件上传
 
 > `Since 0.7.5`
 
@@ -778,8 +781,8 @@ class MiddlewareClass(MiddlewareBase):
 - `extname: str` 装饰器上指定的 extname 值
 - `method: str` 路由的请求方法 **大写格式**
 - `path: str` 路由的请求路径
-- `handler: FunctionType` 路由处理函数对象
-- `func_args: OrderedDict` 路由处理函数参数列表
+- `handler: FunctionType` 路由函数对象
+- `func_args: OrderedDict` 路由函数参数列表
 - `kwargs: dict` 装饰器上指定的其它参数
 
 另外，meta 还提供了 `has` 和 `get` 两个方法，其描述如下：
@@ -924,18 +927,28 @@ app.inject(config=config)
 app.register_middleware(MiddlewareFoo())
 
 @route()
-def get(__config, __test):
-    action = __config.foobar
+def get(_config, _test):
+    action = _config.foobar
     # test 的参数可以在中间件中就填写，不再需要在路由函数中填写了 
-    __test()
+    _test()
 ```
 
-为了方便地表示路由函数的某个参数是一个注入参数，在此框架中，约定：
+为了方便地表示路由函数的某个参数是一个 **注入参数**，在此框架中，约定：
 
-若某个路由函数的参数名称是以两个连续的下划线开头 `__foobar` ，那么就认为这是一个注入参数。
+若某个路由函数的参数名称是以下划线开头 `_foobar` ，那么就认为这是一个注入参数。
 其可以是一个数据项，也可以是函数或其它任意类型。
-需要注意的是，在调用 `app.inject` 或 `request.inject` 时，指定这些注入的名称不需要 `__` 头，
+需要注意的是，在调用 `app.inject` 或 `request.inject` 时，指定这些注入的名称不需要 `_` 头，
 仅仅在路由函数中声明时需要。
+
+```python
+# 注入时使用 test
+app.inject(test=test.bar)
+
+# 声明参数时使用 _test
+@route
+def get(_test):
+    pass
+```
 
 在路由函数中，注入参数的声明是可选的，
 也就是说，这些参数是按需声明的。

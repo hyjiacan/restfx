@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from functools import wraps
 
-from ..app_context import AppContext
+from ..context import AppContext
 from ..http import HttpRequest, HttpServerError
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
@@ -98,7 +98,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
     if result is not None:
         return mgr.handle_response(_wrap_http_response(mgr, result))
 
-    # 调用路由处理函数
+    # 调用路由函数
     arg_len = len(func_args)
     if arg_len == 0:
         return mgr.handle_response(_wrap_http_response(mgr, func()))
@@ -142,7 +142,7 @@ def _process_json_params(request: HttpRequest, context: AppContext):
 
 
 def _get_parameter_str(args: OrderedDict):
-    return ', '.join([str(args[arg]) for arg in args])
+    return ', '.join(filter(lambda n: n[0] != '_', [str(args[arg]) for arg in args]))
 
 
 def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, backup2):
@@ -228,7 +228,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
         # 未找到参数
         if use_default is None:
-            msg = '%s\n\tMissing required argument "%s": %s' % (
+            msg = '%s\n\tMissing required argument "%s", Parameters: (%s)' % (
                 get_func_info(func),
                 arg_name,
                 _get_parameter_str(args)
@@ -296,13 +296,14 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                 # 类型一致，直接使用
                 if isinstance(arg_value, arg_spec.annotation):
                     # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
+                    # 虽然在发起请求的时候并不能指定为 tuple，但还是想兼容一下
                     actual_args[arg_name] = tuple(arg_value) if arg_spec.is_tuple else arg_value
                     used_args.append(arg_name)
                     continue
             actual_args[arg_name] = arg_spec.annotation(arg_value)
             used_args.append(arg_name)
         except Exception:
-            msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", signature: (%s)' \
+            msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", Parameters: (%s)' \
                   % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
             context.logger.warning(msg)
             if not context.DEBUG:
@@ -311,7 +312,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
     # 填充注入参数
     for arg_name in injection_args:
-        injection_name = arg_name[2:]
+        # 注入名称不包含前缀 _
+        # 所以要 [1:]
+        injection_name = arg_name[1:]
         if injection_name in request.injections:
             actual_args[arg_name] = request.injections[injection_name]
         elif injection_name in context.injections:
@@ -354,7 +357,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
     # 启用了严格模式
     # 返回 400 响应
-    msg = 'Unknown argument(s) found: "%s", signature: (%s)' \
+    msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
           % (','.join(variable_arg_keys), _get_parameter_str(args))
     context.logger.warning(msg)
     if not context.DEBUG:

@@ -1,6 +1,4 @@
-from werkzeug.datastructures import FileStorage as HttpFile
-
-from .request import HttpRequest
+from .request import HttpRequest, HttpFile
 from .response import (
     HttpResponse,
     HttpServerError,

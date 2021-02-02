@@ -4,18 +4,18 @@ from restfx.http import HttpRequest
 
 
 @route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False)
-def get(request, __injection, param1=(1, 2), param2=5):
+def get(request, _injection, param1=(1, 2), param2=5):
     """
 
     :param request: HttpRequest
-    :param __injection:
+    :param _injection:
     :param param1:第1个参数
     :param param2:第2个参数
     :return: 返回值为参数字典
     """
     # request 会是 HttpRequest
     return {
-        'injection': __injection,
+        'injection': _injection,
         'param2': param1,
         'param3': param2,
     }
@@ -40,7 +40,7 @@ def get_param(param1, req: HttpRequest, from_=None, param3=5):
 
 
 @route(module='测试名称-模块', name='测试名称-PUT_PARAM', auth=False)
-def put(request: str, file: HttpFile):
+def put(request: int, file: HttpFile):
     """
 
     :param request:第1个参数

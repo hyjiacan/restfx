@@ -1,7 +1,7 @@
 import os
 from typing import Dict, Optional
 
-from ..app_context import AppContext
+from ..context import AppContext
 from ..http.response import HttpNotFound, HttpResponse
 from ..util import utils
 from ..util.func_util import FunctionDescription

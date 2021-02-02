@@ -6,7 +6,7 @@ from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.serving import run_simple
 
-from .app_context import AppContext
+from .context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpRequest
 from .routes.router import Router
 from .util.func_util import FunctionDescription

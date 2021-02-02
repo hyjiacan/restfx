@@ -22,8 +22,8 @@ class ArgumentSpecification:
         self.name = name
         self.index = index
         # 是否是注入参数
-        # 注入参数名称以 __ 开头
-        self.is_injected = name.startswith('__')
+        # 注入参数名称以 _ 开头
+        self.is_injected = name[0] == '_'
         # 是否是可变参数
         self.is_variable = False
         # 是否有类型声明
@@ -39,12 +39,17 @@ class ArgumentSpecification:
         self.default = None
         # 注释
         self.comment = None
-        # 别名，当路由处理函数中声明的是 abc_def 时，自动处理为 abcDef
+        # 别名，当路由函数中声明的是 abc_def_xyz 时，自动处理为 abcDefXyz
+        self.alias = None
+
+        if self.is_injected:
+            return
+
+        if '_' not in self.name:
+            return
+
         # 同时会移除所有的 _ 符号
         self.alias = re.sub('_+(?P<ch>.?)', ArgumentSpecification._get_parameter_alias, name)
-        # 如果与原名称相同，那么就设置为 None 表示无别名
-        if self.alias == name:
-            self.alias = None
 
     @property
     def annotation_name(self):

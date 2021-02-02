@@ -21,6 +21,9 @@ def get_func_info(func):
     line = source_lines[1]
     return 'File "%s", line %d, in %s' % (
         inspect.getmodule(func).__file__,
-        line,
+        # 此处的 line 是从 0 开始计算的，
+        # 而在编辑器中，或者说从开发者角度来看，应该是从 1 开始计算
+        # 所以 +1 以修正行号的正确性
+        line + 1,
         func.__name__
     )

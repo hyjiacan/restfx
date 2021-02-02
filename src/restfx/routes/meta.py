@@ -18,8 +18,8 @@ class RouteMeta:
                  kwargs=None):
         """
 
-        :param handler: 路由处理函数对象
-        :param func_args: 路由处理函数参数列表
+        :param handler: 路由函数对象
+        :param func_args: 路由函数参数列表
         :param route_id: 路由ID，此ID由路由相关信息组合而成
         :param module: 装饰器上指定的 module 值
         :param name: 装饰器上指定的 name 值
