@@ -36,8 +36,6 @@ class App:
         self.id = app_id
         self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode, enable_api_page)
 
-        self.dev_options = {}
-
         self.api_prefix = api_prefix
         self.router = Router(self.context)
 

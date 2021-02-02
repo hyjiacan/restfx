@@ -360,14 +360,14 @@ app.register_middlewares(
 
 框架以[中间件](#sessionmiddleware)的方式提供了简单的 session 支持。
 
-若不指定，不启用 session 支持。
-
 ```python
 from restfx import App
 from restfx.session.providers import MemorySessionProvider
 app = App(...)
 app.register_middleware(MemorySessionProvider(20))
 ```
+
+若不调用 `app.register_middleware()`，不启用 session 支持。
 
 内置了以下几种数据源:
 
