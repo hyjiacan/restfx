@@ -59,6 +59,9 @@ class Router:
                 # 附加信息
                 if addition_func is not None:
                     route['addition_info'] = addition_func(route)
+                # 移除 kwargs，以避免额外数据带来的数据传输消耗
+                if 'kwargs' in route:
+                    del route['kwargs']
 
             self.routes_cache = routes
 

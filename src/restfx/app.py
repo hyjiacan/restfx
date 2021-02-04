@@ -2,14 +2,11 @@ import os
 from types import FunctionType
 
 from werkzeug.exceptions import NotFound
-from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
-from werkzeug.serving import run_simple
 
 from .context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpRequest
 from .routes.router import Router
-from .util.func_util import FunctionDescription
 
 
 class App:
@@ -92,6 +89,7 @@ class App:
         if not self.context.static_map:
             return self.handle_wsgi_request(environ, start_response)
 
+        from werkzeug.middleware.shared_data import SharedDataMiddleware
         return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
             environ, start_response)
 
@@ -114,6 +112,8 @@ class App:
         :return:
         """
         from restfx.util import helper
+        from werkzeug.serving import run_simple
+
         debug_mode = self.context.DEBUG
 
         if debug_mode:
@@ -236,6 +236,8 @@ class App:
         :param handler:
         :return:
         """
+        from .util.func_util import FunctionDescription
+
         rid = '%s#%s' % (path, method.lower())
         if rid in self.router.production_routes:
             self.context.logger.warning('%s %s exists' % (method, path))
@@ -264,7 +266,10 @@ class App:
         :param middlewares: 中间件实例列表
         :return:
         """
+        from restfx.middleware import MiddlewareBase
+
         for middleware in middlewares:
+            assert isinstance(middleware, MiddlewareBase)
             self.context.middlewares.append(middleware)
             self.context.reversed_middlwares.insert(0, middleware)
         return self
@@ -287,4 +292,4 @@ class App:
         :return:
         :rtype: AppContext
         """
-        return App.contexts.get(app_id)
+        return AppContext.get(app_id)

@@ -486,6 +486,14 @@ details[open] summary {
   max-height: 100%;
 }
 
+#test-panel td {
+  padding: 2px 5px 0 5px;
+}
+
+#test-panel .test-row--tool td {
+  padding: 5px;
+}
+
 .fullscreen.panel {
   max-width: unset !important;
   width: 100% !important;
@@ -525,13 +533,14 @@ details[open] summary {
 .arg-value {
   outline: none;
   width: 100%;
-  height: 32px;
-  padding: 5px;
+  height: 28px;
+  padding: 0;
   box-sizing: border-box;
   border-width: 0 0 1px 0;
   border-color: #888888;
   border-style: solid;
   color: rgb(10, 105, 189);
+  margin-bottom: 2px;
 }
 
 #test-panel input.arg-name:focus,
@@ -542,6 +551,7 @@ details[open] summary {
 .arg-value:active {
   border-width: 1px;
   box-shadow: 0 0 3px 2px #bab9b9;
+  padding: 5px;
 }
 
 #test-panel select.arg-type {

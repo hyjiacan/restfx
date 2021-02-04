@@ -67,6 +67,7 @@ class SessionMiddleware(MiddlewareBase):
                  cookie_samesite=None,
                  cookie_httponly=True
                  ):
+        assert isinstance(session_provider, ISessionProvider)
         self.session_provider = session_provider
         self.session_name = session_name
         self.cookie_max_age = cookie_max_age
