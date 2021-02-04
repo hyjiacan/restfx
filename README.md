@@ -125,7 +125,7 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 - [test/test/api/demo.py][12]
 
 
-以下截图仅在 [仓库目录][3] 可见
+以下截图仅在 [Gitee仓库目录][3] 可见
 
 ![list](assets/1.png)
 
