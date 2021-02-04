@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 
 import settings
 from restfx import App
@@ -9,24 +8,19 @@ from restfx.session.providers import MemorySessionProvider
 # 访问 http://127.0.0.1:9127/api 查看接口页面
 app = App(settings.APP_ID,
           settings.ROOT,
-          api_prefix='api',
+          api_prefix=settings.API_PREFIX,
           debug_mode=settings.DEBUG,
-          append_slash=False,
-          strict_mode=False,
-          enable_api_page=None
+          strict_mode=settings.STRICT_MODE
           )
 
-app.map_routes({
-    'foo': 'bar'
-}).map_static({
-    # 尝试访问: http://127.0.0.1:9127/static/index.html
-    '/static': os.path.join(settings.ROOT, 'static')
-})
+app.map_routes(settings.ROUTES_MAP)
+app.map_static(settings.STATIC_MAP)
 
 app.register_middleware(
     SessionMiddleware(MemorySessionProvider(20)),
 )
 
+# 路由注入
 app.inject(root=settings.ROOT)
 
 
@@ -45,4 +39,4 @@ else:
     load_routes_map()
 
 if __name__ == '__main__':
-    app.startup(host='127.0.0.1', port=9127)
+    app.startup(host=settings.HOST, port=settings.PORT)

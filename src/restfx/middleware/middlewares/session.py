@@ -89,7 +89,9 @@ class SessionMiddleware(MiddlewareBase):
         key = md5.hash_str(b64.enc_bytes('%s#%s#%s' % (
             request.remote_addr, str(request.user_agent), context.app_id
         )))
-        app_id = [ord(ch) for ch in list(context.app_id)]
+        # 使用 md5 作为 session　中使用的 key
+        # 以避免指定的 app_id 长度不是32位时引发的错误
+        app_id = [ord(ch) for ch in list(md5.hash_str(context.app_id))]
 
         new_session_id = _encrypt_session_id(key, app_id)
 
