@@ -215,6 +215,8 @@
     testPanel.querySelector('.status-code').textContent = response.status
     testPanel.querySelector('.status-text').textContent = response.statusText
 
+    testPanel.querySelector('div.response').scrollIntoView()
+
     if (response.headers['content-type'].indexOf('text/html') !== -1) {
       testPanel.querySelector('div.response-content').innerHTML = response.data
       testPanel.querySelector('div.response-content').style.display = 'block'
