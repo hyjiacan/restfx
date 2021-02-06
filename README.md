@@ -29,10 +29,6 @@ Python3 的 restful 多应用自动路由框架。
 
 ## 安装
 
-- Gitee: https://gitee.com/hyjiacan/restfx
-- Github: https://github.com/hyjiacan/restfx
-- PyPI: https://pypi.org/project/restfx/ 
-
 ```shell script
 pip install restfx
 ```
