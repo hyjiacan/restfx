@@ -19,5 +19,5 @@ def print_meta(append=None):
         info = info.center(url_len, ' ')
 
     linewidth = '-' * (max_len + 8)
-    print("┌{line}┐\n|    {info}    |\n|    {url}    |\n└{line}┘\n".format(
+    print("#{line}#\n|    {info}    |\n|    {url}    |\n#{line}#\n".format(
         line=linewidth, info=info, url=project_url))

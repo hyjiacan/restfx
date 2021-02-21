@@ -1,6 +1,7 @@
 import json
 
 from werkzeug.exceptions import InternalServerError
+from werkzeug.utils import escape
 from werkzeug.wrappers import Response
 
 
@@ -10,30 +11,48 @@ class HttpResponse(Response):
 
 
 class JsonResponse(HttpResponse):
-    def __init__(self, obj, encoder=None):
-        content = json.dumps(obj, ensure_ascii=True, cls=encoder)
-        super().__init__(content, content_type='application/json;charset=utf8')
+    def __init__(self, obj, encoder=None, ensure_ascii=True, **kwargs):
+        content = json.dumps(obj, ensure_ascii=ensure_ascii, cls=encoder)
+        super().__init__(content, content_type='application/json;charset=utf8', **kwargs)
+
+
+class FileResponse(HttpResponse):
+    def __init__(self, fp, **kwargs):
+        self.fp = fp
+        super().__init__(fp, direct_passthrough=True, **kwargs)
+
+    def close(self) -> None:
+        super().close()
+        if not self.fp.closed:
+            self.fp.close()
 
 
 class HttpBadRequest(HttpResponse):
-    def __init__(self, content=None):
-        super().__init__(content, status=400)
+    def __init__(self, content=None, **kwargs):
+        super().__init__(content, status=400, **kwargs)
+
+
+class HttpRedirect(HttpResponse):
+    def __init__(self, location, status=302, **kwargs):
+        super().__init__(None, status=status, headers={
+            'Location': escape(location)
+        }, **kwargs)
 
 
 class HttpUnauthorized(HttpResponse):
-    def __init__(self, content=None):
-        super().__init__(content, status=401)
+    def __init__(self, content=None, **kwargs):
+        super().__init__(content, status=401, **kwargs)
 
 
 class HttpNotFound(HttpResponse):
-    def __init__(self, content=None):
-        super().__init__(content, status=404)
+    def __init__(self, content=None, **kwargs):
+        super().__init__(content, status=404, **kwargs)
 
 
 class HttpServerError(HttpResponse, InternalServerError):
-    def __init__(self, content=None):
+    def __init__(self, content=None, **kwargs):
         e = None
         if isinstance(content, Exception):
             e = content
             content = None
-        super().__init__(content, None, e)
+        super().__init__(content, None, e, **kwargs)
