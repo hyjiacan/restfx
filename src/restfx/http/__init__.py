@@ -4,7 +4,9 @@ from .response import (
     HttpServerError,
     HttpBadRequest,
     HttpNotFound,
-    JsonResponse
+    JsonResponse,
+    FileResponse,
+    HttpRedirect
 )
 
 __all__ = [
@@ -15,4 +17,6 @@ __all__ = [
     'HttpBadRequest',
     'HttpNotFound',
     'JsonResponse',
+    'FileResponse',
+    'HttpRedirect'
 ]

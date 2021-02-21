@@ -11,9 +11,9 @@ class HttpResponse(Response):
 
 
 class JsonResponse(HttpResponse):
-    def __init__(self, obj, encoder=None, ensure_ascii=True, **kwargs):
+    def __init__(self, obj, encoder=None, content_type='application/json;charset=utf8', ensure_ascii=True, **kwargs):
         content = json.dumps(obj, ensure_ascii=ensure_ascii, cls=encoder)
-        super().__init__(content, content_type='application/json;charset=utf8', **kwargs)
+        super().__init__(content, content_type=content_type, **kwargs)
 
 
 class FileResponse(HttpResponse):
