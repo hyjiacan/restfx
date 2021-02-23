@@ -1,8 +1,5 @@
 import os
-import pickle
 from typing import List, Optional
-
-import pymysql
 
 from .interfaces import ISessionProvider, IDbSessionProvider
 from .session import HttpSession
@@ -62,6 +59,8 @@ class FileSessionProvider(ISessionProvider):
             # print('The session currently loading is empty:' + session_file)
             return None
 
+        import pickle
+
         with open(session_file, mode='rb') as fp:
             # noinspection PyBroadException
             try:
@@ -103,6 +102,8 @@ class FileSessionProvider(ISessionProvider):
         return self._load_session(session_id)
 
     def set(self, session: HttpSession):
+        import pickle
+
         # print('Set session:' + session.id)
         with open(self._get_session_path(session.id), mode='wb') as fp:
             pickle.dump(session, fp, pickle.HIGHEST_PROTOCOL)
@@ -123,6 +124,7 @@ class MysqlSessionProvider(IDbSessionProvider):
         super().__init__(pool, expired, *args, **kwargs)
 
     def execute(self, sql: str, *args):
+        import pymysql
         conn = self.connect()
 
         cursor = None
