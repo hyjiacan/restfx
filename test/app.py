@@ -4,7 +4,7 @@ import os
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
-from restfx.http.response import HttpRedirect, FileResponse
+from restfx.http.response import FileResponse
 from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
@@ -51,8 +51,10 @@ def test_id(request: HttpRequest, **kwargs):
     return HttpResponse(json.dumps(kwargs))
 
 
+DEBUG_MODE = False
+
 app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
-app = App(app_id, root, debug_mode=True, strict_mode=True)
+app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True, enable_api_page=True)
 
 app.map_routes({
     'test': 'test.api'
@@ -103,14 +105,29 @@ app.inject(injection='try1try')
 
 
 def load_routes_map():
-    if not os.path.exists('./routes_map.py'):
-        app.persist('./routes_map.py')
     import routes_map
     app.register_routes(routes_map.routes)
 
 
-if __name__ == '__main__':
-    if not app.context.DEBUG:
-        load_routes_map()
+def command_persist():
+    import sys
+    if len(sys.argv) < 2:
+        return False
 
-    app.startup()
+    arg1 = sys.argv[1]
+    if arg1 != 'persist':
+        return False
+
+    app.persist('routes_map.py')
+    return True
+
+
+if __name__ == '__main__':
+    # 提供对 python main.py persist 命令的支持
+    if command_persist():
+        exit(0)
+    else:
+        if not DEBUG_MODE:
+            load_routes_map()
+        # 启动内置服务器
+        app.startup()

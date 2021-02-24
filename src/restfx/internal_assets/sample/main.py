@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import settings
 from restfx import App
 from restfx.middleware.middlewares import SessionMiddleware
@@ -28,15 +27,30 @@ app.inject(root=settings.ROOT)
 # app.update_debug_mode(True)
 
 def load_routes_map():
-    from routes_map import routes
-    app.map_routes(routes)
+    import routes_map
+    app.register_routes(routes_map.routes)
 
 
-if settings.DEBUG:
-    # app.persist('routes_map.py')
-    pass
-else:
-    load_routes_map()
+def command_persist():
+    import sys
+
+    if len(sys.argv) < 2:
+        return False
+
+    arg1 = sys.argv[1]
+    if arg1 != 'persist':
+        return False
+
+    app.persist('routes_map.py')
+    return True
+
 
 if __name__ == '__main__':
-    app.startup(host=settings.HOST, port=settings.PORT)
+    # 提供对 python main.py persist 命令的支持
+    if command_persist():
+        exit(0)
+    else:
+        if not settings.DEBUG:
+            load_routes_map()
+        # 启动内置服务器
+        app.startup(host=settings.HOST, port=settings.PORT)
