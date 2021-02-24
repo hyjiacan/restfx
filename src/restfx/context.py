@@ -27,6 +27,7 @@ class AppContext:
         # 是否启用DEBUG模式
         self.DEBUG = debug_mode
         # 是否启用 API 列表
+        self.original_enable_api_page = enable_api_page
         self.enable_api_page = debug_mode if enable_api_page is None else enable_api_page
         # 工作目录
         self.ROOT = app_root
@@ -58,7 +59,7 @@ class AppContext:
             'api_page_cache': True
         }
 
-        if enable_api_page:
+        if self.enable_api_page:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
         self.collector = Collector(app_root, append_slash)
@@ -75,6 +76,9 @@ class AppContext:
             return
 
         self.DEBUG = debug_mode
+
+        if self.original_enable_api_page is None:
+            self.enable_api_page = debug_mode
 
         for handler in self.debug_changed_handlers:
             # noinspection PyArgumentList

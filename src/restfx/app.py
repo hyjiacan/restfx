@@ -1,4 +1,5 @@
 import os
+import sys
 from types import FunctionType
 
 from werkzeug.exceptions import NotFound
@@ -120,6 +121,25 @@ class App:
             helper.print_meta('dev-server *DEBUG MODE*')
         else:
             helper.print_meta('dev-server')
+
+        # 检查启动参数
+        argv = sys.argv
+        if len(argv) > 1:
+            server_arg = argv[1].split(':')
+            if len(server_arg) == 1:
+                print('Invalid server args "%s":' % argv[1])
+            else:
+                host = server_arg[0]
+                port = int(server_arg[1])
+
+        # 检查环境变量
+        env_host = os.environ.get('RESTFX_HOST')
+        env_port = os.environ.get('RESTFX_PORT')
+
+        if env_host is not None:
+            host = env_host
+        if env_port is not None:
+            port = int(env_port)
 
         if self.context.enable_api_page:
             print(' * Table of APIs: http://%s:%s/%s%s' % (
