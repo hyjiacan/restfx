@@ -127,7 +127,7 @@ class App:
         if len(argv) > 1:
             server_arg = argv[1].split(':')
             if len(server_arg) == 1:
-                print('Invalid server args "%s":' % argv[1])
+                self.context.logger.warning('Invalid startup argument "%s" (ignored):' % argv[1])
             else:
                 host = server_arg[0]
                 port = int(server_arg[1])
