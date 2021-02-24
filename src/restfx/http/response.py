@@ -18,13 +18,12 @@ class JsonResponse(HttpResponse):
 
 class FileResponse(HttpResponse):
     def __init__(self, fp, **kwargs):
-        self.fp = fp
-        super().__init__(fp, direct_passthrough=True, **kwargs)
-
-    def close(self) -> None:
-        super().close()
-        if not self.fp.closed:
-            self.fp.close()
+        # 如果是字符串，就认为是文件路径
+        if isinstance(fp, str):
+            self.fp = open(fp, mode='rb')
+        else:
+            self.fp = fp
+        super().__init__(self.fp, direct_passthrough=True, **kwargs)
 
 
 class HttpBadRequest(HttpResponse):

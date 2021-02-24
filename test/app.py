@@ -61,7 +61,7 @@ app.map_routes({
 }).map_static({
     # '/': 'static'
 }).map_urls({
-    '/': lambda request: FileResponse(open('./static/index.html', mode='rb')),
+    '/': lambda request: FileResponse('./static/index.html'),
     '/test/<param>': lambda request, param: HttpResponse(param)
 })
 
