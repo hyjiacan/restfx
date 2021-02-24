@@ -1,2 +1,2 @@
-recursive-include src/restfx/assets_for_dev *
+recursive-include src/restfx/internal_assets *
 global-exclude *.pyc

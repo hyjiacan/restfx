@@ -12,6 +12,7 @@ class AppContext:
     """
     应用的上下文环境
     """
+
     def __init__(self, app_id: str,
                  app_root: str,
                  debug_mode: bool,
@@ -57,8 +58,8 @@ class AppContext:
             'api_page_cache': True
         }
 
-        if debug_mode:
-            self.static_map['/restfx_assets_for_dev'] = os.path.join(os.path.dirname(__file__), 'assets_for_dev')
+        if enable_api_page:
+            self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
         self.collector = Collector(app_root, append_slash)
         self.logger = Logger(debug_mode)

@@ -203,7 +203,7 @@ class App:
                 self.context.logger.warning(
                     'Invalid prefix of static map, it should start with "/": %s' % prefix)
                 continue
-            if prefix.lower() == '/restfx_assets_for_dev':
+            if prefix.lower() == '/internal_assets':
                 self.context.logger.warning(
                     'The prefix of static map is reserved, pick another one please: %s' % prefix)
                 continue

@@ -118,7 +118,7 @@
 
     var valueField = el('input', {
       type: 'text',
-      'data-type': 'int',
+      'data-type': 'str',
       'class': 'arg-value'
     })
 

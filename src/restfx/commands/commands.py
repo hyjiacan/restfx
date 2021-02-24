@@ -72,7 +72,7 @@ def command_create(working_dir: str, project_name, *argv):
         sys.exit(1)
 
     # 示例目录
-    sample_path = os.path.abspath(os.path.join(pkg_root, 'assets_for_dev', 'sample'))
+    sample_path = os.path.abspath(os.path.join(pkg_root, 'internal_assets', 'sample'))
     print('Creating structure')
     shutil.copytree(sample_path, project_path)
 
