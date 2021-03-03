@@ -40,7 +40,7 @@ function render (list, data) {
   document.title = 'Table of API_LIST - ' + data.app_name
   document.querySelector('#app-name').innerHTML = data.app_name
   var s = localStorage.getItem('options-expanded')
-  if (s !== undefined) {
+  if (s !== undefined && s !== null && s !== '') {
     data.expanded = s === '1'
   }
   document.querySelector('#expanded-on-load').checked = data.expanded
