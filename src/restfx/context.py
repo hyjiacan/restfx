@@ -68,7 +68,8 @@ class AppContext:
         self.debug_changed_handlers = [self.logger.on_debug_mode_changed]
 
     def __del__(self):
-        del _CONTEXTS[self.app_id]
+        if self.app_id in _CONTEXTS:
+            del _CONTEXTS[self.app_id]
         del self.middlewares
 
     def update_debug_mode(self, debug_mode: bool):
