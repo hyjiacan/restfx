@@ -1,4 +1,5 @@
 import os
+from types import FunctionType
 
 from restfx import __meta__
 from .routes.collector import Collector
@@ -18,7 +19,11 @@ class AppContext:
                  debug_mode: bool,
                  append_slash: bool,
                  strict_mode: bool,
-                 enable_api_page: bool):
+                 api_page_enabled: bool,
+                 api_page_name: str,
+                 api_page_expanded: bool,
+                 api_page_cache: bool,
+                 api_page_addition):
         """
 
         """
@@ -26,9 +31,8 @@ class AppContext:
         self.app_id = app_id
         # 是否启用DEBUG模式
         self.DEBUG = debug_mode
-        # 是否启用 API 列表
-        self.original_enable_api_page = enable_api_page
-        self.enable_api_page = debug_mode if enable_api_page is None else enable_api_page
+        # 是否启用 API 页面
+        self.api_page_enabled = debug_mode if api_page_enabled is None else api_page_enabled
         # 工作目录
         self.ROOT = app_root
         self.append_slash = append_slash
@@ -52,38 +56,24 @@ class AppContext:
         # 其中存放将被注入到路由函数参数列表上的数据/函数
         self.injections = {}
 
-        self.dev_options = {
-            'app_name': 'An awesome %s project' % __meta__.name,
-            'api_list_expanded': False,
+        self.api_page_options = {
+            'api_page_name': api_page_name or 'An awesome %s project' % __meta__.name,
+            'api_page_expanded': api_page_expanded,
             # 是否缓存API页面的 html 文件 和 接口数据
-            'api_page_cache': True
+            'api_page_cache': api_page_cache,
+            'api_page_addition': api_page_addition
         }
 
-        if self.enable_api_page:
+        if self.api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
         self.collector = Collector(app_root, append_slash)
         self.logger = Logger(debug_mode)
-        # debug 状态变化时的处理函数
-        self.debug_changed_handlers = [self.logger.on_debug_mode_changed]
 
     def __del__(self):
         if self.app_id in _CONTEXTS:
             del _CONTEXTS[self.app_id]
         del self.middlewares
-
-    def update_debug_mode(self, debug_mode: bool):
-        if debug_mode == self.DEBUG:
-            return
-
-        self.DEBUG = debug_mode
-
-        if self.original_enable_api_page is None:
-            self.enable_api_page = debug_mode
-
-        for handler in self.debug_changed_handlers:
-            # noinspection PyArgumentList
-            handler(debug_mode)
 
     @staticmethod
     def get(app_id: str):

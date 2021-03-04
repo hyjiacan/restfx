@@ -9,9 +9,6 @@ class Logger:
         self.debug_mode = debug_mode
         self.custom_logger = None
 
-    def on_debug_mode_changed(self, debug_mode: bool):
-        self.debug_mode = debug_mode
-
     def log(self, level, message, e=None):
         if self.custom_logger is not None:
             # noinspection PyUnresolvedReferences

@@ -21,7 +21,7 @@ class Router:
         # 线上模式时，使用固定路由
         self.production_routes = {}
         # API列表页面缓存
-        self.api_list_html_cache = ''
+        self.api_page_html_cache = ''
         # 路由拦截器
         self.intercepter = None
 
@@ -31,28 +31,28 @@ class Router:
         :param request:
         :return:
         """
-        if not self.context.enable_api_page:
+        if not self.context.api_page_enabled:
             self.context.logger.info(
                 'API list is disabled, '
-                'use "App(..., enable_api_page=True, ...)" to enable it.')
+                'use "App(..., api_page_enabled=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
-        if not self.api_list_html_cache or not self.context.dev_options['api_page_cache']:
+        if not self.api_page_html_cache or not self.context.api_page_options['api_page_cache']:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_list.html'),
                       encoding='utf-8') as fp:
                 lines = fp.readlines()
-                self.api_list_html_cache = ''.join(lines)
+                self.api_page_html_cache = ''.join(lines)
                 fp.close()
 
         if request.method != 'POST':
-            return HttpResponse(self.api_list_html_cache, content_type='text/html')
+            return HttpResponse(self.api_page_html_cache, content_type='text/html')
 
-        if not self.routes_cache or not self.context.dev_options['api_page_cache']:
+        if not self.routes_cache or not self.context.api_page_options['api_page_cache']:
             routes = self.context.collector.collect(self.context.routes_map)
 
-            if 'api_list_addition' in self.context.dev_options:
-                addition_func = self.context.dev_options['api_list_addition']
+            if 'api_page_addition' in self.context.api_page_options:
+                addition_func = self.context.api_page_options['api_page_addition']
             else:
                 addition_func = None
             for route in routes:
@@ -71,8 +71,8 @@ class Router:
                 'name': __meta__.name,
                 'version': __meta__.version
             },
-            'app_name': self.context.dev_options['app_name'],
-            'expanded': self.context.dev_options['api_list_expanded'],
+            'name': self.context.api_page_options['api_page_name'],
+            'expanded': self.context.api_page_options['api_page_expanded'],
             'routes': self.routes_cache,
         }, encoder=FunctionDescription.JSONEncoder)
 

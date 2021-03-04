@@ -54,7 +54,20 @@ def test_id(request: HttpRequest, **kwargs):
 DEBUG_MODE = False
 
 app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
-app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True, enable_api_page=True)
+
+
+def api_page_addition(route):
+    if 'auth' not in route['kwargs'] or route['kwargs'] is False:
+        return '<span style="color: #ff7d7d">[需要身份校验]</span>'
+    return '<span style="color: #66c0de">[不需要身份校验]</span>'
+
+
+app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True,
+          api_page_enabled=True,
+          api_page_name='restfx 测试项目',
+          api_page_addition=api_page_addition,
+          api_page_expanded=True,
+          api_page_cache=False)
 
 app.map_routes({
     'test': 'test.api'
@@ -86,21 +99,6 @@ app.register_middleware(
     # MiddlewareB(),
     # MiddlewareC()
 )
-
-
-def api_list_addition(route):
-    if 'auth' not in route['kwargs'] or route['kwargs'] is False:
-        return '<span style="color: #ff7d7d">[需要身份校验]</span>'
-    return '<span style="color: #66c0de">[不需要身份校验]</span>'
-
-
-app.set_dev_options(
-    app_name='restfx 测试项目',
-    api_list_addition=api_list_addition,
-    api_list_expanded=True,
-    api_page_cache=False
-)
-
 app.inject(injection='try1try')
 
 

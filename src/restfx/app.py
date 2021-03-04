@@ -18,21 +18,30 @@ class App:
                  debug_mode=False,
                  append_slash=False,
                  strict_mode=False,
-                 enable_api_page=None
+                 api_page_enabled=None,
+                 api_page_name: str = None,
+                 api_page_expanded=False,
+                 api_page_cache=True,
+                 api_page_addition=None
                  ):
         """
 
         :param app_id: 全局的唯一 id, 用于标识一个APP。可以通过 AppContext.get(id) 获取应用的 Context
-        :param app_root:
-        :param api_prefix:
-        :param debug_mode:
-        :param append_slash:
-        :param strict_mode:
-        :param enable_api_page:
+        :param app_root: 应用的根目录
+        :param api_prefix: API接口URL前缀
+        :param debug_mode: 是否启用调试模式
+        :param append_slash: 是否在URL末尾使用 / 符号
+        :param strict_mode: 是否启用严格模式。在严格模式下，不允许在请求时携带未声明的参数
+        :param api_page_enabled: 只否启用接口页面
+        :param api_page_name: 接口页面名称
+        :param api_page_expanded: 是否展示接口列表
+        :param api_page_cache: 是否缓存接口数据
+        :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
         """
-
         self.id = app_id
-        self.context = AppContext(self.id, app_root, debug_mode, append_slash, strict_mode, enable_api_page)
+        self.context = AppContext(self.id, app_root, debug_mode, append_slash,
+                                  strict_mode, api_page_enabled, api_page_name,
+                                  api_page_expanded, api_page_cache, api_page_addition)
 
         self.api_prefix = api_prefix
         self.router = Router(self.context)
@@ -94,15 +103,6 @@ class App:
         return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
             environ, start_response)
 
-    def update_debug_mode(self, debug_mode: bool):
-        """
-        更新调试模式
-        :param debug_mode:
-        :return:
-        """
-        self.context.update_debug_mode(debug_mode)
-        return self
-
     def startup(self, host='127.0.0.1', port=9127, threaded=True, **kwargs):
         """
         开发时使用的服务器，一般来说，应仅用于开发
@@ -141,7 +141,7 @@ class App:
         if env_port is not None:
             port = int(env_port)
 
-        if self.context.enable_api_page:
+        if self.context.api_page_enabled:
             print(' * Table of APIs: http://%s:%s/%s%s' % (
                 host, port, self.api_prefix, '/' if self.context.append_slash else ''
             ))
@@ -292,12 +292,6 @@ class App:
             assert isinstance(middleware, MiddlewareBase)
             self.context.middlewares.append(middleware)
             self.context.reversed_middlwares.insert(0, middleware)
-        return self
-
-    def set_dev_options(self, **kwargs):
-        """
-        """
-        self.context.dev_options.update(**kwargs)
         return self
 
     def inject(self, **kwargs):

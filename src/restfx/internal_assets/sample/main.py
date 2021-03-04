@@ -9,7 +9,8 @@ app = App(settings.APP_ID,
           settings.ROOT,
           api_prefix=settings.API_PREFIX,
           debug_mode=settings.DEBUG,
-          strict_mode=settings.STRICT_MODE
+          strict_mode=settings.STRICT_MODE,
+          api_page_name='An awesome restfx project'
           )
 
 app.map_routes(settings.ROUTES_MAP)
@@ -22,9 +23,6 @@ app.register_middleware(
 # 路由注入
 app.inject(root=settings.ROOT)
 
-
-# 可以通过此方法动态修改调试模式
-# app.update_debug_mode(True)
 
 def load_routes_map():
     import routes_map
