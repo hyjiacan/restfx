@@ -1,14 +1,15 @@
 import inspect
 
 
-def load_module(module_name: str):
+def load_module(module_name: str, level=0):
     """
     加载模块
+    :param level:
     :param module_name:
     :return:
     """
     # __import__ 自带缓存
-    module = __import__(module_name)
+    module = __import__(module_name, level=level, globals=globals())
     temp = module_name.split('.')
     if len(temp) > 1:
         for seg in temp[1:]:

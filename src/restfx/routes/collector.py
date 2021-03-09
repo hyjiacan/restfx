@@ -1,15 +1,16 @@
 # coding: utf-8
 
+import ast
 # 此模块用于收集路由
-import inspect
 import os
 import re
 from os import path
 
-# 生成：注册路由的代码 -- 模板
-# 注意生成的代码中的缩进，使用的是空格
 from ..util import utils
 from ..util.func_util import FunctionDescription
+
+# 生成：注册路由的代码 -- 模板
+# 注意生成的代码中的缩进，使用的是空格
 
 _REGISTER_STMT = "    # {module}-{name}\n    ['{method}', '{path}', {handler}]"
 _CODE_TPL = """# -*- coding={encoding} -*-
@@ -27,52 +28,16 @@ routes = [
 """
 
 
-def _fake_route(module=None, name=None, extname=None, **kwargs):
-    """
-    此函数用于帮助读取装饰器的参数
-    :param module:
-    :param name:
-    :param kwargs:
-    :return:
-    """
-
-    return {
-        'module': module,
-        'name': name,
-        'extname': extname,
-        'kwargs': kwargs
-    }
-
-
 class Collector:
     def __init__(self, project_root: str, append_slash: bool):
         self.project_root = project_root
         self.append_slash = append_slash
-        # 全局类列表
-        self.global_classes = [_fake_route]
 
-    def _get_env(self, *args):
-        env = {}
-
-        # 加载全局配置
-        for arg in self.global_classes:
-            env[arg.__name__] = arg
-
-        # 加载接口参数
-        # 若存在相同的名称，则会被覆盖
-        for arg in args:
-            env[arg.__name__] = arg
-        return env
-
-    def collect(self, routes_map: dict, *global_classes):
+    def collect(self, routes_map: dict):
         """
         执行收集操作
         :return: 所有路由的集合
         """
-        # 为 route 提供的执行环境
-        # 读取在 settings.py 中配置的环境
-        route_env = self._get_env(*global_classes)
-
         # 所有路由的集合
         routes = []
 
@@ -96,60 +61,38 @@ class Collector:
                     fullname = path.abspath(path.join(dir_name, file))
 
                     # 解析文件
-                    self.get_route_defines(route_root, fullname, http_prefix, pkg_prefix, routes, route_env)
+                    self.get_route_defines(route_root, fullname, http_prefix, pkg_prefix, routes)
 
         return routes
 
-    def get_route_defines(self, route_root, fullname, http_prefix, pkg_prefix, routes, route_env):
-        for define in self.resolve_file(route_root, fullname, http_prefix, pkg_prefix, route_env):
+    def get_route_defines(self, route_root, fullname, http_prefix, pkg_prefix, routes):
+        for define in self.resolve_file(route_root, fullname, http_prefix, pkg_prefix):
             # 返回 None 表示没有找到定义
             if define is None:
                 continue
             routes.append(define)
 
-    def get_route_decorator(self, func):
-        match = re.search(r'^@(route\(.+?\))(.*?)^def (.+?)\(', inspect.getsource(func), re.M | re.S)
-        if match is None:
-            return None
-
-        router_str = match.group(1)
-
-        # 将函数名称由 route 替换为 _fake_route
-        router_str = '_fake_route' + router_str[5:]
-        # 利用 eval 解析出路由的定义（在这个文件中定义了与装饰器相同的函数，以便于读取装饰器的参数）
-        return eval(router_str, self._get_env())
-
-    def resolve_file(self, route_define, fullname, http_prefix, pkg_prefix, route_env: dict):
+    def resolve_file(self, route_define, fullname, http_prefix, pkg_prefix):
         """
         解析文件
-        :param route_env:
         :param pkg_prefix:
         :param http_prefix: http 请求前缀
         :param route_define: 路由文件的根路径
         :param fullname: 文件的完整路径
         :return: 没有路由时返回 None
         """
-        with open(fullname, encoding='utf-8') as python_fp:
-            lines = python_fp.readlines()
-            python_fp.close()
-        source = ''.join(lines)
-
         # 解析路由的定义
-        defines = re.findall(r'^@(route\(.*?\))(.*?)^def (.+?)\(', source, re.M | re.S)
+        envs, routes = self.resolve_routes(fullname)
+
         # 没有找到定义，返回 None
-        if len(defines) == 0:
+        if not routes:
             yield None
 
-        # router_str 是在函数上声明的装饰器定义
-        # other_lines 是装饰器与函数声明间的其它代码
-        # func 是函数的名称
-        for (router_str, other_lines, func) in defines:
+        # router_info 是在函数上声明的装饰器定义信息
+        # func_name 是函数的名称
+        for (func_name, router_info) in routes:
             # 解析出请求的方法(method)与请求的指定函数名称
-            method, name = self.resolve_func(func)
-            # 将函数名称由 route 替换为 _fake_route
-            router_str = '_fake_route' + router_str[5:]
-            # 利用 eval 解析出路由的定义（在这个文件中定义了与装饰器相同的函数，以便于读取装饰器的参数）
-            define = eval(router_str, route_env)
+            method, name = self.resolve_route_func(func_name)
 
             # 构造http请求的地址(将 路径分隔符号 \/ 替换成 . 符号)
             # -3 是为了干掉最后的 .py 字样
@@ -175,7 +118,7 @@ class Collector:
                 http_path += '/' + name
 
             # 指定的 url 扩展名
-            extname = define['extname']
+            extname = router_info['extname']
             if extname is not None:
                 http_path += '.' + extname
 
@@ -191,43 +134,43 @@ class Collector:
             pkg = pkg.rstrip('.')
 
             module = utils.load_module(pkg)
-            handler_obj = getattr(module, func)
+            handler_obj = getattr(module, func_name)
             handler_info = FunctionDescription(handler_obj)
 
             # 唯一标识
-            define['id'] = '%s_%s' % (pkg.replace('_', '__').replace('.', '_'), func)
+            router_info['id'] = '%s_%s' % (pkg.replace('_', '__').replace('.', '_'), func_name)
             # 路由所在包名称
-            define['pkg'] = pkg
+            router_info['pkg'] = pkg
             # 路由所在文件的完整路径
-            define['file'] = fullname
+            router_info['file'] = fullname
             # 路由请求的处理函数
-            define['handler'] = func
+            router_info['handler'] = func_name
             # 路由的请求方法
-            define['method'] = method
+            router_info['method'] = method
             # 路由的请求路径
-            define['path'] = http_path
+            router_info['path'] = http_path
             # 路由函数的描述
-            define['handler_info'] = handler_info
+            router_info['handler_info'] = handler_info
             # 是否是包
-            define['is_package'] = is_package
+            router_info['is_package'] = is_package
             # 是否是扩展模式
-            define['ext_mode'] = ext_mode
+            router_info['ext_mode'] = ext_mode
             # 自定义的装饰器参数
-            define['kwargs'] = define['kwargs']
+            router_info['kwargs'] = router_info['kwargs']
 
-            yield define
+            yield router_info
 
     @staticmethod
-    def resolve_func(func: str):
+    def resolve_route_func(func_name: str):
         """
         从处理函数中解析出路由的 method 与指定名称
-        :param func:
+        :param func_name:
         :return:
         """
-        method, lodash, name = re.match(r'([a-z]+)(_(.+))?', func).groups()
-        return method, name
+        method, _, append = re.match(r'([a-z]+)(_(.+))?', func_name).groups()
+        return method, append
 
-    def persist(self, routes_map: dict, filename: str = '', encoding='utf8', *global_classes):
+    def persist(self, routes_map: dict, filename: str = '', encoding='utf8'):
         """
         将路由持久化
         :param routes_map:
@@ -240,7 +183,7 @@ class Collector:
         routes = []
 
         print('Generating routes map...')
-        for route in self.collect(routes_map, *global_classes):
+        for route in self.collect(routes_map):
             # imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             routes.append(_REGISTER_STMT.format(
@@ -262,3 +205,97 @@ class Collector:
             fp.write(content)
             fp.close()
         print('Routes persisted')
+
+    @staticmethod
+    def resolve_routes(filename: str, func_name: str = None):
+        """
+
+        :param filename:
+        :param func_name: 解析指定的函数
+        :return:
+        """
+        with open(filename, encoding='utf-8') as python_fp:
+            lines = python_fp.readlines()
+            python_fp.close()
+        ast_body = ast.parse(source=''.join(lines), filename=filename).body
+
+        envs = {}
+        routes = []
+
+        for item in ast_body:
+            if isinstance(item, ast.ImportFrom):
+                level = item.level if hasattr(item, 'level') else 0
+                module = utils.load_module(item.module, level)
+                for name_item in item.names:
+                    env_name = name_item.asname or name_item.name
+                    envs[env_name] = getattr(module, name_item.name)
+                continue
+            if not isinstance(item, ast.FunctionDef):
+                continue
+
+            if func_name is not None and item.name != func_name:
+                continue
+
+            # Find out the @route decorator
+            decorator_info = Collector.get_route_decorator(item, envs)
+            if decorator_info is None:
+                continue
+
+            if func_name is not None:
+                return envs, decorator_info
+
+            routes.append((item.name, decorator_info))
+
+        return envs, routes if func_name is None else None
+
+    @staticmethod
+    def get_route_decorator(func_def: ast.FunctionDef, envs: dict = None):
+        for decorator in func_def.decorator_list:
+            if not decorator.func:
+                continue
+            if decorator.func.id != 'route':
+                continue
+
+            keywords = {}
+            for keyword in decorator.keywords:
+                arg_name = keyword.arg
+                value = keyword.value
+                if isinstance(value, ast.Attribute):
+                    arg_value = getattr(envs[value.value.id], value.attr)
+                else:
+                    arg_value = getattr(value, keyword.value._fields[0])
+
+                keywords[arg_name] = arg_value
+
+            route_module = None
+            route_name = None
+            route_extname = None
+
+            # 在此不需要考虑其它的数据类型，因为声明的时候全是 字符串
+            if len(decorator.args) == 1:
+                route_module = decorator.args[0].s
+            elif len(decorator.args) == 2:
+                route_module = decorator.args[0].s
+                route_name = decorator.args[1].s
+            elif len(decorator.args) == 3:
+                route_module = decorator.args[0].s
+                route_name = decorator.args[1].s
+                route_extname = decorator.args[2].s
+
+            if route_module is None and 'module' in keywords:
+                route_module = keywords['module']
+                del keywords['module']
+            if route_name is None and 'name' in keywords:
+                route_name = keywords['name']
+                del keywords['name']
+            if route_extname is None and 'extname' in keywords:
+                route_extname = keywords['extname']
+                del keywords['extname']
+
+            return {
+                'module': route_module,
+                'name': route_name,
+                'extname': route_extname,
+                'kwargs': keywords
+            }
+        return None

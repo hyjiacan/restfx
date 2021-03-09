@@ -129,7 +129,9 @@ class RouteResolver:
         # 模块中有这个函数
         # 通过反射从模块加载函数
         func = getattr(entry_define, func_name)
-        decorator = self.context.collector.get_route_decorator(func)
+        import inspect
+        filename = inspect.getmodule(func).__file__
+        envs, decorator = self.context.collector.resolve_routes(filename, func_name)
 
         if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (

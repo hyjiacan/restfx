@@ -148,23 +148,21 @@ class App:
 
         run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
 
-    def collect(self, *global_classes):
+    def collect(self):
         """
         收集路由
-        :param global_classes: 指定路由装饰器上用到的全局类型
         :return:
         """
-        return self.context.collector.collect(self.context.routes_map, *global_classes)
+        return self.context.collector.collect(self.context.routes_map)
 
-    def persist(self, filename: str = '', encoding='utf8', *global_classes):
+    def persist(self, filename: str = '', encoding='utf8'):
         """
         持久化路由信息到文件
         :param filename: 不指定此值时，此函数会返回路由文件内容
         :param encoding:
-        :param global_classes:
         :return:
         """
-        return self.context.collector.persist(self.context.routes_map, filename, encoding, *global_classes)
+        return self.context.collector.persist(self.context.routes_map, filename, encoding)
 
     def set_intercepter(self, intercepter):
         """
@@ -267,17 +265,6 @@ class App:
             'func': handler,
             'args': desc.arguments
         }
-        return self
-
-    def register_globals(self, *global_classes):
-        """
-        注册全局类型
-        :type global_classes: class
-        :param global_classes:
-        :return:
-        """
-        for cls in global_classes:
-            self.context.collector.global_classes.append(cls)
         return self
 
     def register_middleware(self, *middlewares):

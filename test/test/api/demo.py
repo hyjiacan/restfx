@@ -1,9 +1,10 @@
+from enums import OpTypes
 from restfx import route
 from restfx.http import HttpFile
 from restfx.http import HttpRequest
 
 
-@route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False)
+@route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False, op_type=OpTypes.Query)
 def get(request, _injection, param1=(1, 2), param2=5):
     """
 
@@ -14,11 +15,12 @@ def get(request, _injection, param1=(1, 2), param2=5):
     :return: 返回值为参数字典
     """
     # request 会是 HttpRequest
-    return {
+    data = {
         'injection': _injection,
         'param2': param1,
         'param3': param2,
     }
+    return data
 
 
 @route(module='测试名称-模块', name='测试名称-GET_APPEND_PARAM')

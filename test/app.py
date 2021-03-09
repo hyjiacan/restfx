@@ -51,7 +51,7 @@ def test_id(request: HttpRequest, **kwargs):
     return HttpResponse(json.dumps(kwargs))
 
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
 
@@ -67,7 +67,7 @@ app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True,
           api_page_name='restfx 测试项目',
           api_page_addition=api_page_addition,
           api_page_expanded=True,
-          api_page_cache=False)
+          api_page_cache=None)
 
 app.map_routes({
     'test': 'test.api'
