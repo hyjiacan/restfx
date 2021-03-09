@@ -92,7 +92,7 @@ class Collector:
         # func_name 是函数的名称
         for (func_name, router_info) in routes:
             # 解析出请求的方法(method)与请求的指定函数名称
-            method, name = self.resolve_route_func(func_name)
+            method, _, name = re.match(r'([a-z]+)(_(.+))?', func_name).groups()
 
             # 构造http请求的地址(将 路径分隔符号 \/ 替换成 . 符号)
             # -3 是为了干掉最后的 .py 字样
@@ -160,16 +160,6 @@ class Collector:
 
             yield router_info
 
-    @staticmethod
-    def resolve_route_func(func_name: str):
-        """
-        从处理函数中解析出路由的 method 与指定名称
-        :param func_name:
-        :return:
-        """
-        method, _, append = re.match(r'([a-z]+)(_(.+))?', func_name).groups()
-        return method, append
-
     def persist(self, routes_map: dict, filename: str = '', encoding='utf8'):
         """
         将路由持久化
@@ -230,6 +220,10 @@ class Collector:
                     env_name = name_item.asname or name_item.name
                     envs[env_name] = getattr(module, name_item.name)
                 continue
+            # if isinstance(item, ast.ClassDef):
+            #     continue
+            # if isinstance(item, ast.Assign):
+            #     continue
             if not isinstance(item, ast.FunctionDef):
                 continue
 
@@ -263,6 +257,8 @@ class Collector:
                 if isinstance(value, ast.Attribute):
                     arg_value = getattr(envs[value.value.id], value.attr)
                 else:
+                    # 其它类型暂时不支持
+                    # 统一使用原始值
                     arg_value = getattr(value, keyword.value._fields[0])
 
                 keywords[arg_name] = arg_value

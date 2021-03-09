@@ -9,6 +9,9 @@ from .context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpRequest
 from .routes.router import Router
 
+# APP 实例集合
+_APPS = {}
+
 
 class App:
     def __init__(self,
@@ -52,6 +55,10 @@ class App:
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_list'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
+
+    def __del__(self):
+        if self.id in _APPS:
+            del _APPS[self.id]
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -243,10 +250,10 @@ class App:
         :return:
         """
         for route in routes:
-            self.register(*route)
+            self.register_route(*route)
         return self
 
-    def register(self, method: str, path: str, handler: FunctionType):
+    def register_route(self, method: str, path: str, handler: FunctionType):
         """
         手动注册路由
         :param path:
@@ -288,9 +295,9 @@ class App:
     @staticmethod
     def get(app_id: str):
         """
-
+        获取指定的应用
         :param app_id:
         :return:
         :rtype: AppContext
         """
-        return AppContext.get(app_id)
+        return _APPS.get(app_id)
