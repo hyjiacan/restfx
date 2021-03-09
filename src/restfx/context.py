@@ -1,5 +1,4 @@
 import os
-from types import FunctionType
 
 from restfx import __meta__
 from .routes.collector import Collector
