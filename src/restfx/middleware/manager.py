@@ -24,13 +24,13 @@ class MiddlewareManager:
             if result is not None:
                 return result
 
-    def before_invoke(self):
+    def before_invoke(self, args: dict):
         """
         在路由函数调用前，对其参数等进行处理
         :return:
         """
         for middleware in self.context.middlewares:
-            result = middleware.process_invoke(self.request, self.meta)
+            result = middleware.process_invoke(self.request, self.meta, args)
             if isinstance(result, HttpResponse):
                 return result
             # 返回 None 以阻止后续中间件执行

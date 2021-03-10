@@ -88,7 +88,12 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
     # noinspection PyTypeChecker
     _process_json_params(request, context)
 
-    result = mgr.before_invoke()
+    # 有参数，自动从 queryString, POST 或 json 中获取
+    # 匹配参数
+
+    actual_args = _get_actual_args(request, func, func_args, context)
+
+    result = mgr.before_invoke(actual_args)
 
     # 返回了 HttpResponse ， 直接返回此对象
     if isinstance(result, HttpResponse):
@@ -102,11 +107,6 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
     arg_len = len(func_args)
     if arg_len == 0:
         return mgr.handle_response(_wrap_http_response(mgr, func()))
-
-    # 有参数，自动从 queryString, POST 或 json 中获取
-    # 匹配参数
-
-    actual_args = _get_actual_args(request, func, func_args, context)
 
     if isinstance(actual_args, HttpResponse):
         return mgr.handle_response(actual_args)
