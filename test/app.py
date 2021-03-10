@@ -62,7 +62,10 @@ def api_page_addition(route):
     return '<span style="color: #66c0de">[不需要身份校验]</span>'
 
 
-app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True,
+app = App(root,
+          app_id=app_id,
+          debug=DEBUG_MODE,
+          strict_mode=True,
           api_page_enabled=True,
           api_page_name='restfx 测试项目',
           api_page_addition=api_page_addition,

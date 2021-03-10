@@ -15,7 +15,7 @@ class AppContext:
 
     def __init__(self, app_id: str,
                  app_root: str,
-                 debug_mode: bool,
+                 debug: bool,
                  append_slash: bool,
                  strict_mode: bool,
                  api_page_enabled: bool,
@@ -29,9 +29,9 @@ class AppContext:
         _CONTEXTS[app_id] = self
         self.app_id = app_id
         # 是否启用DEBUG模式
-        self.DEBUG = debug_mode
+        self.debug = debug
         # 是否启用 API 页面
-        self.api_page_enabled = debug_mode if api_page_enabled is None else api_page_enabled
+        self.api_page_enabled = debug if api_page_enabled is None else api_page_enabled
         # 工作目录
         self.ROOT = app_root
         self.append_slash = append_slash
@@ -67,7 +67,7 @@ class AppContext:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
         self.collector = Collector(app_root, append_slash)
-        self.logger = Logger(debug_mode)
+        self.logger = Logger(debug)
 
     def __del__(self):
         if self.app_id in _CONTEXTS:

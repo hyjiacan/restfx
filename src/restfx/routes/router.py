@@ -87,7 +87,7 @@ class Router:
             # noinspection PyCallingNonCallable
             entry = self.intercepter(request, entry)
 
-        if not self.context.DEBUG:
+        if not self.context.debug:
             return self.route_for_production(request, '/' + entry)
 
         resolver = RouteResolver(self.context,

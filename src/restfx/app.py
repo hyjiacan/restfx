@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 from types import FunctionType
 
 from werkzeug.exceptions import NotFound
@@ -15,10 +16,10 @@ _APPS = {}
 
 class App:
     def __init__(self,
-                 app_id: str,
                  app_root: str,
+                 app_id: str = None,
                  api_prefix='api',
-                 debug_mode=False,
+                 debug=True,
                  append_slash=False,
                  strict_mode=False,
                  api_page_enabled=None,
@@ -29,10 +30,10 @@ class App:
                  ):
         """
 
-        :param app_id: 全局的唯一 id, 用于标识一个APP。可以通过 AppContext.get(id) 获取应用的 Context
         :param app_root: 应用的根目录
+        :param app_id: 全局的唯一 id, 用于标识一个APP。可以通过 AppContext.get(id) 获取应用的 Context，若不指定，则自动生成一个 uuid
         :param api_prefix: API接口URL前缀
-        :param debug_mode: 是否启用调试模式
+        :param debug: 是否启用调试模式
         :param append_slash: 是否在URL末尾使用 / 符号
         :param strict_mode: 是否启用严格模式。在严格模式下，不允许在请求时携带未声明的参数
         :param api_page_enabled: 只否启用接口页面
@@ -41,8 +42,11 @@ class App:
         :param api_page_cache: 是否缓存接口数据
         :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
         """
-        self.id = app_id
-        self.context = AppContext(self.id, app_root, debug_mode, append_slash,
+        self.id = app_id or str(uuid.uuid4())
+
+        _APPS[self.id] = self
+
+        self.context = AppContext(self.id, app_root, debug, append_slash,
                                   strict_mode, api_page_enabled, api_page_name,
                                   api_page_expanded, api_page_cache, api_page_addition)
 
@@ -84,7 +88,7 @@ class App:
         except Exception as e:
             if isinstance(e, NotFound):
                 response = HttpNotFound()
-            elif self.context.DEBUG:
+            elif self.context.debug:
                 raise e
             else:
                 response = HttpServerError()
@@ -122,9 +126,9 @@ class App:
         from restfx.util import helper
         from werkzeug.serving import run_simple
 
-        debug_mode = self.context.DEBUG
+        debug = self.context.debug
 
-        if debug_mode:
+        if debug:
             helper.print_meta('dev-server *DEBUG MODE*')
         else:
             helper.print_meta('dev-server')
@@ -153,7 +157,7 @@ class App:
                 host, port, self.api_prefix, '/' if self.context.append_slash else ''
             ))
 
-        run_simple(host, port, self, use_debugger=debug_mode, use_reloader=debug_mode, threaded=threaded, **kwargs)
+        run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
 
     def collect(self):
         """

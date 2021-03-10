@@ -36,7 +36,7 @@ class Logger:
         temp = message if e is None else '%s\n\t%s' % (message, repr(e))
 
         # 非开发模式时，始终不会输出堆栈信息
-        if not self.debug_mode:
+        if not self.debug:
             self.log('ERROR', temp, e)
             return
 

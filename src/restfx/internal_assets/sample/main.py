@@ -5,10 +5,10 @@ from restfx.middleware.middlewares import SessionMiddleware
 from restfx.session.providers import MemorySessionProvider
 
 # 访问 http://127.0.0.1:9127/api 查看接口页面
-app = App(settings.APP_ID,
-          settings.ROOT,
+app = App(settings.ROOT,
+          app_id=settings.APP_ID,
           api_prefix=settings.API_PREFIX,
-          debug_mode=settings.DEBUG,
+          debug=settings.DEBUG,
           strict_mode=settings.STRICT_MODE,
           api_page_name='Another awesome restfx project'
           )

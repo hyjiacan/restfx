@@ -234,7 +234,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                 _get_parameter_str(args)
             )
             context.logger.warning(msg)
-            if not context.DEBUG:
+            if not context.debug:
                 msg = 'Missing required argument'
             return HttpBadRequest(msg)
 
@@ -306,7 +306,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", Parameters: (%s)' \
                   % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
             context.logger.warning(msg)
-            if not context.DEBUG:
+            if not context.debug:
                 msg = 'Argument type mismatch'
             return HttpBadRequest(msg)
 
@@ -322,7 +322,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
         else:
             msg = 'Injection name "%s" not found' % injection_name
             context.logger.warning(msg)
-            return HttpServerError(msg) if context.DEBUG else HttpServerError()
+            return HttpServerError(msg) if context.debug else HttpServerError()
 
     # 填充可变参数
     variable_args = {}
@@ -360,7 +360,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
     msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
           % (','.join(variable_arg_keys), _get_parameter_str(args))
     context.logger.warning(msg)
-    if not context.DEBUG:
+    if not context.debug:
         msg = 'Unknown argument(s)'
     return HttpBadRequest(msg)
 
