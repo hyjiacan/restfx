@@ -10,7 +10,7 @@ app = App(settings.APP_ID,
           api_prefix=settings.API_PREFIX,
           debug_mode=settings.DEBUG,
           strict_mode=settings.STRICT_MODE,
-          api_page_name='An awesome restfx project'
+          api_page_name='Another awesome restfx project'
           )
 
 app.map_routes(settings.ROUTES_MAP)
@@ -47,8 +47,8 @@ if __name__ == '__main__':
     # 提供对 python main.py persist 命令的支持
     if command_persist():
         exit(0)
-    else:
-        if not settings.DEBUG:
-            load_routes_map()
-        # 启动内置服务器
-        app.startup(host=settings.HOST, port=settings.PORT)
+
+    if not settings.DEBUG:
+        load_routes_map()
+    # 启动内置服务器
+    app.startup(host=settings.HOST, port=settings.PORT)

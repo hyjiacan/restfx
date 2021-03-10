@@ -4,7 +4,7 @@ import os
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
-from restfx.http.response import FileResponse
+from restfx.http.response import HttpRedirect
 from restfx.middleware.middlewares import HttpAuthMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
@@ -72,9 +72,9 @@ app = App(app_id, root, debug_mode=DEBUG_MODE, strict_mode=True,
 app.map_routes({
     'test': 'test.api'
 }).map_static({
-    # '/': 'static'
+    '/': 'static'
 }).map_urls({
-    '/': lambda request: FileResponse('./static/index.html'),
+    '/': lambda request: HttpRedirect('/index.html'),
     '/test/<param>': lambda request, param: HttpResponse(param)
 })
 

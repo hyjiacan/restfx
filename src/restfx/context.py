@@ -56,7 +56,7 @@ class AppContext:
         self.injections = {}
 
         self.api_page_options = {
-            'api_page_name': api_page_name or 'An awesome %s project' % __meta__.name,
+            'api_page_name': api_page_name or 'Another awesome %s project' % __meta__.name,
             'api_page_expanded': api_page_expanded,
             # 是否缓存API页面的 html 文件 和 接口数据
             'api_page_cache': api_page_cache,
