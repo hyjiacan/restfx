@@ -114,7 +114,7 @@ class App:
         return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
             environ, start_response)
 
-    def startup(self, host='127.0.0.1', port=9127, threaded=True, **kwargs):
+    def startup(self, host=None, port=9127, threaded=True, **kwargs):
         """
         开发时使用的服务器，一般来说，应仅用于开发
         :param host:
@@ -152,10 +152,22 @@ class App:
         if env_port is not None:
             port = int(env_port)
 
+        # 支持 空串和 * 标志
+        if host in [None, '', '*']:
+            host = '0.0.0.0'
+
         if self.context.api_page_enabled:
-            print(' * Table of APIs: http://%s:%s/%s%s' % (
-                host, port, self.api_prefix, '/' if self.context.append_slash else ''
-            ))
+            if host == '0.0.0.0':
+                from .util import utils
+                ips = utils.get_ip_list()
+            else:
+                ips = [host]
+
+            print(' * Table of APIs:')
+            for ip in ips:
+                print('\t- http://%s:%s/%s%s' % (
+                    ip, port, self.api_prefix, '/' if self.context.append_slash else ''
+                ))
 
         run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
 

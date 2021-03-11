@@ -28,3 +28,21 @@ def get_func_info(func):
         line + 1,
         func.__name__
     )
+
+
+def get_ip_list():
+    """
+    读取本机的IP地址列表
+    :return:
+    """
+    import socket
+
+    addresses = socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)
+
+    ips = ['127.0.0.1']
+    for address in addresses:
+        ip = address[4][0]
+        if ip not in ips:
+            ips.append(ip)
+
+    return ips
