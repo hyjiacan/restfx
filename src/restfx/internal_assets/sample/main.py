@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import settings
+from middlewares import MyMiddleware
 from restfx import App
 from restfx.middleware.middlewares import SessionMiddleware
 from restfx.session.providers import MemorySessionProvider
@@ -18,6 +19,7 @@ app.map_static(settings.STATIC_MAP)
 
 app.register_middleware(
     SessionMiddleware(MemorySessionProvider(20)),
+    MyMiddleware()
 )
 
 # 路由注入

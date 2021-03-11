@@ -78,7 +78,7 @@ class SessionMiddleware(MiddlewareBase):
         self.cookie_samesite = cookie_samesite
         self.cookie_httponly = cookie_httponly
 
-    def process_request(self, request, meta, **kwargs):
+    def process_request(self, request, meta):
         context = AppContext.get(request.app_id)
         if context is None or self.session_provider is None:
             return
@@ -130,13 +130,7 @@ class SessionMiddleware(MiddlewareBase):
 
         request.session.last_access_time = now
 
-    def process_invoke(self, request, meta, **kwargs):
-        pass
-
-    def process_return(self, request, meta, data, **kwargs):
-        pass
-
-    def process_response(self, request, meta, response, **kwargs):
+    def process_response(self, request, meta, response):
         # 在响应结束时才写入，以减少 IO
         if not request.session:
             return

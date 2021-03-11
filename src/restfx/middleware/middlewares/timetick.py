@@ -10,20 +10,20 @@ class TimetickMiddleware(MiddlewareBase):
         self.invoke_time = __meta__.name + '-1-invoke-duration'
         self.response_time = __meta__.name + '-2-response-duration'
 
-    def process_request(self, request, meta, **kwargs):
+    def process_request(self, request, meta):
         request.timetick = {
             'request': time.time() * 1000
         }
 
-    def process_invoke(self, request, meta, **kwargs):
+    def process_invoke(self, request, meta, args):
         if request.timetick:
             request.timetick['invoke'] = time.time() * 1000
 
-    def process_return(self, request, meta, data, **kwargs):
+    def process_return(self, request, meta, data):
         if request.timetick:
             request.timetick['return'] = time.time() * 1000
 
-    def process_response(self, request, meta, response, **kwargs):
+    def process_response(self, request, meta, response):
         if not request.timetick:
             return
 
