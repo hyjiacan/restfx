@@ -1,4 +1,12 @@
 (function () {
+  function padIndex(index, width) {
+    index = index.toString()
+    for (var i = 0; i < width - index.length; i++) {
+      index = '0' + index
+    }
+    return index
+  }
+
   function h(level, content) {
     var data = []
     for (var i = 0; i < level; i++) {
@@ -42,7 +50,7 @@
     return [
       argName,
       arg.has_annotation ? code(argType) : argType,
-      getArgDefaultValue(arg),
+      arg.has_default ? code(getArgDefaultValue(arg)) : '-',
       arg.comment ? arg.comment : '-'
     ]
   }
@@ -79,9 +87,9 @@
     ].join('/'))
   }
 
-  function renderRoute(route) {
+  function renderRoute(route, index) {
     return [
-      h(3, '[路由] ' + (route.name || '<未命名>')),
+      h(3, index + '. [路由] ' + (route.name || '<未命名>')),
       '描述: ' + (route.handler_info.description || '_无_'),
       '',
       renderUrlInfo(route),
@@ -93,16 +101,19 @@
     ].join('\n')
   }
 
-  function renderModule(index) {
+  function renderModule(index, indexWidth) {
     var moduleName = window.apiData.moduleNames[index]
     var routes = window.apiData.modules[moduleName]
 
     var data = [
-      h(2, '[模块] ' + (moduleName || '<未命名>'))
+      h(2, padIndex(index + 1, indexWidth) + '. [模块] ' + (moduleName || '<未命名>'))
     ]
 
-    for (var i = 0; i < routes.length; i++) {
-      data.push(renderRoute(routes[i]))
+    var routeCount = routes.length
+    var routeIndexWidth = routeCount.toString().length
+
+    for (var i = 0; i < routeCount; i++) {
+      data.push(renderRoute(routes[i], padIndex(i + 1, routeIndexWidth)))
     }
 
     return data.join('\n')
@@ -112,17 +123,39 @@
     var content = []
 
     content.push(h(1, data.name))
+    content.push('---')
+    content.push('')
 
-    for (var i = 0; i < data.moduleNames.length; i++) {
-      content.push(renderModule(i))
+    var moduleCount = data.moduleNames.length
+    var indexWidth = moduleCount.toString().length
+
+    for (var i = 0; i < moduleCount; i++) {
+      content.push(renderModule(i, indexWidth))
     }
+
+    content.push('')
+    content.push('---')
+    content.push('')
+    content.push([
+      '> Powered by [',
+      data.meta.name,
+      '@',
+      data.meta.version,
+      '](',
+      data.meta.url + '?from=dist.md',
+      '&version=' + data.meta.version,
+      ')'
+    ].join(''))
 
     // 在结尾处追加空行
     content.push('')
+    var md = content.join('\n')
+
+    console.log(md)
+    return
 
     var form = document.querySelector('#export-proxy')
     form.setAttribute('action', urlRoot + '/' + apiPrefix + '?export=md')
-    var md = content.join('\n')
     document.querySelector('#md-content').value = Base64.encode(md)
     form.submit()
   }

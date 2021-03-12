@@ -1,4 +1,4 @@
-function el (tag, attrs, children) {
+function el(tag, attrs, children) {
   var element = document.createElement(tag)
   var isHTML = false
   if (attrs) {
@@ -23,7 +23,7 @@ function el (tag, attrs, children) {
     if (!Array.isArray(children)) {
       children = [children]
     }
-    children.forEach(function(child) {
+    children.forEach(function (child) {
       if (child === undefined || child === null) {
         return
       }
@@ -35,8 +35,11 @@ function el (tag, attrs, children) {
   }
   return element
 }
-function render (list, data) {
-  document.querySelector('#fx-name').innerHTML = data.meta.name + '@' + data.meta.version
+
+function render(list, data) {
+  var poweredLink = document.querySelector('#fx-name')
+  poweredLink.innerHTML = data.meta.name + '@' + data.meta.version
+  poweredLink.setAttribute('href', data.meta.url + '?from=dist&version=' + data.meta.version)
   document.title = 'Table of APIs - ' + data.name
   document.querySelector('#app-name').innerHTML = data.name
   var s = localStorage.getItem('options-expanded')
@@ -58,7 +61,7 @@ function render (list, data) {
   var modules = Object.create(null)
   var moduleNames = []
   for (var i = 0; i < routes.length; i++) {
-    var route = routes[i];
+    var route = routes[i]
     // if (!route.module) {
     //   route.module = '<未命名模块>'
     // }
@@ -73,7 +76,7 @@ function render (list, data) {
   }
 
   moduleNames.sort()
-  moduleNames.forEach(function(moduleName){
+  moduleNames.forEach(function (moduleName) {
     apiList.appendChild(el('li', {
       'class': 'module-item'
     }, renderModule(modules[moduleName], moduleName, data.expanded)))
@@ -81,6 +84,7 @@ function render (list, data) {
 
   window.apiData = {
     name: data.name,
+    meta: data.meta,
     moduleNames: moduleNames,
     modules: modules
   }
@@ -90,20 +94,21 @@ function render (list, data) {
 }
 
 function padStart(str, width, fill) {
-  for (var i=str.length;i<width;i++) {
-    str = fill + str;
+  for (var i = str.length; i < width; i++) {
+    str = fill + str
   }
   return str
 }
 
-function renderModule (data, moduleName, expanded) {
-  var encodedModuleName = moduleName ? moduleName.split('').map(function(ch) {
+function renderModule(data, moduleName, expanded) {
+  var encodedModuleName = moduleName ? moduleName.split('').map(function (ch) {
+    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
     return padStart(ch.charCodeAt(0).toString(32), 4, '0')
   }).join('') : '00000000000000000000000000000000'
-  return el('details',  {
+  return el('details', {
     open: expanded ? 'open' : undefined
   }, [
-    el('summary',null , [
+    el('summary', null, [
       el(
         'a',
         {
@@ -119,11 +124,11 @@ function renderModule (data, moduleName, expanded) {
     ]),
     el(
       'ol',
-      { 'class': 'api-list' },
-      data.map(function(route) {
+      {'class': 'api-list'},
+      data.map(function (route) {
           var id = route.method + '#' + route.path
           API_LIST[id] = route
-          return el('li', { 'class': 'api-item' }, [
+          return el('li', {'class': 'api-item'}, [
             el('div', null, [
               el(
                 'a',
@@ -136,8 +141,8 @@ function renderModule (data, moduleName, expanded) {
               ),
               el('span', {
                 'class': 'route-name' + (route.name ? '' : ' unnamed-item')
-               }, route.name || '<未命名>'),
-              el('span', { 'class': 'comment', html: true }, route.handler_info.description)
+              }, route.name || '<未命名>'),
+              el('span', {'class': 'comment', html: true}, route.handler_info.description)
             ]),
             el('div', {
               'class': 'url-info'
@@ -162,9 +167,9 @@ function renderModule (data, moduleName, expanded) {
 }
 
 function renderUrlInfo(route) {
-  return el('div', { 'class': 'info' }, [
-    el('span', { 'class': 'method select-all' }, route.method),
-    el('code', { 'class': 'url' }, [
+  return el('div', {'class': 'info'}, [
+    el('span', {'class': 'method select-all'}, route.method),
+    el('code', {'class': 'url'}, [
       el('span', {
         'class': 'url-root'
       }, urlRoot),
@@ -172,7 +177,7 @@ function renderUrlInfo(route) {
         el('span', null, '/'),
         el('span', {
           'class': 'url-prefix'
-        },  [
+        }, [
           el('span', null, apiPrefix),
           el('span', {
             'class': 'url-path-with-slash'
@@ -180,7 +185,7 @@ function renderUrlInfo(route) {
             el('span', null, '/'),
             el('span', {
               'class': 'url-path'
-            }, route.path.substring(1)),
+            }, route.path.substring(1))
           ])
         ])
       ])
@@ -211,7 +216,7 @@ function getArgValueString(value, editable) {
   return value
 }
 
-function getArgDefaultValue (arg, editable) {
+function getArgDefaultValue(arg, editable) {
   var defaultValue = arg['default']
 
   // 将元组和列表视作同种类型
@@ -220,7 +225,7 @@ function getArgDefaultValue (arg, editable) {
     return getArgValueString(defaultValue, editable)
   }
 
-  var listValue = defaultValue.map(function(item) {
+  var listValue = defaultValue.map(function (item) {
     return getArgValueString(item, editable)
   }).join(',')
 
@@ -228,9 +233,9 @@ function getArgDefaultValue (arg, editable) {
   return '[' + listValue + ']'
 }
 
-function renderArgDefaultValue (arg) {
+function renderArgDefaultValue(arg) {
   if (!arg.has_default) {
-    return arg.annotation_name === 'HttpRequest' ? el('span', null , '-') : el('span', {
+    return arg.annotation_name === 'HttpRequest' ? el('span', null, '-') : el('span', {
       'class': 'required-field',
       title: '必填项'
     }, '*')
@@ -238,7 +243,7 @@ function renderArgDefaultValue (arg) {
   return el('code', null, getArgDefaultValue(arg))
 }
 
-function renderArgEditor (arg) {
+function renderArgEditor(arg) {
   var attrs = {
     type: 'text',
     name: arg.name,
@@ -255,15 +260,15 @@ function renderArgEditor (arg) {
     editor = el('input', attrs)
   } else if (['bool', 'int', 'float'].indexOf(arg.annotation_name) === -1) {
     editor = el('textarea', attrs, arg.has_default ? getArgDefaultValue(arg, true) : '')
-  } else  {
+  } else {
     attrs.value = arg.has_default ? getArgDefaultValue(arg, true) : ''
     editor = el('input', attrs)
   }
 
-  return el('div', { 'class': 'arg-editor' }, editor)
+  return el('div', {'class': 'arg-editor'}, editor)
 }
 
-function renderArg (arg, editable) {
+function renderArg(arg, editable) {
   var argName = arg.name
   if (arg.alias) {
     argName += '/' + arg.alias
@@ -303,43 +308,45 @@ function renderArg (arg, editable) {
       null,
       el(
         'span',
-        { 'class': 'comment', html: true},
+        {'class': 'comment', html: true},
         arg.comment ? arg.comment : '-'
       )
     )
   ])
 }
 
-function renderArgs (args, editable, append) {
+function renderArgs(args, editable, append) {
   if (!args || !args.length) {
-    return el('table', { 'class': 'args-table' }, [
+    return el('table', {'class': 'args-table'}, [
       el('tr', null, el('td', null, [
         el('span', null, '参数信息: '),
-        el('span', { 'class': 'tip' }, '无')
+        el('span', {'class': 'tip'}, '无')
       ]))
     ])
   }
 
-  var rows = args.filter(function(arg) {
+  var rows = args.filter(function (arg) {
     // 编辑时不渲染 可变参数
     if (editable && arg.is_variable) {
       return false
     }
     // 始终不显示 HttpRequest 参数 和 注入参数
     return arg.annotation_name !== 'HttpRequest' && !arg.is_injected
-  }).map(function(arg){return renderArg(arg, editable)})
+  }).map(function (arg) {
+    return renderArg(arg, editable)
+  })
 
   if (append) {
     rows.push(append)
   }
 
-  return el('table', { 'class': 'args-table' }, [
+  return el('table', {'class': 'args-table'}, [
     el('caption', null, '参数信息'),
     el('colgroup', null, [
-      el('col', { style: 'width: 200px' }, null),
-      el('col', { style: 'width: 150px' }, null),
-      el('col', { style: 'width: 200px' }, null),
-      el('col', { style: 'width: auto' }, null)
+      el('col', {style: 'width: 200px'}, null),
+      el('col', {style: 'width: 150px'}, null),
+      el('col', {style: 'width: 200px'}, null),
+      el('col', {style: 'width: auto'}, null)
     ]),
     el(
       'thead',
@@ -359,11 +366,11 @@ function renderArgs (args, editable, append) {
   ])
 }
 
-function renderReturn (route) {
-  return el('p', { 'class': 'return-info' }, [
+function renderReturn(route) {
+  return el('p', {'class': 'return-info'}, [
     el('span', null, '返回'),
     // route.handler_info.return_type ? el('code', null, route.return_type) : '',
     el('span', null, ':'),
-    el('span', { 'class': 'comment' }, route.handler_info.return_description || '-')
+    el('span', {'class': 'comment'}, route.handler_info.return_description || '-')
   ])
 }

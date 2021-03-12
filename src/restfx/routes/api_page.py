@@ -62,7 +62,8 @@ class ApiPage:
         return JsonResponse({
             'meta': {
                 'name': __meta__.name,
-                'version': __meta__.version
+                'version': __meta__.version,
+                'url': __meta__.website
             },
             'name': self.context.api_page_options['api_page_name'],
             'expanded': self.context.api_page_options['api_page_expanded'],
