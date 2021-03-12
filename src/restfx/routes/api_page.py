@@ -78,7 +78,7 @@ class ApiPage:
         try:
             from restfx.util import b64
             content = b64.dec_bytes(content)
-        except Exception as e:
+        except Exception:
             return HttpBadRequest()
 
         import urllib.parse
