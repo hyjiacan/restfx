@@ -151,9 +151,6 @@
     content.push('')
     var md = content.join('\n')
 
-    console.log(md)
-    return
-
     var form = document.querySelector('#export-proxy')
     form.setAttribute('action', urlRoot + '/' + apiPrefix + '?export=md')
     document.querySelector('#md-content').value = Base64.encode(md)
