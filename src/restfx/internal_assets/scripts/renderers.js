@@ -79,6 +79,12 @@ function render (list, data) {
     }, renderModule(modules[moduleName], moduleName, data.expanded)))
   })
 
+  window.apiData = {
+    name: data.name,
+    moduleNames: moduleNames,
+    modules: modules
+  }
+
   list.innerHTML = ''
   list.appendChild(apiList)
 }

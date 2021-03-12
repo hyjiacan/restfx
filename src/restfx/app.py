@@ -8,6 +8,7 @@ from werkzeug.routing import Map, Rule
 
 from .context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpRequest
+from .routes.api_page import ApiPage
 from .routes.router import Router
 
 # APP 实例集合
@@ -52,11 +53,12 @@ class App:
 
         self.api_prefix = api_prefix
         self.router = Router(self.context)
+        self.api_page = ApiPage(self.context)
 
         self.custom_url_map = {}
 
         self.url_map = Map([
-            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_list'),
+            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
 
@@ -77,8 +79,8 @@ class App:
             adapter = self.url_map.bind_to_environ(environ)
 
             endpoint, values = adapter.match()
-            if endpoint == 'api_list':
-                response = self.router.api_list(request)
+            if endpoint == 'api_page':
+                response = self.api_page.dispatch(request)
             elif endpoint == 'entry_only':
                 response = self.router.dispatch(request, values['entry'])
             elif endpoint in self.custom_url_map:

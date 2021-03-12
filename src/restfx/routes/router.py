@@ -1,11 +1,9 @@
-import os
 from types import FunctionType
 
 from .route_resolver import RouteResolver
 from ..context import AppContext
-from ..http import HttpNotFound, HttpServerError, HttpResponse, JsonResponse
+from ..http import HttpNotFound, HttpServerError, HttpResponse
 from ..http.request import HttpRequest
-from ..util.func_util import FunctionDescription
 
 
 class Router:
@@ -16,65 +14,10 @@ class Router:
         """
         :type:Dict[str, Optional[FunctionDescription]]
         """
-        # 开发模式的模块缓存，用于API列表
-        self.routes_cache = {}
         # 线上模式时，使用固定路由
         self.production_routes = {}
-        # API列表页面缓存
-        self.api_page_html_cache = ''
         # 路由拦截器
         self.intercepter = None
-
-    def api_list(self, request):
-        """
-        渲染 API 列表
-        :param request:
-        :return:
-        """
-        if not self.context.api_page_enabled:
-            self.context.logger.info(
-                'API list is disabled, '
-                'use "App(..., api_page_enabled=True, ...)" to enable it.')
-            return HttpResponse(status=404)
-
-        if not self.api_page_html_cache or not self.context.api_page_options['api_page_cache']:
-            with open(os.path.join(os.path.dirname(__file__),
-                                   '../internal_assets/templates/api_list.html'),
-                      encoding='utf-8') as fp:
-                lines = fp.readlines()
-                self.api_page_html_cache = ''.join(lines)
-                fp.close()
-
-        if request.method != 'POST':
-            return HttpResponse(self.api_page_html_cache, content_type='text/html')
-
-        if not self.routes_cache or not self.context.api_page_options['api_page_cache']:
-            routes = self.context.collector.collect(self.context.routes_map)
-
-            if 'api_page_addition' in self.context.api_page_options:
-                addition_func = self.context.api_page_options['api_page_addition']
-            else:
-                addition_func = None
-            for route in routes:
-                # 附加信息
-                if addition_func is not None:
-                    route['addition_info'] = addition_func(route)
-                # 移除 kwargs，以避免额外数据带来的数据传输消耗
-                if 'kwargs' in route:
-                    del route['kwargs']
-
-            self.routes_cache = routes
-
-        from restfx import __meta__
-        return JsonResponse({
-            'meta': {
-                'name': __meta__.name,
-                'version': __meta__.version
-            },
-            'name': self.context.api_page_options['api_page_name'],
-            'expanded': self.context.api_page_options['api_page_expanded'],
-            'routes': self.routes_cache,
-        }, encoder=FunctionDescription.JSONEncoder)
 
     def dispatch(self, request: HttpRequest, entry):
         """
@@ -91,7 +34,6 @@ class Router:
             return self.route_for_production(request, '/' + entry)
 
         resolver = RouteResolver(self.context,
-                                 self.routes_cache,
                                  self.entry_cache,
                                  request.method, entry)
 

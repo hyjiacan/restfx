@@ -26,6 +26,8 @@
               <button onclick="collapseAll()">全部收起</button>
               <button onclick="expandAll()">全部展开</button>
               <i></i>
+              <button id="btn-export" title="导出为 Markdown">导出</button>
+              <i></i>
               <button id="btn-show-option-panel">选项</button>
             </div>
           </div>
@@ -140,6 +142,9 @@
       </div>
     </div>
     <div id="btn-back-to-top" title="回到顶部"></div>
+    <form action="" id="export-proxy" style="display: none" target="_blank" method="post">
+        <input type="hidden" name="data" id="md-content" />
+    </form>
     <script>
       var urlRoot = window.location.protocol + '//' + window.location.host
       var apiPrefix = window.location.pathname.substring(1)
@@ -154,5 +159,7 @@
     <script src="/internal_assets/scripts/panel.js" defer></script>
     <script src="/internal_assets/scripts/test.js" defer></script>
     <script src="/internal_assets/scripts/options.js" defer></script>
+    <script src="/internal_assets/scripts/export.js" defer></script>
+    <script src="/internal_assets/scripts/base64.js" defer></script>
   </body>
 </html>

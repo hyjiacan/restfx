@@ -9,12 +9,10 @@ from ..util.func_util import FunctionDescription
 
 class RouteResolver:
     def __init__(self, context: AppContext,
-                 modules_cache: dict,
                  entry_cache: Dict[str, Optional[FunctionDescription]],
                  method: str,
                  entry: str):
         self.context = context
-        self.modules_cache = modules_cache
         self.entry_cache = entry_cache
         self.entry = entry
         self.method = method.lower()
