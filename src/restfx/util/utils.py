@@ -9,7 +9,10 @@ def load_module(module_name: str, level=0):
     :return:
     """
     # __import__ 自带缓存
-    module = __import__(module_name, level=level, globals=globals())
+    module = __import__(module_name, level=level, globals={
+        **globals(),
+        **locals()
+    })
     temp = module_name.split('.')
     if len(temp) > 1:
         for seg in temp[1:]:

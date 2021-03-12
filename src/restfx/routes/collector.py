@@ -32,6 +32,7 @@ class Collector:
     def __init__(self, project_root: str, append_slash: bool):
         self.project_root = project_root
         self.append_slash = append_slash
+        self.global_types = {}
 
     def collect(self, routes_map: dict):
         """
@@ -82,7 +83,7 @@ class Collector:
         :return: 没有路由时返回 None
         """
         # 解析路由的定义
-        envs, routes = self.resolve_routes(fullname)
+        routes = self.resolve_routes(fullname)
 
         # 没有找到定义，返回 None
         if not routes:
@@ -174,7 +175,6 @@ class Collector:
 
         print('Generating routes map...')
         for route in self.collect(routes_map):
-            # imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
             routes.append(_REGISTER_STMT.format(
                 module=route['module'],
@@ -196,8 +196,7 @@ class Collector:
             fp.close()
         print('Routes persisted')
 
-    @staticmethod
-    def resolve_routes(filename: str, func_name: str = None):
+    def resolve_routes(self, filename: str, func_name: str = None):
         """
 
         :param filename:
@@ -209,21 +208,9 @@ class Collector:
             python_fp.close()
         ast_body = ast.parse(source=''.join(lines), filename=filename).body
 
-        envs = {}
         routes = []
 
         for item in ast_body:
-            if isinstance(item, ast.ImportFrom):
-                level = item.level if hasattr(item, 'level') else 0
-                module = utils.load_module(item.module, level)
-                for name_item in item.names:
-                    env_name = name_item.asname or name_item.name
-                    envs[env_name] = getattr(module, name_item.name)
-                continue
-            # if isinstance(item, ast.ClassDef):
-            #     continue
-            # if isinstance(item, ast.Assign):
-            #     continue
             if not isinstance(item, ast.FunctionDef):
                 continue
 
@@ -231,19 +218,18 @@ class Collector:
                 continue
 
             # Find out the @route decorator
-            decorator_info = Collector.get_route_decorator(item, envs)
+            decorator_info = self.get_route_decorator(item)
             if decorator_info is None:
                 continue
 
             if func_name is not None:
-                return envs, decorator_info
+                return decorator_info
 
             routes.append((item.name, decorator_info))
 
-        return envs, routes if func_name is None else None
+        return routes if func_name is None else None
 
-    @staticmethod
-    def get_route_decorator(func_def: ast.FunctionDef, envs: dict = None):
+    def get_route_decorator(self, func_def: ast.FunctionDef):
         for decorator in func_def.decorator_list:
             if not decorator.func:
                 continue
@@ -255,10 +241,11 @@ class Collector:
                 arg_name = keyword.arg
                 value = keyword.value
                 if isinstance(value, ast.Attribute):
-                    arg_value = getattr(envs[value.value.id], value.attr)
+                    arg_value = getattr(self.global_types[value.value.id], value.attr)
                 else:
                     # 其它类型暂时不支持
                     # 统一使用原始值
+                    # noinspection PyProtectedMember
                     arg_value = getattr(value, keyword.value._fields[0])
 
                 keywords[arg_name] = arg_value

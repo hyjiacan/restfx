@@ -1,7 +1,7 @@
-from enums import OpTypes
 from restfx import route
 from restfx.http import HttpFile
 from restfx.http import HttpRequest
+from test.tools.enums import OpTypes
 
 
 @route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False, op_type=OpTypes.Query)

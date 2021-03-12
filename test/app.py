@@ -1,6 +1,8 @@
 import json
 import os
 
+from test.tools.enums import OpTypes
+
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
@@ -80,6 +82,8 @@ app.map_routes({
     '/': lambda request: HttpRedirect('/index.html'),
     '/test/<param>': lambda request, param: HttpResponse(param)
 })
+
+app.register_types(OpTypes)
 
 
 def on_auth(request: HttpRequest, meta: RouteMeta):

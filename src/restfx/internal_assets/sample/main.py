@@ -22,6 +22,16 @@ app.register_middleware(
     MyMiddleware()
 )
 
+# 注册类型
+# from enum import Enum
+# class OpTypes(Enum):
+#     Query = 1
+#     Add = 2
+#     Edit = 3
+#     Delete = 4
+# 如果你想要使用 @route(op_type=OpTypes.Query) 这样的写法，那么需要调用
+# app.register_types(OpTypes)
+
 # 路由注入
 app.inject(root=settings.ROOT)
 

@@ -129,7 +129,7 @@ class RouteResolver:
         func = getattr(entry_define, func_name)
         import inspect
         filename = inspect.getmodule(func).__file__
-        envs, decorator = self.context.collector.resolve_routes(filename, func_name)
+        decorator = self.context.collector.resolve_routes(filename, func_name)
 
         if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (

@@ -76,10 +76,12 @@ class ApiPage:
 
         content = request.POST['data']
 
+        # noinspection PyBroadException
         try:
             from restfx.util import b64
             content = b64.dec_bytes(content)
         except Exception:
+            # This exception can be ignored safety
             return HttpBadRequest()
 
         import urllib.parse

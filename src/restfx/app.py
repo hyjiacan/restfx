@@ -173,6 +173,15 @@ class App:
 
         run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
 
+    def register_types(self, *types):
+        """
+        注册路由参数上使用的类型，目前仅支持枚举类型
+        :param types:
+        :return:
+        """
+        for type_item in types:
+            self.context.collector.global_types[type_item.__name__] = type_item
+
     def collect(self):
         """
         收集路由
