@@ -1,7 +1,18 @@
 (function () {
+  function parseChsNumber(value) {
+    var chs = '零一二三四五六七八九'
+    return value.toString().split('').map(function (item) {
+      return chs[parseInt(item)]
+    }).join('')
+  }
+
   function padIndex(index, width) {
     index = index.toString()
-    for (var i = 0; i < width - index.length; i++) {
+    var padWidth = width - index.length
+    if (padWidth <= 0) {
+      return index
+    }
+    for (var i = 0; i < padWidth; i++) {
       index = '0' + index
     }
     return index
@@ -89,7 +100,7 @@
 
   function renderRoute(route, index) {
     return [
-      h(3, index + '. [路由] ' + (route.name || '<未命名>')),
+      h(3, index + '. [路由] ' + (route.name || '_<未命名>_')),
       '描述: ' + (route.handler_info.description || '_无_'),
       '',
       renderUrlInfo(route),
@@ -101,12 +112,12 @@
     ].join('\n')
   }
 
-  function renderModule(index, indexWidth) {
+  function renderModule(index) {
     var moduleName = window.apiData.moduleNames[index]
     var routes = window.apiData.modules[moduleName]
 
     var data = [
-      h(2, padIndex(index + 1, indexWidth) + '. [模块] ' + (moduleName || '<未命名>'))
+      h(2, parseChsNumber(index + 1) + '、 [模块] ' + (moduleName || '_<未命名>_'))
     ]
 
     var routeCount = routes.length
@@ -127,10 +138,9 @@
     content.push('')
 
     var moduleCount = data.moduleNames.length
-    var indexWidth = moduleCount.toString().length
 
     for (var i = 0; i < moduleCount; i++) {
-      content.push(renderModule(i, indexWidth))
+      content.push(renderModule(i))
     }
 
     content.push('')
@@ -150,6 +160,9 @@
     // 在结尾处追加空行
     content.push('')
     var md = content.join('\n')
+
+    // console.log(md)
+    // return
 
     var form = document.querySelector('#export-proxy')
     form.setAttribute('action', urlRoot + '/' + apiPrefix + '?export=md')
