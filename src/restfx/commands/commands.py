@@ -1,5 +1,4 @@
 import os
-import shutil
 import sys
 import uuid
 
@@ -71,10 +70,13 @@ def command_create(working_dir: str, project_name, *argv):
         print('[ERROR] Project path "%s" exists.' % project_path)
         sys.exit(1)
 
-    # 示例目录
-    sample_path = os.path.abspath(os.path.join(pkg_root, 'internal_assets', 'sample'))
-    print('Creating structure')
-    shutil.copytree(sample_path, project_path)
+    # 示例文件
+    sample_file = os.path.abspath(os.path.join(pkg_root, 'internal_assets', 'sample.tar.gz'))
+    print('Creating project structure')
+    import tarfile
+    tarfile = tarfile.open(sample_file)
+    tarfile.extractall(project_path)
+    tarfile.close()
 
     print('Generating APPID')
     # 生成 uuid
@@ -91,7 +93,5 @@ def command_create(working_dir: str, project_name, *argv):
 
     print("""Created !
 
-Now you can enjoy restfx with following steps:
-    1. cd {project_name}
-    2. python main.py
+Now you can enjoy restfx.
 """.format(project_name=project_name))

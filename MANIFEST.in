@@ -1,2 +1,5 @@
-recursive-include src/restfx/internal_assets *
+recursive-include src/restfx/internal_assets/scripts *
+recursive-include src/restfx/internal_assets/styles *
+recursive-include src/restfx/internal_assets/templates *
+include src/restfx/internal_assets/sample.tar.gz
 global-exclude *.pyc

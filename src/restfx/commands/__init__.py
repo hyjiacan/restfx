@@ -1,7 +1,7 @@
 import os
 import sys
 
-from restfx.commands.commands import (
+from .commands import (
     run_command,
     register,
     command_help,
