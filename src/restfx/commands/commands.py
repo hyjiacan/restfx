@@ -42,6 +42,7 @@ def get_commands():
     ]
 
 
+# noinspection PyUnusedLocal
 def command_help(*argv):
     commands = get_commands()
     print("""Commands:
@@ -55,10 +56,12 @@ Documentation links:
            commands='\n\t'.join(commands)))
 
 
+# noinspection PyUnusedLocal
 def command_version(*argv):
     print('Version: ' + __meta__.version)
 
 
+# noinspection PyUnusedLocal
 def command_create(working_dir: str, project_name, *argv):
     print('working-dir:' + working_dir)
     pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

@@ -195,7 +195,7 @@ function renderUrlInfo(route) {
 
 function getArgValueString(value, editable) {
   if (value === null || value === undefined) {
-    return editable ? '' : 'None'
+    return editable ? '' : 'null'
   }
 
   if (typeof value === 'number') {
@@ -203,10 +203,7 @@ function getArgValueString(value, editable) {
   }
 
   if (typeof value === 'boolean') {
-    if (editable) {
-      return value ? 'true' : 'false'
-    }
-    return value ? 'True' : 'False'
+    return value ? 'true' : 'false'
   }
 
   if (typeof value === 'string') {
@@ -235,7 +232,7 @@ function getArgDefaultValue(arg, editable) {
 
 function renderArgDefaultValue(arg) {
   if (!arg.has_default) {
-    return arg.annotation_name === 'HttpRequest' ? el('span', null, '-') : el('span', {
+    return el('span', {
       'class': 'required-field',
       title: '必填项'
     }, '*')
@@ -277,9 +274,12 @@ function renderArg(arg, editable) {
   if (arg.is_variable) {
     arg.has_annotation = true
     argName = '**' + argName
-    argType = 'VAR_KEYWORD'
+    argType = 'variable'
   } else if (arg.has_annotation) {
     argType = arg.annotation_name
+    if (argType === 'str') {
+      argType = 'string'
+    }
   } else {
     argType = '-'
   }
@@ -300,8 +300,7 @@ function renderArg(arg, editable) {
     el(
       'td',
       null,
-      editable && arg.annotation_name !== 'HttpRequest' && !arg.is_variable ?
-        renderArgEditor(arg) : renderArgDefaultValue(arg)
+      editable && !arg.is_variable ? renderArgEditor(arg) : renderArgDefaultValue(arg)
     ),
     el(
       'td',
@@ -327,11 +326,7 @@ function renderArgs(args, editable, append) {
 
   var rows = args.filter(function (arg) {
     // 编辑时不渲染 可变参数
-    if (editable && arg.is_variable) {
-      return false
-    }
-    // 始终不显示 HttpRequest 参数 和 注入参数
-    return arg.annotation_name !== 'HttpRequest' && !arg.is_injected
+    return !editable || !arg.is_variable
   }).map(function (arg) {
     return renderArg(arg, editable)
   })

@@ -8,7 +8,7 @@ class RouteMeta:
 
     def __init__(self,
                  handler: FunctionType,
-                 func_args,
+                 handler_args,
                  route_id=None,
                  module=None,
                  name=None,
@@ -19,7 +19,7 @@ class RouteMeta:
         """
 
         :param handler: 路由函数对象
-        :param func_args: 路由函数参数列表
+        :param handler_args: 路由函数参数列表
         :param route_id: 路由ID，此ID由路由相关信息组合而成
         :param module: 装饰器上指定的 module 值
         :param name: 装饰器上指定的 name 值
@@ -27,7 +27,7 @@ class RouteMeta:
         :param kwargs: 装饰器上指定的其它参数
         """
         self.handler = handler
-        self.func_args = func_args
+        self.handler_args = handler_args
         self.id = route_id
         self.module = module
         self.name = name

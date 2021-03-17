@@ -79,12 +79,7 @@
     ]
 
     for (var i = 0; i < args.length; i++) {
-      var arg = args[i]
-      // 始终不显示 HttpRequest 参数 和 注入参数
-      if (arg.annotation_name === 'HttpRequest' || arg.is_injected) {
-        continue
-      }
-      table.push('|' + renderArg(arg).join('|') + '|')
+      table.push('|' + renderArg(args[i]).join('|') + '|')
     }
 
     return table.join('\n')

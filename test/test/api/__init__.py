@@ -3,13 +3,19 @@ from ..tools import b64
 
 
 @route('声明在包中的模块', '包路由', auth=False, extname='asp')
-def get():
+def get(content, session):
     """
     这是一个<b>包路由</b>
     :return:
     """
+    old = None
+    if session:
+        old = session.get('old')
+        session.set('old', content)
     return {
-        'data': '来自包中的数据'
+        'data': '来自包中的数据',
+        'content': content,
+        'old': old
     }
 
 

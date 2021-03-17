@@ -4,6 +4,8 @@ import re
 from collections import OrderedDict
 from types import FunctionType
 
+from restfx.session import HttpSession
+
 from .utils import get_func_info
 from ..http import HttpRequest
 
@@ -23,7 +25,7 @@ class ArgumentSpecification:
         self.index = index
         # 是否是注入参数
         # 注入参数名称以 _ 开头
-        self.is_injected = name[0] == '_'
+        self.is_injection = name[0] == '_'
         # 是否是可变参数
         self.is_variable = False
         # 是否有类型声明
@@ -42,7 +44,7 @@ class ArgumentSpecification:
         # 别名，当路由函数中声明的是 abc_def_xyz 时，自动处理为 abcDefXyz
         self.alias = None
 
-        if self.is_injected:
+        if self.is_injection:
             return
 
         if '_' not in self.name:
@@ -75,7 +77,7 @@ class ArgumentSpecification:
             return {
                 'name': o.name,
                 'index': o.index,
-                'is_injected': o.is_injected,
+                'is_injection': o.is_injection,
                 'is_variable': o.is_variable,
                 'has_annotation': o.has_annotation,
                 'has_default': o.has_default,
@@ -108,10 +110,10 @@ class FunctionDescription:
         self.description = ''
         self.return_description = ''
         self.return_type = ''
-        self.arguments = self._get_func_args()
+        self.arguments = self._get_args()
         self.decorator = None
 
-    def _get_func_args(self):
+    def _get_args(self):
         """
         获取函数的参数列表（带参数类型）
         :return:
@@ -172,6 +174,13 @@ class FunctionDescription:
                     # 2. 当参数类型是 HttpRequest 时 (不论参数名称，包括 request)
                     # 但是，参数名称是 request 但其类型不是 HttpRequest ，就会被当作一般参数处理
                     spec.annotation = HttpRequest
+                    spec.has_annotation = True
+                elif p == 'session':
+                    # 以下情况将设置为 HttpSession 对象
+                    # 1. 当参数名称是 session 并且未指定类型
+                    # 2. 当参数类型是 HttpSession 时 (不论参数名称，包括 session)
+                    # 但是，参数名称是 session 但其类型不是 HttpSession ，就会被当作一般参数处理
+                    spec.annotation = HttpSession
                     spec.has_annotation = True
             else:
                 spec.annotation = annotation
@@ -254,6 +263,7 @@ class FunctionDescription:
     class JSONEncoder(json.JSONEncoder):
         def default(self, o):
             if isinstance(o, ArgumentSpecification):
+                # noinspection PyCallByClass
                 return ArgumentSpecification.JSONEncoder.default(self, o)
             if not isinstance(o, FunctionDescription):
                 return json.JSONEncoder.default(self, o)

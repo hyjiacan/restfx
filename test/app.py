@@ -1,13 +1,14 @@
 import json
 import os
 
+from restfx.session.providers import MemorySessionProvider
 from test.tools.enums import OpTypes
 
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import HttpRedirect
-from restfx.middleware.middlewares import HttpAuthMiddleware
+from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
 
@@ -101,7 +102,7 @@ def on_auth(request: HttpRequest, meta: RouteMeta):
 app.register_middleware(
     TimetickMiddleware(),
     HttpAuthMiddleware(on_auth),
-    # SessionMiddleware(MemorySessionProvider(20)),
+    SessionMiddleware(MemorySessionProvider(20)),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()

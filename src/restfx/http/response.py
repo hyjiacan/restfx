@@ -38,6 +38,7 @@ class FileResponse(HttpResponse):
 
         super().__init__(self.fp, direct_passthrough=True, content_type=content_type, **kwargs)
 
+    # noinspection PyMethodMayBeStatic
     def _set_attachment_header(self, request, filename, kwargs):
         from urllib.parse import unquote, quote
 

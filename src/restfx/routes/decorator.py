@@ -7,6 +7,7 @@ from ..http import HttpRequest, HttpServerError
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
 from ..routes.meta import RouteMeta
+from ..session import HttpSession
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
@@ -22,32 +23,32 @@ def route(module=None, name=None, extname=None, **kwargs):
     :param extname: 给路径指定一个扩展名，不能包含 . 符号
     """
 
-    def invoke_route(func):
-        @wraps(func)
+    def invoke_route(handler):
+        @wraps(handler)
         def caller(*args):
             # 参数长度不为 2 时，认为是用户调用
             if len(args) != 2:
-                return func(*args)
+                return handler(*args)
 
             # Http 请求对象
             # :type HttpRequest
             request = args[0]
             # 函数声明时定义的参数列表
             # :type OrderedDict
-            func_args = args[1]
+            handler_args = args[1]
 
             # 如果传入的参数第一个不是 request，第二个不是 OrderedDict，
             # 那么就认为是用户调用，而不是路由调用
-            # 此时直接将原参数传给 func 进行调用
-            if not isinstance(request, HttpRequest) or not isinstance(func_args, OrderedDict):
-                return func(*args)
+            # 此时直接将原参数传给 handler 进行调用
+            if not isinstance(request, HttpRequest) or not isinstance(handler_args, OrderedDict):
+                return handler(*args)
 
             context = AppContext.get(request.app_id)
 
             meta = RouteMeta(
-                func,
-                func_args,
-                route_id='%s_%s' % (func.__module__.replace('_', '__').replace('.', '_'), func.__name__),
+                handler,
+                handler_args,
+                route_id='%s_%s' % (handler.__module__.replace('_', '__').replace('.', '_'), handler.__name__),
                 module=module,
                 name=name,
                 extname=extname,
@@ -69,7 +70,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
         meta
     )
 
-    func_args = meta.func_args
+    handler_args = meta.handler_args
     func = meta.handler
 
     # 调用中间件，以处理请求
@@ -91,7 +92,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
     # 有参数，自动从 queryString, POST 或 json 中获取
     # 匹配参数
 
-    actual_args = _get_actual_args(request, func, func_args, context)
+    actual_args = _get_actual_args(request, func, handler_args, context)
 
     result = mgr.before_invoke(actual_args)
 
@@ -104,7 +105,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
         return mgr.handle_response(_wrap_http_response(mgr, result))
 
     # 调用路由函数
-    arg_len = len(func_args)
+    arg_len = len(handler_args)
     if arg_len == 0:
         return mgr.handle_response(_wrap_http_response(mgr, func()))
 
@@ -201,7 +202,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
     for arg_name in args.keys():
         arg_spec = args.get(arg_name)
 
-        if arg_spec.is_injected:
+        if arg_spec.is_injection:
             injection_args.append(arg_name)
             used_args.append(arg_name)
             continue
@@ -212,7 +213,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             has_variable_args = True
             continue
 
-        # 以及情况将传入 HttpRequest 对象
+        # 以下情况将传入 HttpRequest 对象
         # 1. 当参数名称是 request 并且未指定类型
         # 2. 当参数类型是 HttpRequest 时 (不论参数名称，包括 request)
         # 但是，参数名称是 request 但其类型不是 HttpRequest ，就会被当作一般参数处理
@@ -221,6 +222,31 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             continue
         if arg_spec.annotation == HttpRequest:
             actual_args[arg_name] = request
+            continue
+
+        # 以下情况将传入 HttpSession 对象
+        # 1. 当参数名称是 session 并且未指定类型
+        # 2. 当参数类型是 HttpSession 时 (不论参数名称，包括 session)
+        # 但是，参数名称是 session 但其类型不是 HttpSession ，就会被当作一般参数处理
+        is_session = False
+        if arg_name == 'request' and not arg_spec.has_annotation:
+            is_session = True
+        elif arg_spec.annotation == HttpSession:
+            is_session = True
+
+        if is_session:
+            if request.session is None:
+                msg = '%s\n\tParameter "%s" of type "HttpSession" is not available, ' \
+                      'the value will always be "None", ' \
+                      'please make sure that you have registered the Session-Middleware correctly, ' \
+                      'Parameters: (%s)' % (
+                          get_func_info(func),
+                          arg_name,
+                          _get_parameter_str(args)
+                      )
+                context.logger.warning(msg)
+            # 在 session 未启用时，其值为 None
+            actual_args[arg_name] = request.session
             continue
 
         # noinspection PyUnresolvedReferences

@@ -14,7 +14,7 @@ class MiddlewareBase(ABC):
 
     def process_request(self, request, meta):
         """
-        对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(B,P,G 尚不可用)
+        对 request 对象进行预处理。一般用于请求的数据的解码，此时路由组件尚水进行请求数据的解析(BODY,POST,GET 尚不可用)
         :param request:
         :type request: HttpRequest
         :param meta:
@@ -25,7 +25,7 @@ class MiddlewareBase(ABC):
 
     def process_invoke(self, request, meta, args: dict):
         """
-        在路由函数调用前，对其参数等进行处理，此时路由组件已经完成了请求数据的解析(B,P,G 已可用)
+        在路由函数调用前，对其参数等进行处理，此时路由组件已经完成了请求数据的解析(BODY,POST,GET 已可用)
         此时可以对解析后的参数进行变更
         :param request:
         :type request: HttpRequest
