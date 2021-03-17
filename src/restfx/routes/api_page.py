@@ -84,12 +84,13 @@ class ApiPage:
             # This exception can be ignored safety
             return HttpBadRequest()
 
-        import urllib.parse
         import time
 
-        return HttpResponse(content, content_type='application/markdown;charset=utf8', headers={
-            'Content-Disposition': 'attachment;filename=%s_%s.md' % (
-                urllib.parse.quote(self.context.api_page_options['api_page_name']),
-                time.strftime('%Y-%m-%I_%H_%M_%S')
-            )
-        })
+        from restfx.http import FileResponse
+        return FileResponse(content,
+                            content_type='application/markdown;charset=utf8',
+                            request=request,
+                            attachment='%s[%s].md' % (
+                                self.context.api_page_options['api_page_name'],
+                                time.strftime('%Y%m%I%H%M%S'))
+                            )
