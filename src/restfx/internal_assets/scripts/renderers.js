@@ -367,7 +367,7 @@ function renderReturn(route) {
   return el('p', {'class': 'return-info'}, [
     el('span', null, '返回'),
     // route.handler_info.return_type ? el('code', null, route.return_type) : '',
-    el('span', null, ':'),
+    el('span', null, ': '),
     el('span', {'class': 'comment'}, route.handler_info.return_description || '-')
   ])
 }
