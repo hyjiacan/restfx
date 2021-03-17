@@ -279,6 +279,8 @@ function renderArg(arg, editable) {
     argType = arg.annotation_name
     if (argType === 'str') {
       argType = 'string'
+    } else if (argType === 'HttpFile') {
+      argType = 'file'
     }
   } else {
     argType = '-'
