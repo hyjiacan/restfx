@@ -111,7 +111,7 @@ class App:
                 msg += ':' + request.path
             self.context.logger.warning(msg)
         finally:
-            for plugin in self._plugins:
+            for plugin in reversed(self._plugins):
                 plugin.requested(request, response)
         return response(environ, start_response)
 

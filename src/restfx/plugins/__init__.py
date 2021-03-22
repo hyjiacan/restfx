@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class PluginBase(ABC):
@@ -8,11 +8,9 @@ class PluginBase(ABC):
     def init_app(self, app):
         self.app = app
 
-    @abstractmethod
     def requesting(self, request):
         pass
 
-    @abstractmethod
     def requested(self, request, response):
         pass
 
