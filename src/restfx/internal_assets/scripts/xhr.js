@@ -59,29 +59,25 @@
     var contentType = headers['content-type']
     if (!contentType) {
       headers['content-type'] = contentType = ''
-    } else if (contentType.indexOf('text/*') !== -1 || contentType.indexOf('application/json') !== -1) {
-      decodeResponse(data, true, function (data) {
+    }
+
+    var isText = contentType.indexOf('text/*') !== -1 || contentType.indexOf('application/json') !== -1
+
+    decodeResponse(data, isText, function (data) {
+      if (isText) {
         try {
           data = JSON.parse(data)
         } catch (e) {
         }
-        callback({
-          data: data,
-          headers: headers,
-          status: xhr.status,
-          statusText: xhr.statusText
-        })
+      }
+      callback({
+        data: data,
+        isText: isText,
+        headers: headers,
+        status: xhr.status,
+        statusText: xhr.statusText
       })
-    } else {
-      decodeResponse(data, false, function (data) {
-        callback({
-          data: data,
-          headers: headers,
-          status: xhr.status,
-          statusText: xhr.statusText
-        })
-      })
-    }
+    })
   }
 
   window.xhr = request

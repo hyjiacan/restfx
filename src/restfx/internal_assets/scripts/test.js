@@ -48,7 +48,7 @@
       callback: function (response) {
         var end = new Date().getTime()
         testPanel.querySelector('.response-time').textContent = (end - start) + 'ms'
-        renderTestResponse(response)
+        renderTestResponse(response, url)
       }
     }
 
@@ -197,7 +197,7 @@
     testPanel.style.display = 'flex'
   }
 
-  function renderTestResponse(response) {
+  function renderTestResponse(response, url) {
     var classList = testPanel.querySelector('.response-status').classList
     classList.remove('status-success', 'status-failure')
     classList.add(response.status === 200 ? 'status-success' : 'status-failure')
@@ -217,29 +217,49 @@
       return
     }
     var contentType = (response.headers['content-type'] || '').toLowerCase()
-    if (contentType.indexOf('image/') === 0) {
-      var image = new Image()
-      image.classList.add('response-image')
-      image.src = response.data
-      testPanel.querySelector('div.response-content').appendChild(image)
-      testPanel.querySelector('div.response-content').style.display = 'block'
-      return
-    }
+//    if (contentType.indexOf('image/') === 0) {
+//      var image = new Image()
+//      image.classList.add('response-image')
+//      image.src = response.data
+//      testPanel.querySelector('div.response-content').appendChild(image)
+//      testPanel.querySelector('div.response-content').style.display = 'block'
+//      return
+//    }
 
     var content
 
-    try {
-      if (typeof response.data === 'string') {
+    if (response.isText) {
+      try {
+        if (typeof response.data === 'string') {
+          content = response.data
+        } else {
+          content = JSON.stringify(response.data, null, 4)
+        }
+      } catch (e) {
         content = response.data
-      } else {
-        content = JSON.stringify(response.data, null, 4)
       }
-    } catch (e) {
-      content = response.data
+      testPanel.querySelector('textarea.response-content').value = content
+      testPanel.querySelector('textarea.response-content').style.display = 'block'
+      return
     }
 
-    testPanel.querySelector('textarea.response-content').value = content
-    testPanel.querySelector('textarea.response-content').style.display = 'block'
+    // 其它的数据类型，无法预览
+
+    // 尝试获取可能的扩展名
+    // 此处使用 mime 中的名称
+    // 不用保证正确性
+    var match = /\/([a-z0-9]+)?/.exec(contentType)
+    var ext = match ? ('.' + match[1]) : ''
+
+    var link = document.createElement('a')
+    link.href = response.data
+    link.innerHTML = '点击此处存为文件'
+    link.download = encodeURI(url.substr(window.location.origin.length)) + ext
+    var label = document.createElement('span')
+    label.innerHTML = '<b>[' + contentType + ']</b> ' + '此类型的数据不支持预览，'
+    testPanel.querySelector('div.response-content').appendChild(label)
+    testPanel.querySelector('div.response-content').appendChild(link)
+    testPanel.querySelector('div.response-content').style.display = 'block'
   }
 
   testPanel.querySelector('#btn-send-test').addEventListener('click', function () {
