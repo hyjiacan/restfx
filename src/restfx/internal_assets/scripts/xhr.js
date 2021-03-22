@@ -1,5 +1,5 @@
-(function(){
-  function serializeParams (params) {
+(function () {
+  function serializeParams(params) {
     var temp = []
     for (var key in params) {
       temp.push(key + '=' + params[key])
@@ -7,34 +7,49 @@
     return '?' + temp.join('&')
   }
 
-  function request (method, url, options) {
+  function request(method, url, options) {
     var xhr = new XMLHttpRequest()
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
-        options.callback(getResponse(xhr))
+        getResponse(xhr, options.callback)
       }
     }
     if (options.param) {
       url += serializeParams(options.param)
     }
+    xhr.responseType = 'arraybuffer'
     xhr.open(method.toUpperCase(), url, true)
-    xhr.setRequestHeader('accept', 'application/json;text/*')
+    xhr.setRequestHeader('accept', 'application/json;text/*;image/*;*/*')
     xhr.setRequestHeader('requested-with', 'XmlHttpRequest')
     xhr.send(options.data)
+  }
+
+  function decodeResponse(data, asText, callback) {
+    var reader = new FileReader()
+    var blob = new Blob([data])
+    if (asText) {
+      reader.readAsText(blob)
+    } else {
+      reader.readAsDataURL(blob)
+    }
+    reader.onload = function () {
+      callback(reader.result)
+    }
   }
 
   /**
    *
    * @param {XMLHttpRequest} xhr
-   * @returns {headers: {}, data: string}
+   * @param callback
+   * @returns {{headers: {}, data: string}}
    */
-  function getResponse (xhr) {
-    var data = xhr.responseText
+  function getResponse(xhr, callback) {
+    var data = xhr.response
     var headers = Object.create(null)
     xhr
       .getAllResponseHeaders()
       .split('\r\n')
-      .forEach(function(item) {
+      .forEach(function (item) {
         var temp = item.trim().split(':')
         if (!temp[0]) {
           return
@@ -44,18 +59,28 @@
     var contentType = headers['content-type']
     if (!contentType) {
       headers['content-type'] = contentType = ''
-    }
-    if (contentType.indexOf('application/json') !== -1) {
-      try {
-        data = JSON.parse(data)
-      } catch (e) {
-      }
-    }
-    return {
-      data: data,
-      headers: headers,
-      status: xhr.status,
-      statusText: xhr.statusText
+    } else if (contentType.indexOf('text/*') !== -1 || contentType.indexOf('application/json') !== -1) {
+      decodeResponse(data, true, function (data) {
+        try {
+          data = JSON.parse(data)
+        } catch (e) {
+        }
+        callback({
+          data: data,
+          headers: headers,
+          status: xhr.status,
+          statusText: xhr.statusText
+        })
+      })
+    } else {
+      decodeResponse(data, false, function (data) {
+        callback({
+          data: data,
+          headers: headers,
+          status: xhr.status,
+          statusText: xhr.statusText
+        })
+      })
     }
   }
 

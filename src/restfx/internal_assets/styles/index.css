@@ -584,6 +584,10 @@ textarea.arg-value:active {
     font-size: 14px;
 }
 
+.response-image:hover {
+    background-color: #ffffff;
+}
+
 .response-content {
     background: #ececeb;
     border: none;

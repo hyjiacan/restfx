@@ -1,3 +1,5 @@
+import uuid
+
 from werkzeug import Request
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage
 
@@ -20,6 +22,7 @@ def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
 class HttpRequest(Request):
     def __init__(self, environ, app_id: str):
         super().__init__(environ)
+        self.id = str(uuid.uuid4())
         self.app_id = app_id
         self.GET = _get_request_data(self.args)
         self.POST = _get_request_data(self.form)

@@ -8,6 +8,7 @@ from werkzeug.routing import Map, Rule
 
 from .context import AppContext
 from .http import HttpServerError, HttpNotFound, HttpRequest
+from .plugins import PluginBase
 from .routes.api_page import ApiPage
 from .routes.router import Router
 
@@ -51,20 +52,25 @@ class App:
                                   strict_mode, api_page_enabled, api_page_name,
                                   api_page_expanded, api_page_cache, api_page_addition)
 
-        self.api_prefix = api_prefix
-        self.router = Router(self.context)
-        self.api_page = ApiPage(self.context)
+        self._api_prefix = api_prefix
+        self._router = Router(self.context)
+        self._api_page = ApiPage(self.context)
 
-        self.custom_url_map = {}
+        self._custom_url_map = {}
+        # 请求勾子
+        self._plugins = []
 
-        self.url_map = Map([
-            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='api_page'),
+        self._url_map = Map([
+            Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
 
     def __del__(self):
         if self.id in self._APPS:
             del self._APPS[self.id]
+
+        for plugin in self._plugins:
+            plugin.dispose()
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -74,17 +80,22 @@ class App:
         :return:
         """
         request = None
+        response = None
         try:
             request = HttpRequest(environ, self.context.app_id)
-            adapter = self.url_map.bind_to_environ(environ)
+
+            for plugin in self._plugins:
+                plugin.requesting(request)
+
+            adapter = self._url_map.bind_to_environ(environ)
 
             endpoint, values = adapter.match()
-            if endpoint == 'api_page':
-                response = self.api_page.dispatch(request)
+            if endpoint == '_api_page':
+                response = self._api_page.dispatch(request)
             elif endpoint == 'entry_only':
-                response = self.router.dispatch(request, values['entry'])
-            elif endpoint in self.custom_url_map:
-                response = self.custom_url_map[endpoint](request, **values)
+                response = self._router.dispatch(request, values['entry'])
+            elif endpoint in self._custom_url_map:
+                response = self._custom_url_map[endpoint](request, **values)
             else:
                 response = HttpNotFound()
         except Exception as e:
@@ -99,7 +110,9 @@ class App:
             if request:
                 msg += ':' + request.path
             self.context.logger.warning(msg)
-
+        finally:
+            for plugin in self._plugins:
+                plugin.requested(request, response)
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
@@ -168,7 +181,7 @@ class App:
             print(' * Table of APIs:')
             for ip in ips:
                 print('\t- http://%s:%s/%s%s' % (
-                    ip, port, self.api_prefix, '/' if self.context.append_slash else ''
+                    ip, port, self._api_prefix, '/' if self.context.append_slash else ''
                 ))
 
         run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
@@ -198,15 +211,6 @@ class App:
         """
         return self.context.collector.persist(self.context.routes_map, filename, encoding)
 
-    def set_intercepter(self, intercepter):
-        """
-        设置请求分发前的处理函数
-        :param intercepter:
-        :return:
-        """
-        self.router.intercepter = intercepter
-        return self
-
     def set_logger(self, logger):
         """
         设置自定义的 logger
@@ -223,8 +227,8 @@ class App:
         :return:
         """
         for url in urls_map:
-            self.custom_url_map[url] = urls_map[url]
-            self.url_map.add(Rule(url, endpoint=url))
+            self._custom_url_map[url] = urls_map[url]
+            self._url_map.add(Rule(url, endpoint=url))
         return self
 
     def map_routes(self, routes_map: dict):
@@ -291,11 +295,11 @@ class App:
         from .util.func_util import FunctionDescription
 
         rid = '%s#%s' % (path, method.lower())
-        if rid in self.router.production_routes:
+        if rid in self._router.production_routes:
             self.context.logger.warning('%s %s exists' % (method, path))
 
         desc = FunctionDescription(handler)
-        self.router.production_routes[rid] = {
+        self._router.production_routes[rid] = {
             'func': handler,
             'args': desc.arguments
         }
@@ -317,6 +321,10 @@ class App:
 
     def inject(self, **kwargs):
         self.context.injections.update(**kwargs)
+        return self
+
+    def register_plugin(self, *plugins: PluginBase):
+        self._plugins += plugins
         return self
 
     @classmethod

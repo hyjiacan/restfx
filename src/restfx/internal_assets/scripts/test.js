@@ -216,11 +216,20 @@
       testPanel.querySelector('textarea.response-content').style.display = 'block'
       return
     }
+    var contentType = (response.headers['content-type'] || '').toLowerCase()
+    if (contentType.indexOf('image/') === 0) {
+      var image = new Image()
+      image.classList.add('response-image')
+      image.src = response.data
+      testPanel.querySelector('div.response-content').appendChild(image)
+      testPanel.querySelector('div.response-content').style.display = 'block'
+      return
+    }
 
     var content
 
     try {
-      if (typeof response.data === 'string') {
+      if (contentType.indexOf('application/json') === 0 || typeof response.data === 'string') {
         content = response.data
       } else {
         content = JSON.stringify(response.data, null, 4)

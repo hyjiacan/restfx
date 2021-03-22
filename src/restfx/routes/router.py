@@ -16,8 +16,6 @@ class Router:
         """
         # 线上模式时，使用固定路由
         self.production_routes = {}
-        # 路由拦截器
-        self.intercepter = None
 
     def dispatch(self, request: HttpRequest, entry):
         """
@@ -26,10 +24,6 @@ class Router:
         :param entry: 入口地址
         :return:
         """
-        if self.intercepter is not None:
-            # noinspection PyCallingNonCallable
-            entry = self.intercepter(request, entry)
-
         if not self.context.debug:
             return self.route_for_production(request, '/' + entry)
 
