@@ -76,13 +76,13 @@ class RouteResolver:
         try:
             desc = self._get_handler_info(module_name, func_name, fullname)
         except Exception as e:
-            message = 'Load entry "%s" failed: %s' % (self.entry, fullname)
+            message = 'Failed to load entry "%s": %s' % (self.entry, fullname)
             self.context.logger.error(message, e)
             return HttpNotFound()
 
         # 检查 extname 是否一致
         if isinstance(desc, FunctionDescription) and desc.decorator['extname'] != extname:
-            message = 'Load entry "%s" failed: extname "%s" is not exactly match with "%s"' % (
+            message = 'Failed to load entry "%s": extname "%s" is not exactly match with "%s"' % (
                 self.entry, extname, desc.decorator['extname'])
             self.context.logger.warning(message)
             return HttpNotFound()
@@ -114,7 +114,7 @@ class RouteResolver:
         try:
             entry_define = utils.load_module(module_name.replace('/', '.'))
         except Exception as e:
-            message = 'Load module "%s" failed' % module_name
+            message = 'Failed to load module "%s"' % module_name
             self.context.logger.error(message, e)
             return HttpNotFound()
 

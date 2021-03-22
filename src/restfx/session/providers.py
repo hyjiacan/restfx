@@ -67,7 +67,7 @@ class FileSessionProvider(ISessionProvider):
                 session = pickle.load(fp)
                 fp.close()
             except Exception:  # as e:
-                # print('Load session file %s failed: %s' % (session_file, repr(e)))
+                # print('Failed to load session file %s: %s' % (session_file, repr(e)))
                 fp.close()
                 # 无法解析 session 文件
                 # 说明session文件已经损坏，将其删除

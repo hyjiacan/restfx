@@ -46,6 +46,7 @@ class FileResponse(HttpResponse):
         for name in kwargs:
             if name.lower() == 'headers':
                 headers = kwargs[name]
+                break
 
         if not headers:
             kwargs['headers'] = headers

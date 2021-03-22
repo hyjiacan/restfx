@@ -4,14 +4,14 @@ from restfx import __meta__
 from .routes.collector import Collector
 from .util.logger import Logger
 
-# 所有应用的上下文集合
-_CONTEXTS = {}
-
 
 class AppContext:
     """
     应用的上下文环境
     """
+
+    # 所有应用的上下文集合
+    _CONTEXTS = {}
 
     def __init__(self, app_id: str,
                  app_root: str,
@@ -26,7 +26,7 @@ class AppContext:
         """
 
         """
-        _CONTEXTS[app_id] = self
+        self._CONTEXTS[app_id] = self
         self.app_id = app_id
         # 是否启用DEBUG模式
         self.debug = debug
@@ -70,16 +70,16 @@ class AppContext:
         self.logger = Logger(debug)
 
     def __del__(self):
-        if self.app_id in _CONTEXTS:
-            del _CONTEXTS[self.app_id]
+        if self.app_id in self._CONTEXTS:
+            del self._CONTEXTS[self.app_id]
         del self.middlewares
 
-    @staticmethod
-    def get(app_id: str):
+    @classmethod
+    def get(cls, app_id: str):
         """
 
         :param app_id:
         :return:
         :rtype: AppContext
         """
-        return _CONTEXTS.get(app_id)
+        return cls._CONTEXTS.get(app_id)

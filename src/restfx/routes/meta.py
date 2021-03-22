@@ -51,4 +51,4 @@ class RouteMeta:
         :param arg_name:
         :return:
         """
-        return self.kwargs[arg_name] if arg_name in self.kwargs else default_value
+        return self.kwargs.get(arg_name, default_value)

@@ -1,9 +1,6 @@
 import json
 import os
 
-from restfx.session.providers import MemorySessionProvider
-from test.tools.enums import OpTypes
-
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
@@ -11,6 +8,8 @@ from restfx.http.response import HttpRedirect
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
+from restfx.session.providers import MemorySessionProvider
+from test.tools.enums import OpTypes
 
 root = os.path.dirname(__file__)
 
@@ -60,7 +59,7 @@ app_id = '82615610-3aa5-491e-aa58-fab3a9561e64'
 
 
 def api_page_addition(route):
-    if 'auth' not in route['kwargs'] or route['kwargs'] is False:
+    if route['kwargs'].get('auth', True):
         return '<span style="color: #ff7d7d">[需要身份校验]</span>'
     return '<span style="color: #66c0de">[不需要身份校验]</span>'
 

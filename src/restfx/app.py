@@ -11,11 +11,11 @@ from .http import HttpServerError, HttpNotFound, HttpRequest
 from .routes.api_page import ApiPage
 from .routes.router import Router
 
-# APP 实例集合
-_APPS = {}
-
 
 class App:
+    # APP 实例集合
+    _APPS = {}
+
     def __init__(self,
                  app_root: str,
                  app_id: str = None,
@@ -45,7 +45,7 @@ class App:
         """
         self.id = app_id or str(uuid.uuid4())
 
-        _APPS[self.id] = self
+        self._APPS[self.id] = self
 
         self.context = AppContext(self.id, app_root, debug, append_slash,
                                   strict_mode, api_page_enabled, api_page_name,
@@ -63,8 +63,8 @@ class App:
         ])
 
     def __del__(self):
-        if self.id in _APPS:
-            del _APPS[self.id]
+        if self.id in self._APPS:
+            del self._APPS[self.id]
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -319,12 +319,12 @@ class App:
         self.context.injections.update(**kwargs)
         return self
 
-    @staticmethod
-    def get(app_id: str):
+    @classmethod
+    def get(cls, app_id: str):
         """
         获取指定的应用
         :param app_id:
         :return:
         :rtype: AppContext
         """
-        return _APPS.get(app_id)
+        return cls._APPS.get(app_id)

@@ -44,11 +44,8 @@ class ApiPage:
     def do_post(self):
         if not self.routes_cache or not self.context.api_page_options['api_page_cache']:
             routes = self.context.collector.collect(self.context.routes_map)
+            addition_func = self.context.api_page_options.get('api_page_addition')
 
-            if 'api_page_addition' in self.context.api_page_options:
-                addition_func = self.context.api_page_options['api_page_addition']
-            else:
-                addition_func = None
             for route in routes:
                 # 附加信息
                 if addition_func is not None:

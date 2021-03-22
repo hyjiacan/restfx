@@ -136,9 +136,7 @@ class FunctionDescription:
 
             spec.is_variable = parameter.kind == parameter.VAR_KEYWORD
 
-            if p in documatation:
-                spec.comment = documatation[p]
-
+            spec.comment = documatation.get(p)
             index += 1
             # 类型
             annotation = parameter.annotation

@@ -44,5 +44,5 @@ if __name__ == '__main__':
         tar_dir(tarname, sampledir)
         print('Complete!\n')
     except Exception as e:
-        print('Failed:' + repr(e))
+        print('Failure:' + repr(e))
         exit(1)

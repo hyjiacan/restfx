@@ -139,7 +139,7 @@ def _process_json_params(request: HttpRequest, context: AppContext):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        context.logger.warning('Deserialize request body failed: %s' % str(e))
+        context.logger.warning('Failed to deserialize request body: %s' % str(e))
 
 
 def _get_parameter_str(args: OrderedDict):
@@ -254,14 +254,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
         # 未找到参数
         if use_default is None:
-            msg = '%s\n\tMissing required argument "%s", Parameters: (%s)' % (
-                get_func_info(func),
-                arg_name,
-                _get_parameter_str(args)
-            )
+            msg = 'Missing required argument "%s"' % arg_name
             context.logger.warning(msg)
-            if not context.debug:
-                msg = 'Missing required argument'
             return HttpBadRequest(msg)
 
         # 使用默认值
@@ -297,14 +291,16 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             if arg_value == 'true':
                 actual_args[arg_name] = True
                 used_args.append(arg_name)
-            elif arg_value == 'false':
+                continue
+            if arg_value == 'false':
                 actual_args[arg_name] = False
                 used_args.append(arg_name)
-            else:
-                context.logger.error(
-                    'Value for "%s!%s" may be incorrect (a boolean value expected: true/false): %s' % (
-                        func.__name__, arg_name, arg_value))
-            continue
+                continue
+
+            msg = 'Cannot parse value "%s" into type "%s" (expected: true/false)' % (
+                (arg_value, arg_spec.annotation_name))
+            context.logger.warning(msg)
+            return HttpBadRequest(msg)
 
         # 转换失败时，会抛出异常
         # noinspection PyBroadException
@@ -316,79 +312,77 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                     arg_value = json.loads(arg_value)
                 except Exception:
                     # 此处的异常直接忽略即可
-                    context.logger.warning(
-                        'Value for "%s!%s" may be incorrect: %s' % (func.__name__, arg_name, arg_value))
+                    msg = 'Cannot parse value "%s" into type "%s"' % (arg_value, arg_spec.annotation_name)
+                    context.logger.warning(msg)
+                    return HttpBadRequest(msg)
 
-                # 类型一致，直接使用
-                if isinstance(arg_value, arg_spec.annotation):
-                    # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
-                    # 虽然在发起请求的时候并不能指定为 tuple，但还是想兼容一下
-                    actual_args[arg_name] = tuple(arg_value) if arg_spec.is_tuple else arg_value
-                    used_args.append(arg_name)
-                    continue
+            # 类型一致，直接使用
+            if isinstance(arg_value, arg_spec.annotation):
+                # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
+                # 虽然在发起请求的时候并不能指定为 tuple，但还是想兼容一下
+                actual_args[arg_name] = tuple(arg_value) if arg_spec.is_tuple else arg_value
+                used_args.append(arg_name)
+                continue
             actual_args[arg_name] = arg_spec.annotation(arg_value)
             used_args.append(arg_name)
         except Exception:
-            msg = 'Argument type of "%s" mismatch, expect type "%s" but got "%s", Parameters: (%s)' \
-                  % (arg_name, arg_spec.annotation.__name__, type(arg_value).__name__, _get_parameter_str(args))
+            msg = 'Cannot parse value "%s" into type "%s"' % (arg_value, arg_spec.annotation_name)
             context.logger.warning(msg)
-            if not context.debug:
-                msg = 'Argument type mismatch'
             return HttpBadRequest(msg)
 
-    # 填充注入参数
-    for arg_name in injection_args:
-        # 注入名称不包含前缀 _
-        # 所以要 [1:]
-        injection_name = arg_name[1:]
-        if injection_name in request.injections:
-            actual_args[arg_name] = request.injections[injection_name]
-        elif injection_name in context.injections:
-            actual_args[arg_name] = context.injections[injection_name]
-        else:
-            msg = 'Injection name "%s" not found' % injection_name
-            context.logger.warning(msg)
-            return HttpServerError(msg) if context.debug else HttpServerError()
+        # 填充注入参数
+        for arg_name in injection_args:
+            # 注入名称不包含前缀 _
+            # 所以要 [1:]
+            injection_name = arg_name[1:]
+            if injection_name in request.injections:
+                actual_args[arg_name] = request.injections[injection_name]
+            elif injection_name in context.injections:
+                actual_args[arg_name] = context.injections[injection_name]
+            else:
+                msg = 'Injection name "%s" not found' % injection_name
+                context.logger.warning(msg)
+                return HttpServerError(msg) if context.debug else HttpServerError()
 
-    # 填充可变参数
-    variable_args = {}
-    for item in arg_source:
-        if item in used_args:
-            continue
-        variable_args[item] = arg_source[item]
-
-    # noinspection PyUnresolvedReferences
-    if isinstance(request.BODY, dict):
-        for item in request.BODY:
+        # 填充可变参数
+        variable_args = {}
+        for item in arg_source:
             if item in used_args:
                 continue
-            # noinspection PyUnresolvedReferences
-            variable_args[item] = request.BODY[item]
+            variable_args[item] = arg_source[item]
 
-    variable_arg_keys = variable_args.keys()
+        # noinspection PyUnresolvedReferences
+        if isinstance(request.BODY, dict):
+            for item in request.BODY:
+                if item in used_args:
+                    continue
+                # noinspection PyUnresolvedReferences
+                variable_args[item] = request.BODY[item]
 
-    # 没有可变参数
-    if not variable_arg_keys:
-        return actual_args
+        variable_arg_keys = variable_args.keys()
 
-    # 有可变参数，并且指定了 kwargs
-    if has_variable_args:
-        actual_args.update(variable_args)
-        return actual_args
+        # 没有可变参数
+        if not variable_arg_keys:
+            return actual_args
 
-    # 有可变参数，并且未指定 kwargs
-    # 未启用严格模式
-    if context.strict_mode is not True:
-        return actual_args
+        # 有可变参数，并且指定了 kwargs
+        if has_variable_args:
+            actual_args.update(variable_args)
+            return actual_args
 
-    # 启用了严格模式
-    # 返回 400 响应
-    msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
-          % (','.join(variable_arg_keys), _get_parameter_str(args))
-    context.logger.warning(msg)
-    if not context.debug:
-        msg = 'Unknown argument(s)'
-    return HttpBadRequest(msg)
+        # 有可变参数，并且未指定 kwargs
+        # 未启用严格模式
+        if context.strict_mode is not True:
+            return actual_args
+
+        # 启用了严格模式
+        # 返回 400 响应
+        msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
+              % (','.join(variable_arg_keys), _get_parameter_str(args))
+        context.logger.warning(msg)
+        if not context.debug:
+            msg = 'Unknown argument(s) found: %s' % ','.join(variable_arg_keys)
+        return HttpBadRequest(msg)
 
 
 def _wrap_http_response(mgr, data):

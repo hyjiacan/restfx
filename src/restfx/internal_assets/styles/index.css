@@ -609,7 +609,7 @@ textarea.arg-value:active {
     color: green;
 }
 
-.status-failed {
+.status-failure {
     color: orange;
 }
 

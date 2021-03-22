@@ -1,10 +1,10 @@
-(function() {
+(function () {
   function sendTest(method, url) {
     testPanel.querySelector('div.response-content').innerHTML = ''
     testPanel.querySelector('textarea.response-content').value = ''
     testPanel.querySelector('div.response-content').style.display = 'none'
     testPanel.querySelector('textarea.response-content').style.display = 'none'
-    testPanel.querySelector('.response-status').classList.remove('status-success', 'status-failed')
+    testPanel.querySelector('.response-status').classList.remove('status-success', 'status-failure')
     testPanel.querySelector('.status-code').textContent = ''
     testPanel.querySelector('.status-text').textContent = ''
     testPanel.querySelector('.response-time').textContent = ''
@@ -45,7 +45,7 @@
     testPanel.querySelector('.response-time').textContent = 'Loading...'
     var start = new Date().getTime()
     var option = {
-      callback: function(response) {
+      callback: function (response) {
         var end = new Date().getTime()
         testPanel.querySelector('.response-time').textContent = (end - start) + 'ms'
         renderTestResponse(response)
@@ -68,17 +68,6 @@
         continue
       }
 
-      switch(fieldType) {
-        case 'int':
-          fieldValue = parseInt(fieldValue)
-          break
-        case 'float':
-          fieldValue = parseFloat(fieldValue)
-          break
-        case 'bool':
-          fieldValue = fieldValue === 'true'
-          break
-      }
       formData[name] = fieldValue
     }
 
@@ -110,7 +99,7 @@
         el('option', {value: 'float'}, '小数'),
         el('option', {value: 'bool'}, '布尔值'),
         el('option', {value: 'list'}, '数组'),
-        el('option', {value: 'HttpFile'}, '文件'),
+        el('option', {value: 'HttpFile'}, '文件')
       ])
     }
 
@@ -128,21 +117,21 @@
     }, '移除')
 
     var newRow = el('tr', {
-        'class': 'test-row--tool'
-      }, [
-        el('td', null, nameField),
-        el('td', null, typeField),
-        el('td', null, valueField),
-        el('td', null, removeButton)
-      ])
+      'class': 'test-row--tool'
+    }, [
+      el('td', null, nameField),
+      el('td', null, typeField),
+      el('td', null, valueField),
+      el('td', null, removeButton)
+    ])
 
     rowParent.insertBefore(newRow, toolRow)
 
-    nameField.addEventListener('input', function() {
+    nameField.addEventListener('input', function () {
       valueField.name = nameField.value
     })
 
-    typeField.addEventListener('change', function() {
+    typeField.addEventListener('change', function () {
       valueField.setAttribute('data-type', typeField.value)
       if (typeField.value === 'HttpFile') {
         valueField.type = 'file'
@@ -151,14 +140,14 @@
       }
     })
 
-    removeButton.addEventListener('click', function() {
+    removeButton.addEventListener('click', function () {
       rowParent.removeChild(newRow)
     })
 
     nameField.focus()
   }
 
-  function openTestPanel (e) {
+  function openTestPanel(e) {
     var id = e.target.getAttribute('data-api')
     var api = API_LIST[id]
     testPanel.querySelector('.module').textContent = api.module
@@ -166,7 +155,7 @@
     testPanel.querySelector('.info').innerHTML = ''
     testPanel.querySelector('.info').appendChild(renderUrlInfo(api))
 
-    if(api.addition_info){
+    if (api.addition_info) {
       testPanel.querySelector('.addition-info').innerHTML = api.addition_info
       testPanel.querySelector('.addition-info').style.display = 'block'
     } else {
@@ -177,7 +166,7 @@
     var tableContainer = table.parentElement
 
     var toolRow = null
-    if (api.handler_info.arguments.some(function(item) {
+    if (api.handler_info.arguments.some(function (item) {
       return item.is_variable
     })) {
       var button = el('a', {href: 'javascript:', id: 'btn-add-test-field'}, '添加字段')
@@ -190,7 +179,7 @@
         el('td'),
         el('td')
       ])
-      button.addEventListener('click', function() {
+      button.addEventListener('click', function () {
         addTestField(toolRow, ['post', 'put'].indexOf(api.method) !== -1)
       })
     }
@@ -208,18 +197,23 @@
     testPanel.style.display = 'flex'
   }
 
-  function renderTestResponse (response) {
+  function renderTestResponse(response) {
     var classList = testPanel.querySelector('.response-status').classList
-    classList.remove('status-success', 'status-failed')
-    classList.add(response.status === 200 ? 'status-success' : 'status-failed')
+    classList.remove('status-success', 'status-failure')
+    classList.add(response.status === 200 ? 'status-success' : 'status-failure')
     testPanel.querySelector('.status-code').textContent = response.status
     testPanel.querySelector('.status-text').textContent = response.statusText
 
     testPanel.querySelector('div.response').scrollIntoView()
 
-    if (response.headers['content-type'].indexOf('text/html') !== -1) {
+    if (response.status === 500) {
       testPanel.querySelector('div.response-content').innerHTML = response.data
       testPanel.querySelector('div.response-content').style.display = 'block'
+      return
+    }
+    if (response.status !== 200) {
+      testPanel.querySelector('textarea.response-content').value = response.data
+      testPanel.querySelector('textarea.response-content').style.display = 'block'
       return
     }
 
@@ -238,6 +232,7 @@
     testPanel.querySelector('textarea.response-content').value = content
     testPanel.querySelector('textarea.response-content').style.display = 'block'
   }
+
   testPanel.querySelector('#btn-send-test').addEventListener('click', function () {
     var method = testPanel.querySelector('.method').textContent.trim()
     var url = testPanel.querySelector('.url').textContent.trim()
@@ -249,4 +244,4 @@
     }
   })
   initPanel(testPanel)
-})();
+})()
