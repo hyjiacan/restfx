@@ -330,59 +330,59 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             context.logger.warning(msg)
             return HttpBadRequest(msg)
 
-        # 填充注入参数
-        for arg_name in injection_args:
-            # 注入名称不包含前缀 _
-            # 所以要 [1:]
-            injection_name = arg_name[1:]
-            if injection_name in request.injections:
-                actual_args[arg_name] = request.injections[injection_name]
-            elif injection_name in context.injections:
-                actual_args[arg_name] = context.injections[injection_name]
-            else:
-                msg = 'Injection name "%s" not found' % injection_name
-                context.logger.warning(msg)
-                return HttpServerError(msg) if context.debug else HttpServerError()
+    # 填充注入参数
+    for arg_name in injection_args:
+        # 注入名称不包含前缀 _
+        # 所以要 [1:]
+        injection_name = arg_name[1:]
+        if injection_name in request.injections:
+            actual_args[arg_name] = request.injections[injection_name]
+        elif injection_name in context.injections:
+            actual_args[arg_name] = context.injections[injection_name]
+        else:
+            msg = 'Injection name "%s" not found' % injection_name
+            context.logger.warning(msg)
+            return HttpServerError(msg) if context.debug else HttpServerError()
 
-        # 填充可变参数
-        variable_args = {}
-        for item in arg_source:
+    # 填充可变参数
+    variable_args = {}
+    for item in arg_source:
+        if item in used_args:
+            continue
+        variable_args[item] = arg_source[item]
+
+    # noinspection PyUnresolvedReferences
+    if isinstance(request.BODY, dict):
+        for item in request.BODY:
             if item in used_args:
                 continue
-            variable_args[item] = arg_source[item]
+            # noinspection PyUnresolvedReferences
+            variable_args[item] = request.BODY[item]
 
-        # noinspection PyUnresolvedReferences
-        if isinstance(request.BODY, dict):
-            for item in request.BODY:
-                if item in used_args:
-                    continue
-                # noinspection PyUnresolvedReferences
-                variable_args[item] = request.BODY[item]
+    variable_arg_keys = variable_args.keys()
 
-        variable_arg_keys = variable_args.keys()
+    # 没有可变参数
+    if not variable_arg_keys:
+        return actual_args
 
-        # 没有可变参数
-        if not variable_arg_keys:
-            return actual_args
+    # 有可变参数，并且指定了 kwargs
+    if has_variable_args:
+        actual_args.update(variable_args)
+        return actual_args
 
-        # 有可变参数，并且指定了 kwargs
-        if has_variable_args:
-            actual_args.update(variable_args)
-            return actual_args
+    # 有可变参数，并且未指定 kwargs
+    # 未启用严格模式
+    if context.strict_mode is not True:
+        return actual_args
 
-        # 有可变参数，并且未指定 kwargs
-        # 未启用严格模式
-        if context.strict_mode is not True:
-            return actual_args
-
-        # 启用了严格模式
-        # 返回 400 响应
-        msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
-              % (','.join(variable_arg_keys), _get_parameter_str(args))
-        context.logger.warning(msg)
-        if not context.debug:
-            msg = 'Unknown argument(s) found: %s' % ','.join(variable_arg_keys)
-        return HttpBadRequest(msg)
+    # 启用了严格模式
+    # 返回 400 响应
+    msg = 'Unknown argument(s) found: "%s", Parameters: (%s)' \
+          % (','.join(variable_arg_keys), _get_parameter_str(args))
+    context.logger.warning(msg)
+    if not context.debug:
+        msg = 'Unknown argument(s) found: %s' % ','.join(variable_arg_keys)
+    return HttpBadRequest(msg)
 
 
 def _wrap_http_response(mgr, data):

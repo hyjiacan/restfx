@@ -229,7 +229,7 @@
     var content
 
     try {
-      if (contentType.indexOf('application/json') === 0 || typeof response.data === 'string') {
+      if (typeof response.data === 'string') {
         content = response.data
       } else {
         content = JSON.stringify(response.data, null, 4)
