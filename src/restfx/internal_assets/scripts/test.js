@@ -217,14 +217,14 @@
       return
     }
     var contentType = (response.headers['content-type'] || '').toLowerCase()
-//    if (contentType.indexOf('image/') === 0) {
-//      var image = new Image()
-//      image.classList.add('response-image')
-//      image.src = response.data
-//      testPanel.querySelector('div.response-content').appendChild(image)
-//      testPanel.querySelector('div.response-content').style.display = 'block'
-//      return
-//    }
+    if (contentType.indexOf('image/') === 0) {
+      var image = new Image()
+      image.classList.add('response-image')
+      image.src = response.data
+      testPanel.querySelector('div.response-content').appendChild(image)
+      testPanel.querySelector('div.response-content').style.display = 'block'
+      return
+    }
 
     var content
 
