@@ -112,7 +112,7 @@
       collapsed: false,
       rootCollapsable: true,
       withQuotes: false,
-      withLinks: true
+      withLinks: false
     }, options);
 
     // jQuery chaining
@@ -130,10 +130,11 @@
 
       // Bind click on toggle buttons
       $(this).off('click');
-      $(this).on('click', 'a.json-toggle', function() {
+      $(this).on('click', 'a.json-toggle', function(e) {
+        e.preventDefault()
         var target = $(this).toggleClass('collapsed').siblings('ul.json-dict, ol.json-array');
         target.toggle();
-        if (target.is(':visible')) {
+        if (!$(this).hasClass('collapsed')) {
           target.siblings('.json-placeholder').remove();
         } else {
           var count = target.children('li').length;
@@ -144,7 +145,8 @@
       });
 
       // Simulate click on toggle button when placeholder is clicked
-      $(this).on('click', 'a.json-placeholder', function() {
+      $(this).on('click', 'a.json-placeholder', function(e) {
+        e.preventDefault()
         $(this).siblings('a.json-toggle').click();
         return false;
       });
@@ -155,4 +157,4 @@
       }
     });
   };
-})(jQuery);
+})(Zepto);

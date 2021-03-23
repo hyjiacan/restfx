@@ -2,7 +2,7 @@ function loadPage() {
   // 请求数据
   var loading = $('#loading')
   loading.show()
-  $.post(urlRoot + '/' + apiPrefix).then(function (data, status, xhr) {
+  $.post(urlRoot + '/' + apiPrefix, function (data, status, xhr) {
     if (xhr.status !== 200) {
       list.innerHTML = xhr.responseText
       return

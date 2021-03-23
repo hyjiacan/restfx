@@ -11,7 +11,7 @@
 
     var end = new Date().getTime()
 
-    responseStatus.removeClass(['status-success', 'status-failure'])
+    responseStatus.removeClass('status-success status-failure')
     responseStatus.addClass(xhr.status === 200 ? 'status-success' : 'status-failure')
 
     statusCode.text(xhr.status)
@@ -19,16 +19,16 @@
 
     responseTime.text('耗时: ' + (end - start) + 'ms')
 
-    var type = xhr.getResponseHeader('content-type').split(';')[0]
-    responseType.text('类型: ' + type)
+    var type = xhr.headers['content-type'].split(';')[0]
+    responseType.text('Content-Type: ' + type)
 
-    var len = ((xhr.getResponseHeader('content-length') / 1024).toFixed(2) * 100) / 100
-    responseLength.text('长度: ' + len + ' KB')
+    var len = ((xhr.headers['content-length'] / 1024).toFixed(2) * 100) / 100
+    responseLength.text('Content-Length: ' + len + ' KB')
   }
 
   function sendTest(method, url) {
     responseContent.empty().hide()
-    responseStatus.removeClass(['status-success', 'status-failure'])
+    responseStatus.removeClass('status-success status-failure')
     statusCode.empty()
     statusText.empty()
     responseTime.empty()
@@ -53,9 +53,14 @@
     responseTime.text('加载中...')
 
     var start = new Date().getTime()
+    var option = {
+      callback: function (response) {
+        renderResponseInfo(response, start)
+        renderTestResponse(response, url)
+      }
+    }
     // 处理数据格式
-    // var formData = Object.create(null)
-    var formData = new FormData()
+    var formData = Object.create(null)
     for (var name in fields) {
       // 忽略空的字段
       if (!name || /^\s*$/.test(name)) {
@@ -65,27 +70,19 @@
       // var fieldType = fields[name].type
       var fieldValue = fields[name].value
 
-      // 忽略值为空的字段
-      // if (!fieldValue) {
-      //   continue
-      // }
-      // formData[name] = fieldValue
-      formData.append(name, fieldValue)
+      formData[name] = fieldValue
     }
 
-    $.ajax({
-      url: url,
-      method: method,
-      data: formData,
-      contentType: false,
-      processData: false
-    }).then(function (data, status, xhr) {
-      renderResponseInfo(xhr, start)
-      renderTestResponse(data, xhr.getResponseHeader('content-type'), url)
-    }).fail(function (xhr) {
-      renderResponseInfo(xhr, start)
-      responseContent.html(xhr.responseText).show()
-    })
+    if (['get', 'delete'].indexOf(method) === -1) {
+      option.data = new FormData()
+      for (var name in formData) {
+        option.data.append(name, formData[name])
+      }
+    } else {
+      option.param = formData
+    }
+
+    xhr(method, url, option)
   }
 
   function addTestField(toolRow, allowForm) {
@@ -199,9 +196,10 @@
     testPanel.css('display', 'flex')
   }
 
-  function renderTestResponse(data, contentType, url) {
+  function renderTestResponse(response, url) {
     $('div.response', testPanel)[0].scrollIntoView()
-
+    var contentType = response.headers['content-type']
+    var data = response.data
     if (contentType.indexOf('image/') === 0) {
       var image = new Image()
       image.classList.add('response-image')
@@ -211,20 +209,13 @@
       return
     }
 
-    if (contentType.indexOf('text/') !== -1 || contentType.indexOf('/json') !== -1) {
+    if (response.isText) {
       if (typeof data === 'string') {
-        try {
-          responseContent.jsonViewer(JSON.parse(data))
-          responseContent.show()
-          return
-        } catch (e) {
-          responseContent.html('<pre>' + data + '</pre>')
-          responseContent.show()
-          return
-        }
+        responseContent.html('<pre>' + data + '</pre>')
+      } else {
+        responseContent.jsonViewer(data)
       }
 
-      responseContent.jsonViewer(data)
       responseContent.show()
       return
     }

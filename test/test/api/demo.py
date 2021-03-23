@@ -64,7 +64,7 @@ def put(request: int, file: HttpFile):
     return {
         'request': request,
         'param1': {
-            'filename': file.filename,
+            'filename': file.stream.filename if file else None,
             'type': file.mimetype
         }
     }
