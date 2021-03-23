@@ -16,10 +16,20 @@ def get(request, _injection, param1=(1, 2), param2=5):
     :return: 返回值为参数字典
     """
     # request 会是 HttpRequest
+
+    temp = []
+    for i in range(20):
+        temp.append({
+            'i': i,
+            'p': i ^ i,
+            'o': i & i
+        })
+
     data = {
         'injection': _injection,
         'param2': param1,
         'param3': param2,
+        'temp': temp
     }
     return data
 

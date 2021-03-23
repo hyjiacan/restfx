@@ -159,13 +159,13 @@
     // console.log(md)
     // return
 
-    var form = document.querySelector('#export-proxy')
-    form.setAttribute('action', urlRoot + '/' + apiPrefix + '?export=md')
-    document.querySelector('#md-content').value = Base64.encode(md)
+    var form = $('#export-proxy')
+    form.attr('action', urlRoot + '/' + apiPrefix + '?export=md')
+    $('#md-content').val(Base64.encode(md))
     form.submit()
   }
 
-  document.querySelector('#btn-export').addEventListener('click', function () {
+  $('#btn-export').on('click', function () {
     if (!window.apiData) {
       alert('数据暂不可用，请稍后再试！')
       return

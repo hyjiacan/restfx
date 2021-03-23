@@ -1,171 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
+<head>
+  <meta charset="UTF-8"/>
+  <meta
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       name="viewport"
-    />
-    <title>Table of APIs</title>
-    <link
+  />
+  <title>Table of APIs</title>
+  <link
       type="text/css"
       rel="stylesheet"
       href="/internal_assets/styles/index.css"
-    />
-  </head>
-  <body>
-    <div id="app">
-      <div class="scroll-proxy">
-        <header>
-          <h1>
-            <span>Table of APIs</span>
-            <small id="app-name">restfx</small>
-          </h1>
-          <div id="tools">
-            <div class="buttons">
-              <button onclick="collapseAll()">全部收起</button>
-              <button onclick="expandAll()">全部展开</button>
-              <i></i>
-              <button id="btn-export" title="导出为 Markdown">导出</button>
-              <i></i>
-              <button id="btn-show-option-panel">选项</button>
-            </div>
-          </div>
-        </header>
-        <hr />
-        <div id="ie-tip"></div>
-        <div id="api-list">
-          <p id="loading">正在加载 API 数据...</p>
+  />
+  <link
+      type="text/css"
+      rel="stylesheet"
+      href="/internal_assets/styles/jsonviewer.css"
+  />
+  <script src="/internal_assets/scripts/jquery.js"></script>
+</head>
+<body>
+<div id="app">
+  <div class="scroll-proxy">
+    <header>
+      <h1>
+        <span>Table of APIs</span>
+        <small id="app-name">restfx</small>
+      </h1>
+      <div id="tools">
+        <div class="buttons">
+          <button onclick="collapseAll()">全部收起</button>
+          <button onclick="expandAll()">全部展开</button>
+          <i></i>
+          <button id="btn-export" title="导出为 Markdown">导出</button>
+          <i></i>
+          <button id="btn-show-option-panel">选项</button>
         </div>
-        <hr />
-        <footer>
-          <span>Powered by</span>
-          <a
-            href="http://gitee.com/hyjiacan/restfx?from=dist"
-            id="fx-name"
-            target="_blank"
-            >restfx</a
-          >
-        </footer>
+      </div>
+    </header>
+    <hr/>
+    <div id="ie-tip"></div>
+    <div id="api-list">
+      <p id="loading">正在加载 API 数据...</p>
+    </div>
+    <hr/>
+    <footer>
+      <span>Powered by</span>
+      <a
+          href="http://gitee.com/hyjiacan/restfx?from=dist"
+          id="fx-name"
+          target="_blank"
+      >restfx</a
+      >
+    </footer>
+  </div>
+</div>
+<div id="test-panel">
+  <div class="panel">
+    <div class="panel-heading">
+      <span class="test-lead">接口测试</span>
+      <span class="module"></span>
+      <span class="name"></span>
+
+      <div class="panel-heading--buttons">
+        <button class="btn-fullscreen">全屏</button>
+        <button class="btn-close">关闭</button>
       </div>
     </div>
-    <div id="test-panel">
-      <div class="panel">
-        <div class="panel-heading">
-          <span class="test-lead">接口测试</span>
-          <span class="module"></span>
-          <span class="name"></span>
-
-          <div class="panel-heading--buttons">
-            <button class="btn-fullscreen">全屏</button>
-            <button class="btn-close">关闭</button>
-          </div>
+    <div class="panel-body">
+      <div class="url-info">
+        <div class="info">
+          <span class="method"></span>
+          <code class="url"></code>
         </div>
-        <div class="panel-body">
-          <div class="url-info">
-            <div class="info">
-              <span class="method"></span>
-              <code class="url"></code>
-            </div>
-            <button id="btn-send-test">发送</button>
-          </div>
-          <div class="addition-info"></div>
-          <table class="args-table">
-            <caption>
-              参数信息
-            </caption>
-            <colgroup>
-              <col style="width: 200px" />
-              <col style="width: 200px" />
-              <col style="width: 200px" />
-              <col style="width: auto" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>名称</th>
-                <th>类型</th>
-                <th>值</th>
-                <th>描述</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <div class="response">
-            <p>
-              <span>响应</span>
-              <span class="response-status">
+        <button id="btn-send-test">发送</button>
+      </div>
+      <div class="addition-info"></div>
+      <table class="args-table">
+        <caption>
+          参数信息
+        </caption>
+        <colgroup>
+          <col style="width: 200px"/>
+          <col style="width: 200px"/>
+          <col style="width: 200px"/>
+          <col style="width: auto"/>
+        </colgroup>
+        <thead>
+        <tr>
+          <th>名称</th>
+          <th>类型</th>
+          <th>值</th>
+          <th>描述</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="response">
+        <p>
+          <span>响应</span>
+          <span class="response-status">
                 <span class="status-code"></span>
                 <span class="status-text"></span>
               </span>
-              <span class="response-time"></span>
-            </p>
-            <div class="response-content"></div>
-            <textarea class="response-content" readonly></textarea>
-          </div>
-        </div>
+          <span class="response-time"></span>
+          <span class="response-type"></span>
+          <span class="response-length"></span>
+        </p>
+        <div class="response-content"></div>
       </div>
     </div>
-    <div id="option-panel">
-      <div class="panel">
-        <div class="panel-heading">
-          <span>选项</span>
+  </div>
+</div>
+<div id="option-panel">
+  <div class="panel">
+    <div class="panel-heading">
+      <span>选项</span>
 
-          <div class="panel-heading--buttons">
-            <button class="btn-fullscreen">全屏</button>
-            <button class="btn-close">关闭</button>
-          </div>
+      <div class="panel-heading--buttons">
+        <button class="btn-fullscreen">全屏</button>
+        <button class="btn-close">关闭</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="options">
+        <div>
+          <span>URL选择策略:</span>
+          <select id="option-select-type">
+            <option value="0" selected>无</option>
+            <option value="1" selected>整个 URL</option>
+            <option value="2">从前缀开始(包含 /)</option>
+            <option value="3">从前缀开始(不含 /)</option>
+            <option value="4">仅路径(包含 /)</option>
+            <option value="5">仅路径(不含 /)</option>
+          </select>
         </div>
-        <div class="panel-body">
-          <div class="options">
-            <div>
-              <span>URL选择策略:</span>
-              <select id="option-select-type">
-                <option value="0" selected>无</option>
-                <option value="1" selected>整个 URL</option>
-                <option value="2">从前缀开始(包含 /)</option>
-                <option value="3">从前缀开始(不含 /)</option>
-                <option value="4">仅路径(包含 /)</option>
-                <option value="5">仅路径(不含 /)</option>
-              </select>
-            </div>
-            <div>
-              <label for="expanded-on-load">
-                <input type="checkbox" id="expanded-on-load" />
-                <span>加载后展开所有项</span>
-              </label>
-            </div>
-            <div>
-              <label for="dark-mode">
-                <input type="checkbox" id="dark-mode" />
-                <span>启用深色模式</span>
-              </label>
-            </div>
-          </div>
+        <div>
+          <label for="expanded-on-load">
+            <input type="checkbox" id="expanded-on-load"/>
+            <span>加载后展开所有项</span>
+          </label>
         </div>
-        <div class="option-tip">
-          这些配置会保存在 <code>localStorage</code> 中
+        <div>
+          <label for="dark-mode">
+            <input type="checkbox" id="dark-mode"/>
+            <span>启用深色模式</span>
+          </label>
         </div>
       </div>
     </div>
-    <div id="btn-back-to-top" title="回到顶部"></div>
-    <form action="" id="export-proxy" style="display: none" target="_blank" method="post">
-        <input type="hidden" name="data" id="md-content" />
-    </form>
-    <script>
-      var urlRoot = window.location.protocol + '//' + window.location.host
-      var apiPrefix = window.location.pathname.substring(1)
-      var API_LIST = Object.create(null)
-      var list = document.querySelector('#api-list')
-      var testPanel = document.querySelector('#test-panel')
-      var optionPanel = document.querySelector('#option-panel')
-    </script>
-    <script src="/internal_assets/scripts/xhr.js"></script>
-    <script src="/internal_assets/scripts/renderers.js"></script>
-    <script src="/internal_assets/scripts/index.js"></script>
-    <script src="/internal_assets/scripts/panel.js" defer></script>
-    <script src="/internal_assets/scripts/test.js" defer></script>
-    <script src="/internal_assets/scripts/options.js" defer></script>
-    <script src="/internal_assets/scripts/export.js" defer></script>
-    <script src="/internal_assets/scripts/base64.js" defer></script>
-  </body>
+    <div class="option-tip">
+      这些配置会保存在 <code>localStorage</code> 中
+    </div>
+  </div>
+</div>
+<div id="btn-back-to-top" title="回到顶部"></div>
+<form action="" id="export-proxy" style="display: none" target="_blank" method="post">
+  <input type="hidden" name="data" id="md-content"/>
+</form>
+<script>
+var urlRoot = window.location.protocol + '//' + window.location.host
+var apiPrefix = window.location.pathname.substring(1)
+var API_LIST = Object.create(null)
+var list = $('#api-list')
+var testPanel = $('#test-panel')
+var optionPanel = $('#option-panel')
+</script>
+<script src="/internal_assets/scripts/renderers.js"></script>
+<script src="/internal_assets/scripts/index.js"></script>
+<script src="/internal_assets/scripts/panel.js" defer></script>
+<script src="/internal_assets/scripts/test.js" defer></script>
+<script src="/internal_assets/scripts/options.js" defer></script>
+<script src="/internal_assets/scripts/export.js" defer></script>
+<script src="/internal_assets/scripts/base64.js" defer></script>
+<script src="/internal_assets/scripts/jsonviewer.js" defer></script>
+</body>
 </html>

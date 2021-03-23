@@ -37,20 +37,21 @@ function el(tag, attrs, children) {
 }
 
 function render(list, data) {
-  var poweredLink = document.querySelector('#fx-name')
-  poweredLink.innerHTML = data.meta.name + '@' + data.meta.version
-  poweredLink.setAttribute('href', data.meta.url + '?from=dist&version=' + data.meta.version)
   document.title = 'Table of APIs - ' + data.name
-  document.querySelector('#app-name').innerHTML = data.name
+  $('#app-name').html(data.name)
+
+  var poweredLink = $('#fx-name')
+  poweredLink.html(data.meta.name + '@' + data.meta.version)
+  poweredLink.attr('href', data.meta.url + '?from=dist&version=' + data.meta.version)
   var s = localStorage.getItem('options-expanded')
   if (s !== undefined && s !== null && s !== '') {
     data.expanded = s === '1'
   }
-  document.querySelector('#expanded-on-load').checked = data.expanded
+  $('#expanded-on-load').prop('checked', data.expanded)
 
   var routes = data.routes
   if (!routes || !routes.length) {
-    document.querySelector('#loading').innerHTML = '未找到接口信息'
+    $('#loading').html('未找到接口信息')
     return
   }
 
@@ -89,8 +90,7 @@ function render(list, data) {
     modules: modules
   }
 
-  list.innerHTML = ''
-  list.appendChild(apiList)
+  list.empty().append(apiList)
 }
 
 function padStart(str, width, fill) {

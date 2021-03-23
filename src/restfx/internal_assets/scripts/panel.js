@@ -1,25 +1,20 @@
 function toggleFullscreen(panel) {
-  panel = panel.querySelector('.panel')
-  if (panel.classList.contains('fullscreen')) {
-    panel.classList.remove('fullscreen')
-  } else {
-    panel.classList.add('fullscreen')
-  }
+  panel = $('.panel', panel)
+  panel.toggleClass('fullscreen')
 }
 
 function initPanel(panel) {
-  panel.querySelector('.btn-close').addEventListener('click', function () {
-    panel.style.display = 'none'
+  $('.btn-close', panel).on('click', function () {
+    panel.hide()
     return false
   })
-
-  panel.querySelector('.btn-fullscreen').addEventListener('click', function() {
+  $('.btn-fullscreen', panel).on('click', function () {
     toggleFullscreen(panel)
     return false
   })
 
   var lastClick = 0
-  panel.querySelector('.panel-heading').addEventListener('click', function (e) {
+  $('.panel-heading', panel).on('click', function (e) {
     var now = new Date()
     if (now - lastClick > 200) {
       lastClick = now

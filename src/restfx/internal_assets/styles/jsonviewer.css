@@ -1,0 +1,97 @@
+/* Root element */
+.json-document {
+    padding: 1em 2em;
+}
+
+.json-document li:hover > .json-dict,
+.json-document li:hover > .json-array {
+    border-left-color: #5e5e5e;
+}
+
+/* Syntax highlighting for JSON objects */
+ul.json-dict, ol.json-array {
+    list-style-type: none;
+    margin: 0 0 0 1px;
+    border-left: 1px dotted #ccc;
+    padding-left: 2em;
+}
+
+.json-string {
+    color: #0B7500;
+}
+
+.json-literal {
+    color: #006fff;
+}
+
+/* Toggle button */
+a.json-toggle {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+}
+
+a.json-toggle:focus {
+    outline: none;
+}
+
+a.json-toggle:before {
+    font-size: 1em;
+    color: #ccc;
+    content: "\25BC"; /* down arrow */
+    position: absolute;
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+    line-height: 1em;
+    left: -1.2em;
+    margin-top: 3px;
+    transform: scale(0.8);
+}
+
+.json-document li:hover > a.json-toggle:before {
+    color: #888888;
+}
+
+a.json-toggle.collapsed:before {
+    /* Use rotated down arrow, prevents right arrow appearing smaller than down arrow in some browsers */
+    transform: scale(0.8) rotate(-90deg);
+}
+
+/* Collapsable placeholder links */
+a.json-placeholder {
+    color: #888888;
+    padding: 0 1em;
+    text-decoration: none;
+}
+
+a.json-placeholder:hover {
+    text-decoration: underline;
+}
+
+/* ------------------dark-mode--------------------- */
+.theme-dark .json-string {
+    color: #229d15;
+}
+
+.theme-dark .json-literal {
+    color: #0098ff;
+}
+
+.theme-dark ul.json-dict,
+.theme-dark ol.json-array {
+    border-left-color: #666666;
+}
+
+.theme-dark .json-document li:hover > .json-dict,
+.theme-dark .json-document li:hover > .json-array {
+    border-left-color: #aaaaaa;
+}
+
+.theme-dark a.json-toggle:before {
+    color: #666666;
+}
+
+.theme-dark .json-document li:hover > a.json-toggle:before {
+    color: #aaaaaa;
+}

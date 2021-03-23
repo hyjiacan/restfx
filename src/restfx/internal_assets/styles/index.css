@@ -560,6 +560,13 @@ details[open] summary {
     padding: 5px;
 }
 
+
+#test-panel input[type=file].arg-value:focus,
+#test-panel input[type=file].arg-value:hover,
+#test-panel input[type=file].arg-value:active {
+    padding: 2px;
+}
+
 #test-panel select.arg-type {
     height: 26px;
 }
@@ -598,11 +605,8 @@ textarea.arg-value:active {
     border: none;
     padding: 15px;
     width: 100%;
-    min-height: 200px;
     box-sizing: border-box;
     outline: none;
-    overflow: auto;
-    resize: vertical;
     font-size: 12px;
 }
 
@@ -622,8 +626,11 @@ textarea.arg-value:active {
     color: orange;
 }
 
-.response-time {
+.response-time,
+.response-type,
+.response-length {
     margin-left: 20px;
+    font-size: 12px;
 }
 
 tr.test-row--tool {

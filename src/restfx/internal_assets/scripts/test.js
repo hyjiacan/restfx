@@ -1,23 +1,44 @@
 (function () {
+  var responseContent = $('div.response-content', testPanel)
+  var responseStatus = $('.response-status', testPanel)
+  var statusCode = $('.status-code', testPanel)
+  var statusText = $('.status-text', testPanel)
+  var responseTime = $('.response-time', testPanel)
+  var responseLength = $('.response-length', testPanel)
+  var responseType = $('.response-type', testPanel)
+
+  function renderResponseInfo(xhr, start) {
+
+    var end = new Date().getTime()
+
+    responseStatus.removeClass(['status-success', 'status-failure'])
+    responseStatus.addClass(xhr.status === 200 ? 'status-success' : 'status-failure')
+
+    statusCode.text(xhr.status)
+    statusText.text(xhr.statusText)
+
+    responseTime.text('耗时: ' + (end - start) + 'ms')
+
+    var type = xhr.getResponseHeader('content-type').split(';')[0]
+    responseType.text('类型: ' + type)
+
+    var len = ((xhr.getResponseHeader('content-length') / 1024).toFixed(2) * 100) / 100
+    responseLength.text('长度: ' + len + ' KB')
+  }
+
   function sendTest(method, url) {
-    testPanel.querySelector('div.response-content').innerHTML = ''
-    testPanel.querySelector('textarea.response-content').value = ''
-    testPanel.querySelector('div.response-content').style.display = 'none'
-    testPanel.querySelector('textarea.response-content').style.display = 'none'
-    testPanel.querySelector('.response-status').classList.remove('status-success', 'status-failure')
-    testPanel.querySelector('.status-code').textContent = ''
-    testPanel.querySelector('.status-text').textContent = ''
-    testPanel.querySelector('.response-time').textContent = ''
+    responseContent.empty().hide()
+    responseStatus.removeClass(['status-success', 'status-failure'])
+    statusCode.empty()
+    statusText.empty()
+    responseTime.empty()
+    responseLength.empty()
 
     var fields = Object.create(null)
-    var temp = testPanel.querySelectorAll('input.arg-value')
-    for (var index = 0; index < temp.length; index++) {
-      var field = temp[index]
-//      if (field.required && !field.value) {
-//        field.classList.add('required')
-//        return
-//      }
-      field.classList.remove('required')
+    $('input.arg-value, textarea.arg-value', testPanel).each(function () {
+      var field = $(this)
+      field.removeClass('required')
+      field = field[0]
       if (field.type === 'file') {
         fields[field.name] = {
           value: field.files[0]
@@ -28,59 +49,43 @@
         }
       }
       fields[field.name].type = field.dataset.type
-    }
-    temp = testPanel.querySelectorAll('textarea.arg-value')
-    for (var index = 0; index < temp.length; index++) {
-      var field = temp[index]
-//      if (field.required && !field.value) {
-//        field.classList.add('required')
-//        return
-//      }
-      field.classList.remove('required')
-      fields[field.name] = {
-        value: field.value,
-        type: field.dataset.type
-      }
-    }
-    testPanel.querySelector('.response-time').textContent = 'Loading...'
-    var start = new Date().getTime()
-    var option = {
-      callback: function (response) {
-        var end = new Date().getTime()
-        testPanel.querySelector('.response-time').textContent = (end - start) + 'ms'
-        renderTestResponse(response, url)
-      }
-    }
+    })
+    responseTime.text('加载中...')
 
+    var start = new Date().getTime()
     // 处理数据格式
-    var formData = Object.create(null)
+    // var formData = Object.create(null)
+    var formData = new FormData()
     for (var name in fields) {
       // 忽略空的字段
       if (!name || /^\s*$/.test(name)) {
         continue
       }
 
-      var fieldType = fields[name].type
+      // var fieldType = fields[name].type
       var fieldValue = fields[name].value
 
       // 忽略值为空的字段
-      if (!fieldValue) {
-        continue
-      }
-
-      formData[name] = fieldValue
+      // if (!fieldValue) {
+      //   continue
+      // }
+      // formData[name] = fieldValue
+      formData.append(name, fieldValue)
     }
 
-    if (['get', 'delete'].indexOf(method) === -1) {
-      option.data = new FormData()
-      for (var name in formData) {
-        option.data.append(name, formData[name])
-      }
-    } else {
-      option.param = formData
-    }
-
-    xhr(method, url, option)
+    $.ajax({
+      url: url,
+      method: method,
+      data: formData,
+      contentType: false,
+      processData: false
+    }).then(function (data, status, xhr) {
+      renderResponseInfo(xhr, start)
+      renderTestResponse(data, xhr.getResponseHeader('content-type'), url)
+    }).fail(function (xhr) {
+      renderResponseInfo(xhr, start)
+      responseContent.html(xhr.responseText).show()
+    })
   }
 
   function addTestField(toolRow, allowForm) {
@@ -150,20 +155,18 @@
   function openTestPanel(e) {
     var id = e.target.getAttribute('data-api')
     var api = API_LIST[id]
-    testPanel.querySelector('.module').textContent = api.module
-    testPanel.querySelector('.name').textContent = api.name
-    testPanel.querySelector('.info').innerHTML = ''
-    testPanel.querySelector('.info').appendChild(renderUrlInfo(api))
+    $('.module', testPanel).text(api.module)
+    $('.name', testPanel).text(api.name)
+    $('.info', testPanel).empty()
+    $('.info', testPanel).append(renderUrlInfo(api))
 
     if (api.addition_info) {
-      testPanel.querySelector('.addition-info').innerHTML = api.addition_info
-      testPanel.querySelector('.addition-info').style.display = 'block'
+      $('.addition-info', testPanel).html(api.addition_info).show()
     } else {
-      testPanel.querySelector('.addition-info').style.display = 'none'
+      $('.addition-info', testPanel).hide()
     }
 
-    var table = testPanel.querySelector('table')
-    var tableContainer = table.parentElement
+    var table = $('table', testPanel)
 
     var toolRow = null
     if (api.handler_info.arguments.some(function (item) {
@@ -184,62 +187,45 @@
       })
     }
 
-    tableContainer.replaceChild(renderArgs(api.handler_info.arguments, true, toolRow), table)
+    table.replaceWith(renderArgs(api.handler_info.arguments, true, toolRow))
 
-    testPanel.querySelector('.status-code').textContent = ''
-    testPanel.querySelector('.status-text').textContent = ''
-    testPanel.querySelector('div.response-content').innerHTML = ''
-    testPanel.querySelector('textarea.response-content').value = ''
-    testPanel.querySelector('div.response-content').style.display = 'none'
-    testPanel.querySelector('textarea.response-content').style.display = 'none'
-    testPanel.querySelector('.response-time').textContent = ''
+    statusCode.empty()
+    statusText.empty()
+    responseContent.empty().hide()
+    responseTime.empty()
+    responseType.empty()
+    responseLength.empty()
 
-    testPanel.style.display = 'flex'
+    testPanel.css('display', 'flex')
   }
 
-  function renderTestResponse(response, url) {
-    var classList = testPanel.querySelector('.response-status').classList
-    classList.remove('status-success', 'status-failure')
-    classList.add(response.status === 200 ? 'status-success' : 'status-failure')
-    testPanel.querySelector('.status-code').textContent = response.status
-    testPanel.querySelector('.status-text').textContent = response.statusText
+  function renderTestResponse(data, contentType, url) {
+    $('div.response', testPanel)[0].scrollIntoView()
 
-    testPanel.querySelector('div.response').scrollIntoView()
-
-    if (response.status === 500) {
-      testPanel.querySelector('div.response-content').innerHTML = response.data
-      testPanel.querySelector('div.response-content').style.display = 'block'
-      return
-    }
-    if (response.status !== 200) {
-      testPanel.querySelector('textarea.response-content').value = response.data
-      testPanel.querySelector('textarea.response-content').style.display = 'block'
-      return
-    }
-    var contentType = (response.headers['content-type'] || '').toLowerCase()
     if (contentType.indexOf('image/') === 0) {
       var image = new Image()
       image.classList.add('response-image')
-      image.src = response.data
-      testPanel.querySelector('div.response-content').appendChild(image)
-      testPanel.querySelector('div.response-content').style.display = 'block'
+      image.src = data
+      responseContent.append(image)
+      responseContent.show()
       return
     }
 
-    var content
-
-    if (response.isText) {
-      try {
-        if (typeof response.data === 'string') {
-          content = response.data
-        } else {
-          content = JSON.stringify(response.data, null, 4)
+    if (contentType.indexOf('text/') !== -1 || contentType.indexOf('/json') !== -1) {
+      if (typeof data === 'string') {
+        try {
+          responseContent.jsonViewer(JSON.parse(data))
+          responseContent.show()
+          return
+        } catch (e) {
+          responseContent.html('<pre>' + data + '</pre>')
+          responseContent.show()
+          return
         }
-      } catch (e) {
-        content = response.data
       }
-      testPanel.querySelector('textarea.response-content').value = content
-      testPanel.querySelector('textarea.response-content').style.display = 'block'
+
+      responseContent.jsonViewer(data)
+      responseContent.show()
       return
     }
 
@@ -256,21 +242,21 @@
     link.innerHTML = '点击此处存为文件'
     link.download = encodeURI(url.substr(window.location.origin.length)) + ext
     var label = document.createElement('span')
-    label.innerHTML = '<b>[' + contentType + ']</b> ' + '此类型的数据不支持预览，'
-    testPanel.querySelector('div.response-content').appendChild(label)
-    testPanel.querySelector('div.response-content').appendChild(link)
-    testPanel.querySelector('div.response-content').style.display = 'block'
+    label.innerHTML = '此类型的数据不支持预览，'
+    responseContent.append(label)
+    responseContent.append(link)
+    responseContent.show()
   }
 
-  testPanel.querySelector('#btn-send-test').addEventListener('click', function () {
-    var method = testPanel.querySelector('.method').textContent.trim()
-    var url = testPanel.querySelector('.url').textContent.trim()
+  $('#btn-send-test', testPanel).on('click', function () {
+    var method = $('.method', testPanel).text().trim()
+    var url = $('.url', testPanel).text().trim()
     sendTest(method, url)
   })
-  document.body.addEventListener('click', function (e) {
-    if (e.target.classList.contains('btn-open-test')) {
-      openTestPanel(e)
-    }
+
+  list.on('click', '.btn-open-test', function (e) {
+    openTestPanel(e)
   })
   initPanel(testPanel)
-})()
+})
+()
