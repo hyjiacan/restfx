@@ -137,7 +137,7 @@ class MysqlSessionProvider(IDbSessionProvider):
             else:
                 data = None
         except Exception as e:
-            print(repr(e))
+            print(str(e))
             return 0, None
         finally:
             if cursor is not None:

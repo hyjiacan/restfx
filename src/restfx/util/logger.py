@@ -33,7 +33,7 @@ class Logger:
         self.log('warning', message)
 
     def error(self, message, e=None, _raise=True):
-        temp = message if e is None else '%s\n\t%s' % (message, repr(e))
+        temp = message if e is None else '%s\n\t%s' % (message, str(e))
 
         # 非开发模式时，始终不会输出堆栈信息
         if not self.debug:

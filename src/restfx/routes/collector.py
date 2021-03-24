@@ -294,7 +294,7 @@ class Collector:
                 # 这样的写法是错误的，应该写为  @route()
                 msg = 'File "%s", line %d, in %s\n\t%s' % (
                     filename, func_def.lineno, func_def.name,
-                    'Unsupported decorator "@route", use "@route()" instead.')
+                    'Unexpected usage with "@route", use "@route()" instead.')
                 from ..util import Logger
                 Logger.get(self.app_id).error(msg)
                 continue

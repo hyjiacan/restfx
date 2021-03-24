@@ -108,7 +108,7 @@ class SessionMiddleware(MiddlewareBase):
             old_session_id = request.cookies[self.session_name]
             cookie_key = _decrypt_session_id(old_session_id, encoded_app_id)
         except Exception as e:
-            logger.warning('Cannot decode session id from cookie: %s' % repr(e))
+            logger.warning('Cannot decode session id from cookie: %s' % str(e))
             request.session = self.session_provider.create(new_session_id)
             return
 

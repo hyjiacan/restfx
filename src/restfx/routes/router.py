@@ -53,4 +53,4 @@ class Router:
         except Exception as e:
             from ..util import Logger
             Logger.get(self.context.app_id).error(e)
-            return HttpServerError(repr(e))
+            return HttpServerError(str(e))

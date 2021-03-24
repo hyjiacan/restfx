@@ -71,14 +71,14 @@ class App:
         Collector.create(app_id, app_root, append_slash)
 
     def __del__(self):
-        if self.id in self._APPS:
-            del self._APPS[self.id]
+        from .routes import Collector
+        Collector.destroy(self.id)
 
         for plugin in self._plugins:
             plugin.dispose()
 
-        from .routes import Collector
-        Collector.destroy(self.id)
+        if self.id in self._APPS:
+            del self._APPS[self.id]
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -112,11 +112,11 @@ class App:
             if isinstance(e, NotFound):
                 response = HttpNotFound()
             elif self.context.debug:
-                raise e
+                response = HttpServerError(e)
             else:
                 response = HttpServerError()
 
-            msg = repr(e)
+            msg = str(e)
             if request:
                 msg += ':' + request.path
             self._logger.warning(msg)

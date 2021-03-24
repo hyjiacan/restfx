@@ -124,6 +124,21 @@ button:active {
     color: #aaaaaa;
 }
 
+/* ---------------- load error ------------------------*/
+
+.load-error h3 {
+    color: #ff7171;
+}
+
+.load-error pre,
+.load-error p {
+    color: #ff0505;
+    border-radius: 4px;
+    padding: 20px;
+    background-color: #ebebeb;
+    line-height: 1.5em;
+}
+
 /* ----------------- header ------------------------ */
 
 header {
@@ -889,4 +904,10 @@ tr.test-row--tool {
 .theme-dark #ie-tip {
     background-color: #360404;
     color: #fb4c4c;
+}
+
+.theme-dark .load-error pre,
+.theme-dark .load-error p {
+    color: #ff5555;
+    background-color: #414141;
 }

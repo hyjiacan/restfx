@@ -2,12 +2,22 @@ function loadPage() {
   // 请求数据
   var loading = $('#loading')
   loading.show()
-  $.post(urlRoot + '/' + apiPrefix, function (data, status, xhr) {
-    if (xhr.status !== 200) {
-      list.innerHTML = xhr.responseText
-      return
+  xhr('post', urlRoot + '/' + apiPrefix, {
+    callback: function (response) {
+      var data = response.data
+      if (response.status !== 200) {
+        loading.hide()
+        list.append(el('div', {
+          'class': 'load-error'
+        }, [
+          el('h3', null, response.statusText),
+          response.headers['content-type'].indexOf('text/html') === -1 ?
+            el('pre', null, data) : el('p', null, data)
+        ])).show()
+        return
+      }
+      render(list, typeof data === 'string' ? JSON.parse(data) : data)
     }
-    render(list, typeof data === 'string' ? JSON.parse(data) : data)
   })
 
   var app = $('#app')

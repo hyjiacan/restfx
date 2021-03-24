@@ -93,9 +93,7 @@ class HttpNotFound(HttpResponse):
 
 
 class HttpServerError(HttpResponse, InternalServerError):
-    def __init__(self, content=None, **kwargs):
-        e = None
+    def __init__(self, content=None):
         if isinstance(content, Exception):
-            e = content
-            content = None
-        super().__init__(content, None, e, **kwargs)
+            content = str(content)
+        super().__init__(content, status=500, content_type='text/plain')
