@@ -81,15 +81,15 @@ def command_create(working_dir: str, project_name, *argv):
     tarfile.extractall(project_path)
     tarfile.close()
 
-    print('Generating APPID')
+    print('Generating APP ID')
     # 生成 uuid
     setting_file = os.path.abspath(os.path.join(project_path, 'settings.py'))
     with open(setting_file, mode='r', encoding='utf8') as fp:
         lines = fp.readlines()
-        appid = uuid.uuid4()
-        print(appid)
+        app_id = uuid.uuid4()
+        print(app_id)
         # 在第5行
-        lines[5] = "APP_ID = '%s'%s" % (appid, os.linesep)
+        lines[5] = "APP_ID = '%s'%s" % (app_id, os.linesep)
 
     with open(setting_file, mode='w', encoding='utf8') as fp:
         fp.writelines(lines)

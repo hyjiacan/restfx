@@ -52,11 +52,12 @@ class FileResponse(HttpResponse):
             kwargs['headers'] = headers
 
         if not request:
-            print(
-                'You are using FileReponse for attachment,'
-                'it is recommanded to fill the "request" parameter.'
-                'Otherwise, you may got an encoding issue of the filename.'
-            )
+            from ..util import Logger
+            Logger.print('warning',
+                         'You are using FileResponse for attachment,'
+                         'it is recommended to fill the "request" parameter.'
+                         'Otherwise, you may got an encoding issue of the filename.'
+                         )
 
         user_agent = request and request.headers.environ['HTTP_USER_AGENT']
         is_firefox = user_agent and ('Firefox/' in user_agent)

@@ -122,11 +122,11 @@ class FunctionDescription:
         parameters = signature.parameters
         _empty = signature.empty
 
-        documatation = self._get_func_docs()
+        documentation = self._get_func_docs()
 
-        self.description = documatation['__func__']
-        self.return_type = documatation['__rtype__']
-        self.return_description = documatation['__return__']
+        self.description = documentation['__func__']
+        self.return_type = documentation['__rtype__']
+        self.return_description = documentation['__return__']
 
         args = OrderedDict()
         index = 0
@@ -136,7 +136,7 @@ class FunctionDescription:
 
             spec.is_variable = parameter.kind == parameter.VAR_KEYWORD
 
-            spec.comment = documatation.get(p)
+            spec.comment = documentation.get(p)
             index += 1
             # 类型
             annotation = parameter.annotation

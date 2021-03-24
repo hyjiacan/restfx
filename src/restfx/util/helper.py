@@ -18,6 +18,6 @@ def print_meta(append=None):
         max_len = url_len
         info = info.center(url_len, ' ')
 
-    linewidth = '-' * (max_len + 8)
+    line_width = '-' * (max_len + 8)
     print("#{line}#\n|    {info}    |\n|    {url}    |\n#{line}#\n".format(
-        line=linewidth, info=info, url=project_url))
+        line=line_width, info=info, url=project_url))

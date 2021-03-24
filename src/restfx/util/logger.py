@@ -11,17 +11,21 @@ class Logger:
         self._LOGGERS[app_id] = self
         self.custom_logger = None
 
+    @classmethod
+    def print(cls, level, message):
+
+        if level not in cls.colors:
+            print('[%s] %s' % (level, message))
+            return
+
+        print('%s[%s] %s%s' % (cls.colors[level], level, message, '\033[0m'))
+
     def log(self, level, message, e=None):
         if self.custom_logger is not None:
             # noinspection PyUnresolvedReferences
             self.custom_logger(level, message, e)
             return
-
-        if level not in self.colors:
-            print('[%s] %s' % (level, message))
-            return
-
-        print('%s[%s] %s%s' % (self.colors[level], level, message, '\033[0m'))
+        self.print(level, message)
 
     def debug(self, message):
         self.log('debug', message)
