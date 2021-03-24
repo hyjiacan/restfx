@@ -1,8 +1,6 @@
 import os
 
 from restfx import __meta__
-from .routes.collector import Collector
-from .util.logger import Logger
 
 
 class AppContext:
@@ -30,8 +28,6 @@ class AppContext:
         self.app_id = app_id
         # 是否启用DEBUG模式
         self.debug = debug
-        # 是否启用 API 页面
-        self.api_page_enabled = debug if api_page_enabled is None else api_page_enabled
         # 工作目录
         self.ROOT = app_root
         self.append_slash = append_slash
@@ -41,7 +37,7 @@ class AppContext:
         """
         :type: List[MiddlewareBase]
         """
-        self.reversed_middlwares = []
+        self.reversed_middlewares = []
         """
         :type: List[MiddlewareBase]
         """
@@ -56,6 +52,8 @@ class AppContext:
         self.injections = {}
 
         self.api_page_options = {
+            # 是否启用 API 页面
+            'api_page_enabled': debug if api_page_enabled is None else api_page_enabled,
             'api_page_name': api_page_name or 'Another awesome %s project' % __meta__.name,
             'api_page_expanded': api_page_expanded,
             # 是否缓存API页面的 html 文件 和 接口数据
@@ -63,11 +61,8 @@ class AppContext:
             'api_page_addition': api_page_addition
         }
 
-        if self.api_page_enabled:
+        if self.api_page_options['api_page_enabled']:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
-
-        self.collector = Collector(app_root, append_slash)
-        self.logger = Logger(debug)
 
     def __del__(self):
         if self.app_id in self._CONTEXTS:

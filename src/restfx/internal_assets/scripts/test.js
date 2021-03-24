@@ -211,7 +211,11 @@
 
     if (response.isText) {
       if (typeof data === 'string') {
-        responseContent.html('<pre>' + data + '</pre>')
+        if (response.headers['content-type'].indexOf('text/html') === -1) {
+          responseContent.html('<pre>' + data + '</pre>')
+        } else {
+          responseContent.html(data)
+        }
       } else {
         responseContent.jsonViewer(data)
       }

@@ -1,12 +1,14 @@
 class Logger:
+    _LOGGERS = {}
     colors = {
         'error': '\033[1;31m',
         'warning': '\033[1;33m',
         'debug': '\033[1;37m'
     }
 
-    def __init__(self, debug_mode: bool):
-        self.debug_mode = debug_mode
+    def __init__(self, app_id: str):
+        self.app_id = app_id
+        self._LOGGERS[app_id] = self
         self.custom_logger = None
 
     def log(self, level, message, e=None):
@@ -22,9 +24,7 @@ class Logger:
         print('%s[%s] %s%s' % (self.colors[level], level, message, '\033[0m'))
 
     def debug(self, message):
-        # 仅在 debug 模式下输出这类日志
-        if self.debug_mode:
-            self.log('debug', message)
+        self.log('debug', message)
 
     def info(self, message):
         self.log('info', message)
@@ -57,3 +57,15 @@ class Logger:
         new_msg = '%s\n\t%s' % (message, e.args[0]) if len(e.args) > 0 else message
         e.args = (new_msg,)
         raise e
+
+    @classmethod
+    def remove(cls, app_id: str):
+        if app_id in cls._LOGGERS:
+            del cls._LOGGERS[app_id]
+
+    @classmethod
+    def get(cls, app_id: str):
+        logger = cls._LOGGERS.get(app_id, None)
+        if logger is None:
+            logger = Logger(app_id)
+        return logger

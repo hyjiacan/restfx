@@ -91,27 +91,30 @@ class SessionMiddleware(MiddlewareBase):
         )))
         # 使用 md5 作为 session　中使用的 key
         # 以避免指定的 app_id 长度不是32位时引发的错误
-        app_id = [ord(ch) for ch in list(md5.hash_str(context.app_id))]
+        encoded_app_id = [ord(ch) for ch in list(md5.hash_str(context.app_id))]
 
-        new_session_id = _encrypt_session_id(key, app_id)
+        new_session_id = _encrypt_session_id(key, encoded_app_id)
 
         # 只要 cookie 中没有 session_id 那么就新建一个 session
         if self.session_name not in request.cookies:
             request.session = self.session_provider.create(new_session_id)
             return
 
+        from ...util import Logger
+        logger = Logger.get(context.app_id)
+
         # noinspection PyBroadException
         try:
             old_session_id = request.cookies[self.session_name]
-            cookie_key = _decrypt_session_id(old_session_id, app_id)
+            cookie_key = _decrypt_session_id(old_session_id, encoded_app_id)
         except Exception as e:
-            context.logger.warning('Cannot decode session id from cookie: %s' % repr(e))
+            logger.warning('Cannot decode session id from cookie: %s' % repr(e))
             request.session = self.session_provider.create(new_session_id)
             return
 
         # 校验 session_id 合法性
         if key != cookie_key:
-            context.logger.warning('Invalid session key: expected "%s", got "%s"' % (
+            logger.warning('Invalid session key: expected "%s", got "%s"' % (
                 new_session_id, cookie_key))
             request.session = self.session_provider.create(new_session_id)
             return

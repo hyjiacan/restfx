@@ -6,11 +6,7 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
-from .context import AppContext
-from .http import HttpServerError, HttpNotFound, HttpRequest
-from .plugins import PluginBase
-from .routes.api_page import ApiPage
-from .routes.router import Router
+from restfx.plugins import PluginBase
 
 
 class App:
@@ -44,6 +40,12 @@ class App:
         :param api_page_cache: 是否缓存接口数据
         :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
         """
+        from .context import AppContext
+        from .routes import ApiPage
+        from .routes import Collector
+        from .routes import Router
+        from .util import Logger
+
         self.id = app_id or str(uuid.uuid4())
 
         self._APPS[self.id] = self
@@ -64,6 +66,9 @@ class App:
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
+        self._logger = Logger(app_id)
+
+        Collector.create(app_id, app_root, append_slash)
 
     def __del__(self):
         if self.id in self._APPS:
@@ -72,6 +77,9 @@ class App:
         for plugin in self._plugins:
             plugin.dispose()
 
+        from .routes import Collector
+        Collector.destroy(self.id)
+
     def handle_wsgi_request(self, environ, start_response):
         """
         接收并处理来自 wsgi 的请求
@@ -79,6 +87,8 @@ class App:
         :param start_response:
         :return:
         """
+        from .http import HttpServerError, HttpNotFound, HttpRequest
+
         request = None
         response = None
         try:
@@ -109,7 +119,7 @@ class App:
             msg = repr(e)
             if request:
                 msg += ':' + request.path
-            self.context.logger.warning(msg)
+            self._logger.warning(msg)
         finally:
             for plugin in reversed(self._plugins):
                 plugin.requested(request, response)
@@ -153,7 +163,7 @@ class App:
         if len(argv) > 1:
             server_arg = argv[1].split(':')
             if len(server_arg) == 1:
-                self.context.logger.warning('Invalid startup argument "%s" (ignored):' % argv[1])
+                self._logger.warning('Invalid startup argument "%s" (ignored):' % argv[1])
             else:
                 host = server_arg[0]
                 port = int(server_arg[1])
@@ -171,7 +181,7 @@ class App:
         if host in [None, '', '*']:
             host = '0.0.0.0'
 
-        if self.context.api_page_enabled:
+        if self.context.api_page_options['api_page_enabled']:
             if host == '0.0.0.0':
                 from .util import utils
                 ips = utils.get_ip_list()
@@ -192,15 +202,18 @@ class App:
         :param types:
         :return:
         """
+        from .routes import Collector
+        collector = Collector.get(self.id)
         for type_item in types:
-            self.context.collector.global_types[type_item.__name__] = type_item
+            collector.global_types[type_item.__name__] = type_item
 
     def collect(self):
         """
         收集路由
         :return:
         """
-        return self.context.collector.collect(self.context.routes_map)
+        from .routes import Collector
+        return Collector.get(self.id).collect(self.context.routes_map)
 
     def persist(self, filename: str = '', encoding='utf8'):
         """
@@ -209,7 +222,8 @@ class App:
         :param encoding:
         :return:
         """
-        return self.context.collector.persist(self.context.routes_map, filename, encoding)
+        from .routes import Collector
+        return Collector.get(self.id).persist(self.context.routes_map, filename, encoding)
 
     def set_logger(self, logger):
         """
@@ -217,7 +231,7 @@ class App:
         :param logger:
         :return:
         """
-        self.context.logger.custom_logger = logger
+        self._logger.custom_logger = logger
         return self
 
     def map_urls(self, urls_map: dict):
@@ -243,7 +257,7 @@ class App:
             pkg = routes_map[path]
             pkg_path = os.path.join(self.context.ROOT, pkg.replace('.', '/'))
             if not os.path.exists(pkg_path):
-                self.context.logger.warning('Route map "%s" not exists, path=%s' % (pkg, pkg_path))
+                self._logger.warning('Route map "%s" not exists, path=%s' % (pkg, pkg_path))
             self.context.routes_map[path] = pkg
         return self
 
@@ -256,11 +270,11 @@ class App:
         for prefix in static_map:
             # 静态资源的前缀，必须以 / 开头
             if prefix[0] != '/':
-                self.context.logger.warning(
+                self._logger.warning(
                     'Invalid prefix of static map, it should start with "/": %s' % prefix)
                 continue
             if prefix.lower() == '/internal_assets':
-                self.context.logger.warning(
+                self._logger.warning(
                     'The prefix of static map is reserved, pick another one please: %s' % prefix)
                 continue
             target_path = static_map[prefix]
@@ -268,9 +282,9 @@ class App:
             # 无论目录是否存在都注册，因为静态目录可能是动态生成的
             self.context.static_map[prefix] = abs_target_path
             if os.path.exists(abs_target_path):
-                self.context.logger.debug('Map static url %s to path %s' % (prefix, abs_target_path))
+                self._logger.debug('Map static url %s to path %s' % (prefix, abs_target_path))
             else:
-                self.context.logger.warning(
+                self._logger.warning(
                     'The target path of static url %s not found: %s' % (prefix, abs_target_path))
         return self
 
@@ -296,7 +310,7 @@ class App:
 
         rid = '%s#%s' % (path, method.lower())
         if rid in self._router.production_routes:
-            self.context.logger.warning('%s %s exists' % (method, path))
+            self._logger.warning('%s %s exists' % (method, path))
 
         desc = FunctionDescription(handler)
         self._router.production_routes[rid] = {
@@ -316,7 +330,7 @@ class App:
         for middleware in middlewares:
             assert isinstance(middleware, MiddlewareBase)
             self.context.middlewares.append(middleware)
-            self.context.reversed_middlwares.insert(0, middleware)
+            self.context.reversed_middlewares.insert(0, middleware)
         return self
 
     def inject(self, **kwargs):

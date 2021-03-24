@@ -33,10 +33,19 @@ routes = [
 
 
 class Collector:
-    def __init__(self, project_root: str, append_slash: bool):
-        self.project_root = project_root
+    _COLLECTORS = {}
+
+    def __init__(self, app_id: str, app_root: str, append_slash: bool):
+        self.app_id = app_id
+        self.app_root = app_root
         self.append_slash = append_slash
         self.global_types = {}
+
+    @classmethod
+    def create(cls, app_id: str, app_root: str, append_slash: bool):
+        collector = Collector(app_id, app_root, append_slash)
+        cls._COLLECTORS[app_id] = collector
+        return collector
 
     def collect(self, routes_map: dict):
         """
@@ -51,7 +60,7 @@ class Collector:
                 'Routes map is empty, did you forgot to call "restfx.map_routes(routes_map: dict)"')
 
         for (http_prefix, pkg_prefix) in routes_map.items():
-            route_root = path.abspath(path.join(self.project_root, pkg_prefix.replace('.', path.sep)))
+            route_root = path.abspath(path.join(self.app_root, pkg_prefix.replace('.', path.sep)))
 
             # 遍历目录，找出所有的 .py 文件
             for (dir_name, dirs, files) in os.walk(route_root):
@@ -222,7 +231,7 @@ class Collector:
                 continue
 
             # Find out the @route decorator
-            decorator_info = self.get_route_decorator(item)
+            decorator_info = self.get_route_decorator(filename, item)
             if decorator_info is None:
                 continue
 
@@ -233,51 +242,62 @@ class Collector:
 
         return routes if func_name is None else None
 
-    def get_route_decorator(self, func_def: ast.FunctionDef):
+    def get_route_decorator(self, filename: str, func_def: ast.FunctionDef):
         for decorator in func_def.decorator_list:
-            if not decorator.func:
-                continue
-            if decorator.func.id != 'route':
-                continue
-
-            keywords = {}
-            for keyword in decorator.keywords:
-                arg_name = keyword.arg
-                value = keyword.value
-                if isinstance(value, ast.Attribute):
-                    arg_value = getattr(self.global_types[value.value.id], value.attr)
-                else:
-                    # 其它类型暂时不支持
-                    # 统一使用原始值
-                    # noinspection PyProtectedMember
-                    arg_value = getattr(value, keyword.value._fields[0])
-
-                keywords[arg_name] = arg_value
-
             route_module = None
             route_name = None
             route_extname = None
+            keywords = {}
 
-            # 在此不需要考虑其它的数据类型，因为声明的时候全是 字符串
-            if len(decorator.args) == 1:
-                route_module = decorator.args[0].s
-            elif len(decorator.args) == 2:
-                route_module = decorator.args[0].s
-                route_name = decorator.args[1].s
-            elif len(decorator.args) == 3:
-                route_module = decorator.args[0].s
-                route_name = decorator.args[1].s
-                route_extname = decorator.args[2].s
+            if hasattr(decorator, 'func'):
+                if decorator.func.id != 'route':
+                    continue
+                for keyword in decorator.keywords:
+                    arg_name = keyword.arg
+                    value = keyword.value
+                    if isinstance(value, ast.Attribute):
+                        arg_value = getattr(self.global_types[value.value.id], value.attr)
+                    else:
+                        # 其它类型暂时不支持
+                        # 统一使用原始值
+                        # noinspection PyProtectedMember
+                        arg_value = getattr(value, keyword.value._fields[0])
 
-            if route_module is None and 'module' in keywords:
-                route_module = keywords['module']
-                del keywords['module']
-            if route_name is None and 'name' in keywords:
-                route_name = keywords['name']
-                del keywords['name']
-            if route_extname is None and 'extname' in keywords:
-                route_extname = keywords['extname']
-                del keywords['extname']
+                    keywords[arg_name] = arg_value
+
+                # 在此不需要考虑其它的数据类型，因为声明的时候全是 字符串
+                if len(decorator.args) == 1:
+                    route_module = decorator.args[0].s
+                elif len(decorator.args) == 2:
+                    route_module = decorator.args[0].s
+                    route_name = decorator.args[1].s
+                elif len(decorator.args) == 3:
+                    route_module = decorator.args[0].s
+                    route_name = decorator.args[1].s
+                    route_extname = decorator.args[2].s
+
+                if route_module is None and 'module' in keywords:
+                    route_module = keywords['module']
+                    del keywords['module']
+                if route_name is None and 'name' in keywords:
+                    route_name = keywords['name']
+                    del keywords['name']
+                if route_extname is None and 'extname' in keywords:
+                    route_extname = keywords['extname']
+                    del keywords['extname']
+            elif not hasattr(decorator, 'id'):
+                continue
+            elif decorator.id != 'route':
+                continue
+            else:
+                # 写了使用 @route 的方式（不带括号）
+                # 这样的写法是错误的，应该写为  @route()
+                msg = 'File "%s", line %d, in %s\n\t%s' % (
+                    filename, func_def.lineno, func_def.name,
+                    'Unsupported decorator "@route", use "@route()" instead.')
+                from ..util import Logger
+                Logger.get(self.app_id).error(msg)
+                continue
 
             return {
                 'module': route_module,
@@ -285,4 +305,14 @@ class Collector:
                 'extname': route_extname,
                 'kwargs': keywords
             }
+
         return None
+
+    @classmethod
+    def destroy(cls, app_id: str):
+        if app_id in cls._COLLECTORS:
+            del cls._COLLECTORS[app_id]
+
+    @classmethod
+    def get(cls, app_id: str):
+        return cls._COLLECTORS.get(app_id, None)

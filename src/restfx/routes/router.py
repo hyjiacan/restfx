@@ -51,5 +51,6 @@ class Router:
         try:
             return func(request, args)
         except Exception as e:
-            self.context.logger.error(e)
+            from ..util import Logger
+            Logger.get(self.context.app_id).error(e)
             return HttpServerError(repr(e))

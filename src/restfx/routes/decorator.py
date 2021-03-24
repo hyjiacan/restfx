@@ -8,6 +8,7 @@ from ..http import HttpResponse, HttpBadRequest, JsonResponse
 from ..middleware import MiddlewareManager
 from ..routes.meta import RouteMeta
 from ..session import HttpSession
+from ..util import Logger
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
@@ -115,7 +116,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
         result = func(**actual_args)
     except Exception as e:
         message = '\t%s' % get_func_info(func)
-        context.logger.error(message, e)
+        Logger.get(context.app_id).error(message, e)
         return mgr.handle_response(HttpServerError('%s: %s' % (message, str(e))))
 
     return mgr.handle_response(_wrap_http_response(mgr, result))
@@ -139,7 +140,7 @@ def _process_json_params(request: HttpRequest, context: AppContext):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        context.logger.warning('Failed to deserialize request body: %s' % str(e))
+        Logger.get(context.app_id).warning('Failed to deserialize request body: %s' % str(e))
 
 
 def _get_parameter_str(args: OrderedDict):
@@ -244,7 +245,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                           arg_name,
                           _get_parameter_str(args)
                       )
-                context.logger.warning(msg)
+                Logger.get(context.app_id).warning(msg)
             # 在 session 未启用时，其值为 None
             actual_args[arg_name] = request.session
             continue
@@ -255,7 +256,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
         # 未找到参数
         if use_default is None:
             msg = 'Missing required argument "%s".' % arg_name
-            context.logger.warning(msg)
+            Logger.get(context.app_id).warning(msg)
             return HttpBadRequest(msg)
 
         # 使用默认值
@@ -299,7 +300,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
             msg = 'Cannot parse value "%s" into type "%s". (expected: true/false)' % (
                 (arg_value, arg_spec.annotation_name))
-            context.logger.warning(msg)
+            Logger.get(context.app_id).warning(msg)
             return HttpBadRequest(msg)
 
         # 转换失败时，会抛出异常
@@ -313,7 +314,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                 except Exception:
                     # 此处的异常直接忽略即可
                     msg = 'Cannot parse value "%s" into type "%s".' % (arg_value, arg_spec.annotation_name)
-                    context.logger.warning(msg)
+                    Logger.get(context.app_id).warning(msg)
                     return HttpBadRequest(msg)
 
             # 类型一致，直接使用
@@ -327,7 +328,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             used_args.append(arg_name)
         except Exception:
             msg = 'Cannot parse value "%s" into type "%s".' % (arg_value, arg_spec.annotation_name)
-            context.logger.warning(msg)
+            Logger.get(context.app_id).warning(msg)
             return HttpBadRequest(msg)
 
     # 填充注入参数
@@ -341,7 +342,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             actual_args[arg_name] = context.injections[injection_name]
         else:
             msg = 'Injection name "%s" not found.' % injection_name
-            context.logger.warning(msg)
+            Logger.get(context.app_id).warning(msg)
             return HttpServerError(msg) if context.debug else HttpServerError()
 
     # 填充可变参数
@@ -379,7 +380,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
     # 返回 400 响应
     msg = 'Unknown argument(s) found: "%s", Parameters: (%s).' \
           % (','.join(variable_arg_keys), _get_parameter_str(args))
-    context.logger.warning(msg)
+    Logger.get(context.app_id).warning(msg)
     if not context.debug:
         msg = 'Unknown argument(s) found: %s.' % ','.join(variable_arg_keys)
     return HttpBadRequest(msg)

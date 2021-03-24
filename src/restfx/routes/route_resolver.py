@@ -16,13 +16,15 @@ class RouteResolver:
         self.entry_cache = entry_cache
         self.entry = entry
         self.method = method.lower()
+        from ..util import Logger
+        self.logger = Logger.get(context.app_id)
 
     def _get_module_abs_path(self, module_name):
         abs_path = os.path.join(self.context.ROOT, module_name)
 
         if os.path.isdir(abs_path):
             # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
-            self.context.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
+            self.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
             return '%s%s%s' % (module_name, os.path.sep, '__init__')
 
         if os.path.exists('%s.py' % abs_path):
@@ -45,7 +47,7 @@ class RouteResolver:
         func_name = self.method
 
         if module_name is None:
-            self.context.logger.warning(
+            self.logger.warning(
                 'Cannot find route "%s" in routes_map' % self.entry)
             return HttpNotFound()
 
@@ -77,14 +79,14 @@ class RouteResolver:
             desc = self._get_handler_info(module_name, func_name, fullname)
         except Exception as e:
             message = 'Failed to load entry "%s": %s' % (self.entry, fullname)
-            self.context.logger.error(message, e)
+            self.logger.error(message, e)
             return HttpNotFound()
 
         # 检查 extname 是否一致
         if isinstance(desc, FunctionDescription) and desc.decorator['extname'] != extname:
             message = 'Failed to load entry "%s": extname "%s" is not exactly match with "%s"' % (
                 self.entry, extname, desc.decorator['extname'])
-            self.context.logger.warning(message)
+            self.logger.warning(message)
             return HttpNotFound()
 
         return desc
@@ -115,7 +117,7 @@ class RouteResolver:
             entry_define = utils.load_module(module_name.replace('/', '.'))
         except Exception as e:
             message = 'Failed to load module "%s"' % module_name
-            self.context.logger.error(message, e)
+            self.logger.error(message, e)
             return HttpNotFound()
 
         # 模块中也没有这个函数
@@ -128,15 +130,16 @@ class RouteResolver:
         # 通过反射从模块加载函数
         func = getattr(entry_define, func_name)
         import inspect
+        from . import Collector
         filename = inspect.getmodule(func).__file__
-        decorator = self.context.collector.resolve_routes(filename, func_name)
+        decorator = Collector.get(self.context.app_id).resolve_routes(filename, func_name)
 
         if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (
                 utils.get_func_info(func),
                 fullname
             )
-            self.context.logger.warning(msg)
+            self.logger.warning(msg)
             # 没有配置装饰器@route，则认为函数不可访问，更新缓存
             self.entry_cache[func_name] = None
             return HttpNotFound()
