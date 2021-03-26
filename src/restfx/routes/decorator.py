@@ -115,9 +115,10 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContex
     try:
         result = func(**actual_args)
     except Exception as e:
-        message = '\t%s' % get_func_info(func)
-        Logger.get(context.app_id).error(message, e)
-        return mgr.handle_response(HttpServerError('%s: %s' % (message, str(e))))
+        message = get_func_info(func)
+        Logger.get(context.app_id).error(message, e, False)
+        from restfx.util import utils
+        return mgr.handle_response(HttpServerError(utils.get_exception_info(message, e)))
 
     return mgr.handle_response(_wrap_http_response(mgr, result))
 

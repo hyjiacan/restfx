@@ -380,6 +380,10 @@ details summary span:before {
     padding: 2px 3px;
 }
 
+.arg-type.is-variable {
+    color: #d462f2;
+}
+
 .required-field {
     color: rgb(211, 5, 5);
 }
@@ -625,6 +629,12 @@ textarea.arg-value:active {
     font-size: 12px;
 }
 
+.response-content > pre {
+    word-break: break-all;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
 .required {
     border-color: red;
 }
@@ -832,6 +842,10 @@ tr.test-row--tool {
 
 .theme-dark footer a:hover {
     color: #ff7d7d;
+}
+
+.theme-dark .arg-type.is-variable {
+    color: #ff57f4;
 }
 
 .theme-dark button {

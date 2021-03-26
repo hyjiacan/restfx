@@ -281,6 +281,8 @@ function renderArg(arg, editable) {
       argType = 'string'
     } else if (argType === 'HttpFile') {
       argType = 'file'
+    } else if (argType === 'list') {
+      argType = 'array'
     }
   } else {
     argType = '-'
@@ -295,7 +297,9 @@ function renderArg(arg, editable) {
       null,
       el(
         arg.has_annotation ? 'code' : 'span',
-        null,
+        {
+          'class': 'arg-type' + (arg.is_variable ? ' is-variable' : '')
+        },
         argType
       )
     ),

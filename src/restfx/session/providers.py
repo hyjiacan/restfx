@@ -117,21 +117,22 @@ class FileSessionProvider(ISessionProvider):
         super().dispose()
 
 
-class MysqlSessionProvider(IDbSessionProvider):
-    def __init__(self, pool, table_name="restfx_sessions", expired=20, *args, **kwargs):
+class MySQLSessionProvider(IDbSessionProvider):
+    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired=20, *args, **kwargs):
         self.table_name = table_name
 
-        super().__init__(pool, expired, *args, **kwargs)
+        super().__init__(pool_options, expired, *args, **kwargs)
 
     def execute(self, sql: str, *args):
         import pymysql
         conn = self.connect()
 
+        # print('[MySQLSessionProvider] %s (%s)' % (sql, ','.join([str(i) for i in args])))
+
         cursor = None
         try:
             cursor = conn.cursor(pymysql.cursors.DictCursor)
             rows = cursor.execute(sql, args)
-
             if sql.startswith('SELECT'):
                 data = cursor.fetchall()
             else:
@@ -139,6 +140,8 @@ class MysqlSessionProvider(IDbSessionProvider):
         except Exception as e:
             print(str(e))
             return 0, None
+        else:
+            conn.commit()
         finally:
             if cursor is not None:
                 cursor.close()
@@ -148,12 +151,12 @@ class MysqlSessionProvider(IDbSessionProvider):
 
     def table_exists(self) -> bool:
         rows, _ = self.execute(
-            """SELECT 1 FROM information_schema.tables
-            WHERE table_name ='{table_name}' LIMIT 1""".format(table_name=self.table_name))
+            """SELECT 1 FROM `information_schema`.`tables`
+            WHERE `table_name` ='{table_name}' LIMIT 1""".format(table_name=self.table_name))
         return rows > 0
 
     def create_table(self):
-        self.execute("""CREATE TABLE {table_name} (
+        self.execute("""CREATE TABLE `{table_name}` (
         id VARCHAR(256) PRIMARY KEY NOT NULL,
         creation_time LONG NOT NULL,
         last_access_time LONG NOT NULL,
@@ -163,12 +166,14 @@ class MysqlSessionProvider(IDbSessionProvider):
 
     def get_expired_session(self, time_before: float) -> List[str]:
         rows, data = self.execute(
-            'SELECT id FROM {table_name} WHERE last_access_time < %s'.format(table_name=self.table_name),
+            'SELECT `id` FROM `{table_name}` WHERE `last_access_time` < %s'.format(table_name=self.table_name),
             int(time_before))
+        if rows == 0:
+            return []
         return [item['id'] for item in data]
 
     def get(self, session_id: str) -> Optional[HttpSession]:
-        rows, data = self.execute("SELECT * FROM {table_name} WHERE id=%s LIMIT 1".format(table_name=self.table_name),
+        rows, data = self.execute("SELECT * FROM `{table_name}` WHERE `id`=%s LIMIT 1".format(table_name=self.table_name),
                                   session_id)
         if rows == 0:
             return None
@@ -179,7 +184,7 @@ class MysqlSessionProvider(IDbSessionProvider):
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
         data = b64.enc_str(store)
 
-        self.execute("""INSERT INTO {table_name} VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
+        self.execute("""INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
         last_access_time=%s, store=%s""".format(table_name=self.table_name),
                      session_id,
                      int(creation_time),
@@ -189,12 +194,12 @@ class MysqlSessionProvider(IDbSessionProvider):
                      data)
 
     def exists(self, session_id: str) -> bool:
-        rows, _ = self.execute("""SELECT 1 FROM {table_name} WHERE id=%s limit 1""".format(table_name=self.table_name),
+        rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=%s limit 1""".format(table_name=self.table_name),
                                session_id)
         return rows > 0
 
     def remove(self, session_id: str):
-        self.execute("""DELETE FROM {table_name} WHERE id=%s""".format(table_name=self.table_name), session_id)
+        self.execute("""DELETE FROM `{table_name}` WHERE `id`=%s""".format(table_name=self.table_name), session_id)
 
     def dispose(self):
-        self.execute('TRUNCATE TABLE {table_name}'.format(table_name=self.table_name))
+        self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))

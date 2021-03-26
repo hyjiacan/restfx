@@ -147,7 +147,16 @@ class Collector:
 
             pkg = pkg.rstrip('.')
 
-            module = utils.load_module(pkg)
+            try:
+                module = utils.load_module(pkg)
+            except Exception as e:
+                from ..util import Logger
+                msg = 'File "%s", line %d, in %s\n\t%s' % (
+                    fullname, router_info['lineno'], func_name,
+                    'Cannot load module "%s"' % pkg
+                )
+                Logger.get(self.app_id).error(msg, e)
+                return
             handler_obj = getattr(module, func_name)
             handler_info = FunctionDescription(handler_obj)
 
@@ -243,6 +252,8 @@ class Collector:
         return routes if func_name is None else None
 
     def get_route_decorator(self, filename: str, func_def: ast.FunctionDef):
+        from ..util import Logger
+        logger = Logger.get(self.app_id)
         for decorator in func_def.decorator_list:
             route_module = None
             route_name = None
@@ -256,7 +267,16 @@ class Collector:
                     arg_name = keyword.arg
                     value = keyword.value
                     if isinstance(value, ast.Attribute):
-                        arg_value = getattr(self.global_types[value.value.id], value.attr)
+                        type_name = value.value.id
+                        type_def = self.global_types[type_name]
+                        type_val = value.attr
+                        if not hasattr(type_def, type_val):
+                            msg = 'File "%s", line %d, in %s\n\t%s' % (
+                                filename, func_def.lineno, func_def.name,
+                                'Cannot retrieve value "%s.%s" from type "%s"' % (type_name, type_val, type_name)
+                            )
+                            logger.error(msg)
+                        arg_value = getattr(type_def, type_val)
                     else:
                         # 其它类型暂时不支持
                         # 统一使用原始值
@@ -295,11 +315,11 @@ class Collector:
                 msg = 'File "%s", line %d, in %s\n\t%s' % (
                     filename, func_def.lineno, func_def.name,
                     'Unexpected usage with "@route", use "@route()" instead.')
-                from ..util import Logger
-                Logger.get(self.app_id).error(msg)
+                logger.error(msg)
                 continue
 
             return {
+                'lineno': func_def.lineno,
                 'module': route_module,
                 'name': route_name,
                 'extname': route_extname,

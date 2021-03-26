@@ -10,20 +10,23 @@
   function renderResponseInfo(xhr, start) {
 
     var end = new Date().getTime()
+    responseTime.text('耗时: ' + (end - start) + 'ms')
 
     responseStatus.removeClass('status-success status-failure')
     responseStatus.addClass(xhr.status === 200 ? 'status-success' : 'status-failure')
 
+    if (xhr.status === 0) {
+        return
+    }
+
     statusCode.text(xhr.status)
     statusText.text(xhr.statusText)
-
-    responseTime.text('耗时: ' + (end - start) + 'ms')
 
     var type = xhr.headers['content-type'].split(';')[0]
     responseType.text('Content-Type: ' + type)
 
     var len = ((xhr.headers['content-length'] / 1024).toFixed(2) * 100) / 100
-    responseLength.text('Content-Length: ' + len + ' KB')
+    responseLength.text('Content-Length: ' + xhr.headers['content-length'] + ' (' + len + 'KB)')
   }
 
   function sendTest(method, url) {
@@ -56,6 +59,10 @@
     var option = {
       callback: function (response) {
         renderResponseInfo(response, start)
+
+        if (response.status === 0) {
+            return
+        }
         renderTestResponse(response, url)
       }
     }

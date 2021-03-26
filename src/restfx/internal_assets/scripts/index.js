@@ -7,12 +7,18 @@ function loadPage() {
       var data = response.data
       if (response.status !== 200) {
         loading.hide()
+
+        var content = ''
+        if (response.status) {
+          content = response.headers['content-type'].indexOf('text/html') === -1 ?
+            el('pre', null, data) : el('p', null, data)
+        }
+
         list.append(el('div', {
           'class': 'load-error'
         }, [
-          el('h3', null, response.statusText),
-          response.headers['content-type'].indexOf('text/html') === -1 ?
-            el('pre', null, data) : el('p', null, data)
+          el('h3', null, response.status ? response.statusText : 'No responding'),
+          content
         ])).show()
         return
       }

@@ -6,7 +6,8 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
-from restfx.plugins import PluginBase
+from .plugins import PluginBase
+from .routes import Collector
 
 
 class App:
@@ -42,7 +43,6 @@ class App:
         """
         from .context import AppContext
         from .routes import ApiPage
-        from .routes import Collector
         from .routes import Router
         from .util import Logger
 
@@ -71,7 +71,7 @@ class App:
         Collector.create(app_id, app_root, append_slash)
 
     def __del__(self):
-        from .routes import Collector
+        self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
 
         for plugin in self._plugins:
@@ -202,7 +202,6 @@ class App:
         :param types:
         :return:
         """
-        from .routes import Collector
         collector = Collector.get(self.id)
         for type_item in types:
             collector.global_types[type_item.__name__] = type_item
@@ -212,7 +211,6 @@ class App:
         收集路由
         :return:
         """
-        from .routes import Collector
         return Collector.get(self.id).collect(self.context.routes_map)
 
     def persist(self, filename: str = '', encoding='utf8'):
@@ -222,7 +220,6 @@ class App:
         :param encoding:
         :return:
         """
-        from .routes import Collector
         return Collector.get(self.id).persist(self.context.routes_map, filename, encoding)
 
     def set_logger(self, logger):
@@ -257,7 +254,7 @@ class App:
             pkg = routes_map[path]
             pkg_path = os.path.join(self.context.ROOT, pkg.replace('.', '/'))
             if not os.path.exists(pkg_path):
-                self._logger.warning('Route map "%s" not exists, path=%s' % (pkg, pkg_path))
+                self._logger.warning('Route map "%s" does not exist, path=%s' % (pkg, pkg_path))
             self.context.routes_map[path] = pkg
         return self
 
@@ -310,7 +307,7 @@ class App:
 
         rid = '%s#%s' % (path, method.lower())
         if rid in self._router.production_routes:
-            self._logger.warning('%s %s exists' % (method, path))
+            self._logger.warning('Duplicated route %s %s' % (method, path))
 
         desc = FunctionDescription(handler)
         self._router.production_routes[rid] = {
@@ -338,7 +335,9 @@ class App:
         return self
 
     def register_plugin(self, *plugins: PluginBase):
-        self._plugins += plugins
+        for plugin in plugins:
+            plugin.init_app(self)
+            self._plugins.append(plugin)
         return self
 
     @classmethod

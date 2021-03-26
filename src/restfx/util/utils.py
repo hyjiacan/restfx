@@ -25,10 +25,7 @@ def get_func_info(func):
     line = source_lines[1]
     return 'File "%s", line %d, in %s' % (
         inspect.getmodule(func).__file__,
-        # 此处的 line 是从 0 开始计算的，
-        # 而在编辑器中，或者说从开发者角度来看，应该是从 1 开始计算
-        # 所以 +1 以修正行号的正确性
-        line + 1,
+        line,
         func.__name__
     )
 
@@ -49,3 +46,23 @@ def get_ip_list():
             ips.append(ip)
 
     return ips
+
+
+def get_exception_info(message: str, e: Exception = None):
+    messages = [message]
+    if e:
+        tb = e.__traceback__
+
+        while tb:
+            msg = str(tb.tb_frame)
+            # 移除前面的 '<frame at 0x0000016FE8839208, f' 字样
+            # 和
+            # 后面的 '>' 字样
+            m = 'F' + msg[31:-1].replace('\\\\', '\\').replace("'", '"')
+            messages.append(m)
+
+            tb = tb.tb_next
+
+        messages.append('\t' + str(e))
+
+    return '\n\t'.join(messages)

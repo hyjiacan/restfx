@@ -1,3 +1,8 @@
+import re
+
+from restfx.util import utils
+
+
 class Logger:
     _LOGGERS = {}
     colors = {
@@ -15,10 +20,10 @@ class Logger:
     def print(cls, level, message):
 
         if level not in cls.colors:
-            print('[%s] %s' % (level, message))
+            print('%s' % message)
             return
 
-        print('%s[%s] %s%s' % (cls.colors[level], level, message, '\033[0m'))
+        print('%s%s%s' % (cls.colors[level], message, '\033[0m'))
 
     def log(self, level, message, e=None):
         if self.custom_logger is not None:
@@ -37,11 +42,11 @@ class Logger:
         self.log('warning', message)
 
     def error(self, message, e=None, _raise=True):
-        temp = message if e is None else '%s\n\t%s' % (message, str(e))
+        temp = utils.get_exception_info(message, e)
 
         # 非开发模式时，始终不会输出堆栈信息
         if not self.debug:
-            self.log('ERROR', temp, e)
+            self.log('error', temp, e)
             return
 
         # print('\033[1;31;47m {0} \033[0m'.format(temp))
@@ -50,7 +55,7 @@ class Logger:
 
         # 不需要抛出异常
         if not _raise:
-            self.log('ERROR', temp, e)
+            self.log('error', temp, e)
             return
 
         # 抛出新的异常
@@ -58,8 +63,9 @@ class Logger:
             raise Exception(message)
 
         # 修改异常消息
-        new_msg = '%s\n\t%s' % (message, e.args[0]) if len(e.args) > 0 else message
-        e.args = (new_msg,)
+        # new_msg = '%s\n\t%s' % (temp, e.args[0]) if len(e.args) > 0 else temp
+        e.args = (temp,)
+        e.msg = temp
         raise e
 
     @classmethod
