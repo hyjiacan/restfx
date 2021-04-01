@@ -18,7 +18,7 @@ class ApiPage:
         if not self.context.api_page_options['api_page_enabled']:
             from ..util import Logger
             Logger.get(self.context.app_id).info(
-                'API list is disabled, '
+                'API page is disabled, '
                 'use "App(..., api_page_enabled=True, ...)" to enable it.')
             return HttpResponse(status=404)
 
