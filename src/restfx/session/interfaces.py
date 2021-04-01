@@ -96,6 +96,7 @@ class ISessionProvider(ABC):
 class IDbSessionProvider(ISessionProvider):
     def __init__(self, pool_options: dict, expired: int, *args, **kwargs):
         from dbutils.pooled_db import PooledDB
+        self.pool_option = pool_options
         self.pool = PooledDB(**pool_options)
         if not self.table_exists():
             self.create_table()

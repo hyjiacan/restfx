@@ -23,7 +23,8 @@ class HttpSession:
         # 当前是否已经被销毁
         self._destroyed = False
         # session 是否有变更
-        self._changed = False
+        # 默认值指定为 True，以在新建session后，能够被存储
+        self._changed = True
 
     def __str__(self):
         return self.id

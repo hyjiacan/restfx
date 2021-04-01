@@ -6,11 +6,11 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
-from .plugins import PluginBase
 from .routes import Collector
+from .util.event import Event
 
 
-class App:
+class App(Event):
     # APP 实例集合
     _APPS = {}
 
@@ -59,8 +59,6 @@ class App:
         self._api_page = ApiPage(self.context)
 
         self._custom_url_map = {}
-        # 请求勾子
-        self._plugins = []
 
         self._url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
@@ -70,12 +68,12 @@ class App:
 
         Collector.create(app_id, app_root, append_slash)
 
+        super(App, self).__init__()
+
     def __del__(self):
+        self.emit('shutdown')
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
-
-        for plugin in self._plugins:
-            plugin.dispose()
 
         if self.id in self._APPS:
             del self._APPS[self.id]
@@ -94,8 +92,7 @@ class App:
         try:
             request = HttpRequest(environ, self.context.app_id)
 
-            for plugin in self._plugins:
-                plugin.requesting(request)
+            self.emit('requesting', request=request)
 
             adapter = self._url_map.bind_to_environ(environ)
 
@@ -121,8 +118,7 @@ class App:
                 msg += ':' + request.path
             self._logger.warning(msg)
         finally:
-            for plugin in reversed(self._plugins):
-                plugin.requested(request, response)
+            self.emit('requested', request=request, response=response)
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
@@ -328,16 +324,11 @@ class App:
             assert isinstance(middleware, MiddlewareBase)
             self.context.middlewares.append(middleware)
             self.context.reversed_middlewares.insert(0, middleware)
+            middleware.late_init(self)
         return self
 
     def inject(self, **kwargs):
         self.context.injections.update(**kwargs)
-        return self
-
-    def register_plugin(self, *plugins: PluginBase):
-        for plugin in plugins:
-            plugin.init_app(self)
-            self._plugins.append(plugin)
         return self
 
     @classmethod

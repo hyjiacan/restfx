@@ -629,6 +629,7 @@ textarea.arg-value:active {
     font-size: 12px;
 }
 
+.response-content,
 .response-content > pre {
     word-break: break-all;
     white-space: pre-wrap;

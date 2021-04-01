@@ -6,10 +6,12 @@ class MiddlewareBase(ABC):
     路由中间件基类
     """
 
-    def __int__(self, *args):
-        pass
-
-    def __del__(self):
+    def late_init(self, app):
+        """
+        在将此中间件实例传给 App.register_middleware() 后执行
+        :param app: App 实例
+        :return:
+        """
         pass
 
     def process_request(self, request, meta):

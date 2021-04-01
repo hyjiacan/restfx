@@ -75,6 +75,7 @@
       }
 
       // var fieldType = fields[name].type
+
       var fieldValue = fields[name].value
 
       formData[name] = fieldValue

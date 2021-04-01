@@ -151,8 +151,11 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def table_exists(self) -> bool:
         rows, _ = self.execute(
-            """SELECT 1 FROM `information_schema`.`tables`
-            WHERE `table_name` ='{table_name}' LIMIT 1""".format(table_name=self.table_name))
+            """SELECT count(*) FROM `information_schema`.`tables`
+            WHERE `table_scheme`='{db_name}' AND `table_name` ='{table_name}' LIMIT 1""".format(
+                db_name=self.pool_option['database'],
+                table_name=self.table_name
+            ))
         return rows > 0
 
     def create_table(self):
@@ -173,8 +176,9 @@ class MySQLSessionProvider(IDbSessionProvider):
         return [item['id'] for item in data]
 
     def get(self, session_id: str) -> Optional[HttpSession]:
-        rows, data = self.execute("SELECT * FROM `{table_name}` WHERE `id`=%s LIMIT 1".format(table_name=self.table_name),
-                                  session_id)
+        rows, data = self.execute(
+            "SELECT * FROM `{table_name}` WHERE `id`=%s LIMIT 1".format(table_name=self.table_name),
+            session_id)
         if rows == 0:
             return None
         item = data[0]
@@ -194,8 +198,8 @@ class MySQLSessionProvider(IDbSessionProvider):
                      data)
 
     def exists(self, session_id: str) -> bool:
-        rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=%s limit 1""".format(table_name=self.table_name),
-                               session_id)
+        rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=%s limit 1""".format(
+            table_name=self.table_name), session_id)
         return rows > 0
 
     def remove(self, session_id: str):

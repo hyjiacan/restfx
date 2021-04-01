@@ -206,7 +206,7 @@ function getArgValueString(value, editable) {
     return value ? 'true' : 'false'
   }
 
-  if (typeof value === 'string') {
+  if (!editable && typeof value === 'string') {
     return '"' + value + '"'
   }
 
