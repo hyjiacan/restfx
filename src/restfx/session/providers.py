@@ -151,8 +151,8 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def table_exists(self) -> bool:
         rows, _ = self.execute(
-            """SELECT count(*) FROM `information_schema`.`tables`
-            WHERE `table_scheme`='{db_name}' AND `table_name` ='{table_name}' LIMIT 1""".format(
+            """SELECT count(*) FROM `information_schema`.`TABLES`
+            WHERE `TABLE_SCHEMA`='{db_name}' AND `TABLE_NAME` ='{table_name}' LIMIT 1""".format(
                 db_name=self.pool_option['database'],
                 table_name=self.table_name
             ))

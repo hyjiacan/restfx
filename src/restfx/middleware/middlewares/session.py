@@ -59,6 +59,7 @@ def _decrypt_session_id(session_id, app_id):
 class SessionMiddleware(MiddlewareBase):
     def __init__(self, session_provider: ISessionProvider,
                  session_name='sessionid',
+                 sessid_maker=None,
                  cookie_max_age=None,
                  cookie_expires=None,
                  cookie_path="/",
@@ -67,7 +68,23 @@ class SessionMiddleware(MiddlewareBase):
                  cookie_samesite=None,
                  cookie_httponly=True
                  ):
+        """
+
+        :param session_provider:
+        :param session_name:
+        :param sessid_maker:session id 的创建算法:<br/>
+            设置为 None 时表示使用默认的加密算法
+            设置为函数表示自定义算法
+        :param cookie_max_age:
+        :param cookie_expires:
+        :param cookie_path:
+        :param cookie_domain:
+        :param cookie_secure:
+        :param cookie_samesite:
+        :param cookie_httponly:
+        """
         assert isinstance(session_provider, ISessionProvider)
+        self.sessid_maker = sessid_maker
         self.session_provider = session_provider
         self.session_name = session_name
         self.cookie_max_age = cookie_max_age
@@ -78,30 +95,27 @@ class SessionMiddleware(MiddlewareBase):
         self.cookie_samesite = cookie_samesite
         self.cookie_httponly = cookie_httponly
 
-    def process_request(self, request, meta):
-        context = AppContext.get(request.app_id)
-        if context is None or self.session_provider is None:
-            return
-
-        """
-        :type: HttpSession
-        """
+    def get_new_default_sessionid(self, request, app_id):
         key = md5.hash_str(b64.enc_bytes('%s#%s#%s' % (
-            request.remote_addr, str(request.user_agent), context.app_id
+            request.remote_addr, str(request.user_agent), app_id
         )))
         # 使用 md5 作为 session　中使用的 key
         # 以避免指定的 app_id 长度不是32位时引发的错误
-        encoded_app_id = [ord(ch) for ch in list(md5.hash_str(context.app_id))]
+        # TODO: 这个结果应该缓存起来
+        encoded_app_id = [ord(ch) for ch in list(md5.hash_str(app_id))]
 
         new_session_id = _encrypt_session_id(key, encoded_app_id)
 
+        return key, encoded_app_id, new_session_id
+
+    def get_old_default_sessionid(self, request, app_id):
+        key, encoded_app_id, new_session_id = self.get_new_default_sessionid(request, app_id)
         # 只要 cookie 中没有 session_id 那么就新建一个 session
         if self.session_name not in request.cookies:
-            request.session = self.session_provider.create(new_session_id)
-            return
+            return None
 
         from ...util import Logger
-        logger = Logger.get(context.app_id)
+        logger = Logger.get(app_id)
 
         # noinspection PyBroadException
         try:
@@ -109,26 +123,50 @@ class SessionMiddleware(MiddlewareBase):
             cookie_key = _decrypt_session_id(old_session_id, encoded_app_id)
         except Exception as e:
             logger.warning('Cannot decode session id from cookie: %s' % str(e))
-            request.session = self.session_provider.create(new_session_id)
-            return
+            return None
 
         # 校验 session_id 合法性
         if key != cookie_key:
             logger.warning('Invalid session key: expected "%s", got "%s"' % (
                 new_session_id, cookie_key))
-            request.session = self.session_provider.create(new_session_id)
+            return None
+
+        return old_session_id
+
+    def get_new_sessionid(self, request, app_id):
+        if self.sessid_maker:
+            return self.sessid_maker(request, app_id)
+        key, encoded_app_id, new_session_id = self.get_new_default_sessionid(request, app_id)
+        return new_session_id
+
+    def process_request(self, request, meta):
+        # 当指定了 session=False 时，表示此请求此路由时不需要创建 session
+        if not meta.get('session', True):
             return
+        context = AppContext.get(request.app_id)
+        if context is None or self.session_provider is None:
+            return
+
+        if self.sessid_maker is None:
+            old_session_id = self.get_old_default_sessionid(request, context.app_id)
+        else:
+            old_session_id = request.cookies.get(self.session_name)
+
+        if not old_session_id:
+            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
+            return
+
         request.session = self.session_provider.get(old_session_id)
 
         # session 已经过期或session被清除
         if request.session is None:
-            request.session = self.session_provider.create(new_session_id)
+            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
             return
 
         now = time.time()
         # session 过期
         if self.session_provider.is_expired(request.session):
-            request.session = self.session_provider.create(new_session_id)
+            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
             return
 
         request.session.last_access_time = now

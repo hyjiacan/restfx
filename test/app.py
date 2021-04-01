@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 
 import pymysql
 
@@ -75,10 +76,15 @@ def on_auth(request: HttpRequest, meta: RouteMeta):
         return False
 
 
+def sessionid_maker(request, app_id):
+    return uuid.uuid4().hex
+
+
 app.register_middleware(
     TimetickMiddleware(),
     HttpAuthMiddleware(on_auth),
     SessionMiddleware(MemorySessionProvider(20)),
+    # SessionMiddleware(session_provider, sessid_maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
