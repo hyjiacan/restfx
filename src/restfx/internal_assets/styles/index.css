@@ -227,6 +227,13 @@ details summary span:before {
     font-size: 12px;
 }
 
+.route-description:not(:empty) {
+    background-color: #fafafa;
+    padding: 10px;
+    border-radius: 4px;
+    line-height: 1.5em;
+}
+
 /* ----------------- api item ------------------------ */
 
 #api-list[data-select-type='1']
@@ -632,7 +639,6 @@ textarea.arg-value:active {
 .response-content,
 .response-content > pre {
     word-break: break-all;
-    white-space: pre-wrap;
     line-height: 1.5;
 }
 
@@ -806,6 +812,10 @@ tr.test-row--tool {
 .theme-dark .test-lead {
     color: #ececec;
     background-color: #717070;
+}
+
+.theme-dark .route-description {
+    background-color: #505050;
 }
 
 .theme-dark .args-table th,

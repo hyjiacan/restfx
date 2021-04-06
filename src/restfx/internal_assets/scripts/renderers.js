@@ -141,9 +141,9 @@ function renderModule(data, moduleName, expanded) {
               ),
               el('span', {
                 'class': 'route-name' + (route.name ? '' : ' unnamed-item')
-              }, route.name || '<未命名>'),
-              el('span', {'class': 'comment', html: true}, route.handler_info.description)
+              }, route.name || '<未命名>')
             ]),
+            el('p', {'class': 'comment route-description', html: true}, route.handler_info.description),
             el('div', {
               'class': 'url-info'
             }, [
@@ -218,7 +218,7 @@ function getArgDefaultValue(arg, editable) {
 
   // 将元组和列表视作同种类型
   // 事实上，后台已经处理过这个类型，此处并不会接收到 tuple 类型
-  if (arg.annotation_name !== 'list') {
+  if (arg.annotation_name !== 'list' || defaultValue === null) {
     return getArgValueString(defaultValue, editable)
   }
 
