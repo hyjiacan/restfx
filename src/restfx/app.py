@@ -47,6 +47,9 @@ class App(Event):
         from .util import Logger
 
         self.id = app_id or str(uuid.uuid4())
+        self._logger = Logger(app_id)
+
+        sys.excepthook = self._except_hook
 
         self._APPS[self.id] = self
 
@@ -64,14 +67,17 @@ class App(Event):
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
-        self._logger = Logger(app_id)
 
         Collector.create(app_id, app_root, append_slash)
 
         super(App, self).__init__()
 
+    def _except_hook(self, except_type, except_value, except_traceback):
+        self._logger.error('%s: %s' % (repr(except_value), repr(except_traceback)))
+
     def __del__(self):
         self.emit('shutdown')
+
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
 

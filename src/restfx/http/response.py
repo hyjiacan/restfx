@@ -34,7 +34,9 @@ class FileResponse(HttpResponse):
             self.fp = open(fp, mode='rb')
         else:
             self.fp = fp
-        self._set_attachment_header(request, attachment, kwargs)
+
+        if attachment:
+            self._set_attachment_header(request, attachment, kwargs)
 
         super().__init__(self.fp, direct_passthrough=True, content_type=content_type, **kwargs)
 
