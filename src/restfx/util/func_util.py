@@ -200,7 +200,7 @@ class FunctionDescription:
         }
 
         # :type str
-        doc_str = self.func.__doc__
+        doc_str = inspect.getdoc(self.func)
         if doc_str is None:
             return docs
 
@@ -213,22 +213,17 @@ class FunctionDescription:
         last_name = None
 
         for line in lines:
-            line = line.strip()
-
-            if not line:
-                continue
-
             if not line.startswith(':'):
                 buffer.append(line)
                 continue
 
             if not colon_found:
-                docs['__func__'] = ' '.join(buffer)
+                docs['__func__'] = self.filter_doc_buffer(buffer)
                 buffer.clear()
                 colon_found = True
 
             if last_name:
-                docs[last_name] = ' '.join(buffer)
+                docs[last_name] = self.filter_doc_buffer(buffer)
                 buffer.clear()
                 last_name = None
 
@@ -254,9 +249,46 @@ class FunctionDescription:
                 continue
 
         if last_name:
-            docs[last_name] = ' '.join(buffer)
+            docs[last_name] = self.filter_doc_buffer(buffer)
             buffer.clear()
         return docs
+
+    @staticmethod
+    def filter_doc_buffer(buffer):
+        """
+        移除注释中前置和后置的空行
+        :param buffer:
+        :return:
+        """
+        length = len(buffer)
+
+        start = 0
+        end = length
+
+        data_range = range(length)
+
+        for i in data_range:
+            line = buffer[i].lstrip()
+            if line:
+                break
+            start += 1
+
+        if start == end:
+            return ''
+
+        for i in data_range:
+            line = buffer[-i].lstrip()
+            if line:
+                break
+            end -= 1
+
+        temp = []
+        for line in buffer[start:end]:
+            if line.strip():
+                temp.append(line)
+            else:
+                temp.append('\n')
+        return ''.join(temp)
 
     class JSONEncoder(json.JSONEncoder):
         def default(self, o):

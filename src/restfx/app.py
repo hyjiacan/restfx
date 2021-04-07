@@ -24,7 +24,7 @@ class App(Event):
                  api_page_enabled=None,
                  api_page_name: str = None,
                  api_page_expanded=False,
-                 api_page_cache=True,
+                 api_page_cache=None,
                  api_page_addition=None
                  ):
         """
@@ -49,8 +49,6 @@ class App(Event):
         self.id = app_id or str(uuid.uuid4())
         self._logger = Logger(app_id)
 
-        sys.excepthook = self._except_hook
-
         self._APPS[self.id] = self
 
         self.context = AppContext(self.id, app_root, debug, append_slash,
@@ -71,9 +69,6 @@ class App(Event):
         Collector.create(app_id, app_root, append_slash)
 
         super(App, self).__init__()
-
-    def _except_hook(self, except_type, except_value, except_traceback):
-        self._logger.error('%s: %s' % (repr(except_value), repr(except_traceback)))
 
     def __del__(self):
         self.emit('shutdown')

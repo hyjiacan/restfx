@@ -36,6 +36,18 @@ function el(tag, attrs, children) {
   return element
 }
 
+function formatComment(comment) {
+  return comment.split('\n').map(function (line) {
+    return line
+      .replace(/\t/g, '    ')
+      .replace(/ /g, '&nbsp;')
+      .replace(/`(.+?)`/g, function (match, code) {
+        return '<code>' + code + '</code>'
+      })
+  }).join('<br/>')
+
+}
+
 function render(list, data) {
   document.title = 'Table of APIs - ' + data.name
   $('#app-name').html(data.name)
@@ -143,7 +155,10 @@ function renderModule(data, moduleName, expanded) {
                 'class': 'route-name' + (route.name ? '' : ' unnamed-item')
               }, route.name || '<未命名>')
             ]),
-            el('p', {'class': 'comment route-description', html: true}, route.handler_info.description),
+            route.handler_info.description ?
+              el('p', {'class': 'comment route-description', html: true},
+                formatComment(route.handler_info.description)
+              ) : '',
             el('div', {
               'class': 'url-info'
             }, [
@@ -314,7 +329,7 @@ function renderArg(arg, editable) {
       el(
         'span',
         {'class': 'comment', html: true},
-        arg.comment ? arg.comment : '-'
+        formatComment(arg.comment || '-')
       )
     )
   ])
@@ -372,6 +387,8 @@ function renderReturn(route) {
     el('span', null, '返回'),
     // route.handler_info.return_type ? el('code', null, route.return_type) : '',
     el('span', null, ': '),
-    el('span', {'class': 'comment'}, route.handler_info.return_description || '-')
+    el('span', {'class': 'comment', html: true},
+      formatComment(route.handler_info.return_description || '-')
+    )
   ])
 }

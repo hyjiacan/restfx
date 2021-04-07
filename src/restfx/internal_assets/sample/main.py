@@ -11,7 +11,7 @@ app = App(settings.ROOT,
           api_prefix=settings.API_PREFIX,
           debug=settings.DEBUG,
           strict_mode=settings.STRICT_MODE,
-          api_page_name='Another awesome restfx project'
+          api_page_name='An awesome restfx project'
           )
 
 app.map_routes(settings.ROUTES_MAP)

@@ -45,12 +45,9 @@ def api_page_addition(route):
 app = App(root,
           app_id=app_id,
           debug=DEBUG_MODE,
-          strict_mode=True,
-          api_page_enabled=True,
           api_page_name='restfx 测试项目',
           api_page_addition=api_page_addition,
-          api_page_expanded=True,
-          api_page_cache=None)
+          api_page_expanded=True)
 
 app.map_routes({
     'test': 'test.api'

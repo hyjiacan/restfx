@@ -54,10 +54,10 @@ class AppContext:
         self.api_page_options = {
             # 是否启用 API 页面
             'api_page_enabled': debug if api_page_enabled is None else api_page_enabled,
-            'api_page_name': api_page_name or 'Another awesome %s project' % __meta__.name,
+            'api_page_name': api_page_name or 'An awesome %s project' % __meta__.name,
             'api_page_expanded': api_page_expanded,
             # 是否缓存API页面的 html 文件 和 接口数据
-            'api_page_cache': api_page_cache,
+            'api_page_cache': debug if api_page_cache is None else api_page_cache,
             'api_page_addition': api_page_addition
         }
 

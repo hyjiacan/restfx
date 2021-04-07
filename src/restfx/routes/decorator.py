@@ -299,8 +299,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                 used_args.append(arg_name)
                 continue
 
-            msg = 'Cannot parse value "%s" into type "%s". (expected: true/false)' % (
-                (arg_value, arg_spec.annotation_name))
+            msg = 'Cannot parse value "%s" into type "%s: %s". (expected: true/false)' % (
+                (arg_value, arg_spec.annotation_name, arg_name))
             Logger.get(context.app_id).warning(msg)
             return HttpBadRequest(msg)
 
@@ -314,7 +314,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                     arg_value = json.loads(arg_value)
                 except Exception:
                     # 此处的异常直接忽略即可
-                    msg = 'Cannot parse value "%s" into type "%s".' % (arg_value, arg_spec.annotation_name)
+                    msg = 'Cannot parse value "%s" into type "%s": %s.' % (
+                        arg_value, arg_spec.annotation_name, arg_name
+                    )
                     Logger.get(context.app_id).warning(msg)
                     return HttpBadRequest(msg)
 
@@ -328,7 +330,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             actual_args[arg_name] = arg_spec.annotation(arg_value)
             used_args.append(arg_name)
         except Exception:
-            msg = 'Cannot parse value "%s" into type "%s".' % (arg_value, arg_spec.annotation_name)
+            msg = 'Cannot parse value "%s" into type "%s": %s.' % (
+                arg_value, arg_spec.annotation_name, arg_name
+            )
             Logger.get(context.app_id).warning(msg)
             return HttpBadRequest(msg)
 
@@ -343,7 +347,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             actual_args[arg_name] = context.injections[injection_name]
         else:
             msg = 'Injection name "%s" not found.' % injection_name
-            Logger.get(context.app_id).warning(msg)
+            if context.debug:
+                msg = '%s\n\t%s' % (get_func_info(func), msg)
+            Logger.get(context.app_id).error(msg)
             return HttpServerError(msg) if context.debug else HttpServerError()
 
     # 填充可变参数

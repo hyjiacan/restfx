@@ -6,6 +6,14 @@
     }).join('')
   }
 
+  function formatComment(comment, seperator) {
+    return comment.split('\n').map(function (line) {
+      return line
+        .replace(/\t/g, '    ')
+        .replace(/ {2}/g, '&nbsp;&nbsp;')
+    }).join(seperator)
+  }
+
   function padIndex(index, width) {
     index = index.toString()
     var padWidth = width - index.length
@@ -39,7 +47,7 @@
   }
 
   function renderReturn(route) {
-    return '返回:' + (route.handler_info.return_description || '-')
+    return '> 返回:' + formatComment(route.handler_info.return_description || '-', '\n> ')
   }
 
   function renderArg(arg) {
@@ -62,7 +70,7 @@
       argName,
       arg.has_annotation ? code(argType) : argType,
       arg.has_default ? code(getArgDefaultValue(arg)) : '-',
-      arg.comment ? arg.comment : '-'
+      formatComment(arg.comment || '-', '<br/>')
     ]
   }
 
@@ -96,7 +104,8 @@
   function renderRoute(route, index) {
     return [
       h(3, index + '. [路由] ' + (route.name || '_<未命名>_')),
-      '描述: ' + (route.handler_info.description || '_无_'),
+      route.handler_info.description ?
+        '\n> ' + formatComment(route.handler_info.description, '\n> ') : '',
       '',
       renderUrlInfo(route),
       route.addition_info ? (route.addition_info + '\n') : '',
@@ -142,14 +151,14 @@
     content.push('---')
     content.push('')
     content.push([
-      '> Powered by [',
+      '<footer style="text-align: center">Powered by <a href="',
+      data.meta.url + '?from=dist.md',
+      '&version=' + data.meta.version,
+      '">',
       data.meta.name,
       '@',
       data.meta.version,
-      '](',
-      data.meta.url + '?from=dist.md',
-      '&version=' + data.meta.version,
-      ')'
+      '</a></footer>'
     ].join(''))
 
     // 在结尾处追加空行

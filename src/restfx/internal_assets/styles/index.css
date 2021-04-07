@@ -227,11 +227,12 @@ details summary span:before {
     font-size: 12px;
 }
 
-.route-description:not(:empty) {
+.route-description,
+.return-info {
     background-color: #fafafa;
     padding: 10px;
     border-radius: 4px;
-    line-height: 1.5em;
+    line-height: 2;
 }
 
 /* ----------------- api item ------------------------ */
@@ -480,6 +481,7 @@ details[open] summary {
 
 .return-info {
     font-size: 1em;
+    line-height: 2;
 }
 
 .return-info code {

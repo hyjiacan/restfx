@@ -72,7 +72,7 @@ class SessionMiddleware(MiddlewareBase):
 
         :param session_provider:
         :param session_name:
-        :param sessid_maker:session id 的创建算法:<br/>
+        :param sessid_maker:session id 的创建算法:
             设置为 None 时表示使用默认的加密算法
             设置为函数表示自定义算法
         :param cookie_max_age:
