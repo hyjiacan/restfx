@@ -86,9 +86,6 @@ function render(list, data) {
       moduleNames.push(route.module)
     }
     modules[route.module].push(route)
-
-    $('#api-summary .count1').text(moduleNames.length)
-    $('#api-summary .count2').text(routes.length)
   }
 
   moduleNames.sort()
@@ -106,6 +103,36 @@ function render(list, data) {
   }
 
   list.empty().append(apiList)
+
+  // 滚动到指定项
+  goToAnchor()
+}
+
+function goToAnchor() {
+  // substr(1) 用于移除前导的 # 符号
+  var hash = window.location.hash.substr(1)
+  if (!hash) {
+    return
+  }
+  var anchors = $('a[name].anchor')
+  for (var i = 0; i < anchors.length; i++) {
+    var anchor = anchors.eq(i)
+    if (anchor.attr('name') !== hash) {
+      continue
+    }
+    if (anchor.parent().is('summary')) {
+      // 锚点是模块，那么直接滚动到其位置
+      anchor.get(0).scrollIntoView()
+      break
+    }
+    // 锚点是路由，那么展开其所在模块，然后滚动到其位置
+    // dom 路径是固定的，所以使用 4 个 parent() 就能找到模块元素
+    var module = anchor.parent().parent().parent().parent()
+    module.prop('open', 'open')
+    var offsetTop = anchor.get(0).offsetTop - 60
+    $('#app').scrollTop(offsetTop)
+    break
+  }
 }
 
 function padStart(str, width, fill) {
@@ -116,9 +143,11 @@ function padStart(str, width, fill) {
 }
 
 function renderModule(data, moduleName, expanded) {
-  var encodedModuleName = moduleName ? moduleName.split('').map(function (ch) {
-    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
-  }).join('') : '00000000000000000000000000000000'
+//  var encodedModuleName = moduleName ? moduleName.split('').map(function (ch) {
+//    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
+//    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
+//  }).join('') : '00000000000000000000000000000000'
+  var encodedModuleName = encodeURI(moduleName)
   return el('details', {
     open: expanded ? 'open' : undefined
   }, [
@@ -133,12 +162,8 @@ function renderModule(data, moduleName, expanded) {
         '#'
       ),
       el('span', {
-        'class': 'module-name' + (moduleName ? '' : ' unnamed-item')
-      }, moduleName || '<未命名>'),
-      el('span', {
-        'class': 'route-count',
-        title: '此模块中包含的路由数量'
-      }, '*' + data.length)
+        'class': moduleName ? '' : 'unnamed-item'
+      }, moduleName || '<未命名>')
     ]),
     el(
       'ol',
@@ -146,13 +171,14 @@ function renderModule(data, moduleName, expanded) {
       data.map(function (route) {
           var id = route.method + '#' + route.path
           API_LIST[id] = route
+          var encodedRoutePath = encodeURI(route.path)
           return el('li', {'class': 'api-item'}, [
             el('div', null, [
               el(
                 'a',
                 {
-                  href: '#' + encodeURI(route.path),
-                  name: encodeURI(route.path),
+                  href: '#' + encodedRoutePath,
+                  name: encodedRoutePath,
                   'class': 'anchor'
                 },
                 '#'
