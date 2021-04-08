@@ -104,6 +104,9 @@ function render(list, data) {
 
   list.empty().append(apiList)
 
+  $('#api-summary .count1').text(moduleNames.length)
+  $('#api-summary .count2').text(routes.length)
+
   // 滚动到指定项
   goToAnchor()
 }
@@ -129,24 +132,14 @@ function goToAnchor() {
     // dom 路径是固定的，所以使用 4 个 parent() 就能找到模块元素
     var module = anchor.parent().parent().parent().parent()
     module.prop('open', 'open')
+    // -60 用于修正 模块名称使用了 sticky 定位时占用的高度
     var offsetTop = anchor.get(0).offsetTop - 60
     $('#app').scrollTop(offsetTop)
     break
   }
 }
 
-function padStart(str, width, fill) {
-  for (var i = str.length; i < width; i++) {
-    str = fill + str
-  }
-  return str
-}
-
 function renderModule(data, moduleName, expanded) {
-//  var encodedModuleName = moduleName ? moduleName.split('').map(function (ch) {
-//    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
-//    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
-//  }).join('') : '00000000000000000000000000000000'
   var encodedModuleName = encodeURI(moduleName)
   return el('details', {
     open: expanded ? 'open' : undefined
@@ -157,13 +150,18 @@ function renderModule(data, moduleName, expanded) {
         {
           href: '#' + encodedModuleName,
           name: encodedModuleName,
-          'class': 'anchor'
+          'class': 'anchor',
+          html: true
         },
-        '#'
+        '&sect;'
       ),
       el('span', {
-        'class': moduleName ? '' : 'unnamed-item'
-      }, moduleName || '<未命名>')
+        'class': 'module-name' + (moduleName ? '' : ' unnamed-item')
+      }, moduleName || '<未命名>'),
+      el('span', {
+        'class': 'route-count',
+        title: '此模块中包含的路由数量'
+      }, '*' + data.length)
     ]),
     el(
       'ol',
@@ -179,9 +177,10 @@ function renderModule(data, moduleName, expanded) {
                 {
                   href: '#' + encodedRoutePath,
                   name: encodedRoutePath,
-                  'class': 'anchor'
+                  'class': 'anchor',
+                  html: true
                 },
-                '#'
+                '&sect;'
               ),
               el('span', {
                 'class': 'route-name' + (route.name ? '' : ' unnamed-item')
