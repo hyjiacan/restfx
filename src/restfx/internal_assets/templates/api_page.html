@@ -7,16 +7,9 @@
       name="viewport"
   />
   <title>Table of APIs</title>
-  <link
-      type="text/css"
-      rel="stylesheet"
-      href="/internal_assets/styles/index.css"
-  />
-  <link
-      type="text/css"
-      rel="stylesheet"
-      href="/internal_assets/styles/jsonviewer.css"
-  />
+  <link type="text/css" rel="stylesheet" href="/internal_assets/styles/index.css"/>
+  <link type="text/css" rel="stylesheet" href="/internal_assets/styles/jsonviewer.css"/>
+  <link type="text/css" rel="stylesheet" href="/internal_assets/styles/search.css"/>
   <script src="/internal_assets/scripts/xhr.js"></script>
   <script src="/internal_assets/scripts/zepto.min.js"></script>
 </head>
@@ -30,6 +23,9 @@
       </h1>
       <div id="tools">
         <div class="buttons">
+          <input type="text" id="search-input" title="按 Esc 取消查找" maxlength="64"
+                 placeholder="查找接口: 快捷键 Ctrl-F"/>
+          <i></i>
           <button onclick="collapseAll()">全部收起</button>
           <button onclick="expandAll()">全部展开</button>
           <i></i>
@@ -181,5 +177,6 @@ var optionPanel = $('#option-panel')
 <script src="/internal_assets/scripts/export.js" defer></script>
 <script src="/internal_assets/scripts/base64.js" defer></script>
 <script src="/internal_assets/scripts/jsonviewer.js" defer></script>
+<script src="/internal_assets/scripts/search.js" defer></script>
 </body>
 </html>
