@@ -106,7 +106,6 @@
       h(3, index + '. [路由] ' + (route.name || '_<未命名>_')),
       route.handler_info.description ?
         '\n> ' + formatComment(route.handler_info.description, '\n> ') : '',
-      '',
       renderUrlInfo(route),
       route.addition_info ? (route.addition_info + '\n') : '',
       renderArgs(route.handler_info.arguments),
@@ -121,7 +120,9 @@
     var routes = window.apiData.modules[moduleName]
 
     var data = [
-      h(2, parseChsNumber(index + 1) + '、 [模块] ' + (moduleName || '_<未命名>_'))
+      h(2, parseChsNumber(index + 1) + '、 [模块] ' +
+        (moduleName || '_<未命名>_') +
+        ' <span style="font-size: 0.8em;font-weight: normal;color: #0977c0;margin-left: 20px;"> *' + routes.length + '</span>')
     ]
 
     var routeCount = routes.length

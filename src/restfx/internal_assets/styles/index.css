@@ -157,12 +157,22 @@ header h1 {
 
 #tools {
     float: right;
-    margin-top: 24px;
+    margin-top: 15px;
     display: none;
 }
 
 .buttons {
-    display: inline-block;
+    margin-bottom: 5px;
+}
+
+#api-summary {
+    font-size: 12px;
+    padding: 5px;
+    text-align: right;
+}
+
+#api-summary .count1 {
+    margin-right: 20px;
 }
 
 .buttons i {
@@ -217,7 +227,7 @@ details summary span:before,
     color: #636363;
 }
 
-details summary span:before {
+details summary .module-name:before {
     content: '模块';
     font-size: 13px;
 }
@@ -233,6 +243,13 @@ details summary span:before {
     padding: 10px;
     border-radius: 4px;
     line-height: 2;
+}
+
+.route-count {
+    margin-left: 20px;
+    font-size: 12px;
+    line-height: 1;
+    color: #0977c0;
 }
 
 /* ----------------- api item ------------------------ */
@@ -816,7 +833,8 @@ tr.test-row--tool {
     background-color: #717070;
 }
 
-.theme-dark .route-description {
+.theme-dark .route-description,
+.theme-dark .return-info {
     background-color: #505050;
 }
 
@@ -937,4 +955,8 @@ tr.test-row--tool {
 .theme-dark .load-error p {
     color: #ff5555;
     background-color: #414141;
+}
+
+.theme-dark .route-count {
+    color: #6bbbf0;
 }

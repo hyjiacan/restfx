@@ -2,7 +2,7 @@ from restfx import route
 from ..tools import b64
 
 
-@route('声明在包中的模块', '包路由', auth=False, extname='asp')
+@route('', '包路由', auth=False, extname='asp')
 def get(content, session):
     """
     这是一个<b>包路由</b>

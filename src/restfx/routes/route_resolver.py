@@ -44,15 +44,13 @@ class RouteResolver:
         # 对应的模块(包或模块路径，使用 . 分隔）
         module_name = self.get_route_map(entry)
 
-        func_name = self.method
-
         if module_name is None:
             self.logger.warning(
                 'Cannot find route "%s" in routes_map' % self.entry)
             return HttpNotFound()
 
+        func_name = self.method
         module_path = module_name.replace('.', os.path.sep)
-
         # 先检查完整路径是否存在
         module_abs_path = self._get_module_abs_path(module_path)
         if module_abs_path is None:
@@ -71,7 +69,7 @@ class RouteResolver:
             # 如果指定了名称，那么就加上
             # 如：name = 'detail'
             #   func_name = get_detail
-            func_name = '%s_%s' % (func_name, name.lower())
+            func_name = '%s_%s' % (self.method, name.lower())
 
         # 完全限定名称
         fullname = '%s.%s' % (module_name, func_name)

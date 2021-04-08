@@ -86,6 +86,9 @@ function render(list, data) {
       moduleNames.push(route.module)
     }
     modules[route.module].push(route)
+
+    $('#api-summary .count1').text(moduleNames.length)
+    $('#api-summary .count2').text(routes.length)
   }
 
   moduleNames.sort()
@@ -115,7 +118,6 @@ function padStart(str, width, fill) {
 function renderModule(data, moduleName, expanded) {
   var encodedModuleName = moduleName ? moduleName.split('').map(function (ch) {
     return padStart(ch.charCodeAt(0).toString(32), 4, '0')
-    return padStart(ch.charCodeAt(0).toString(32), 4, '0')
   }).join('') : '00000000000000000000000000000000'
   return el('details', {
     open: expanded ? 'open' : undefined
@@ -131,8 +133,12 @@ function renderModule(data, moduleName, expanded) {
         '#'
       ),
       el('span', {
-        'class': moduleName ? '' : 'unnamed-item'
-      }, moduleName || '<未命名>')
+        'class': 'module-name' + (moduleName ? '' : ' unnamed-item')
+      }, moduleName || '<未命名>'),
+      el('span', {
+        'class': 'route-count',
+        title: '此模块中包含的路由数量'
+      }, '*' + data.length)
     ]),
     el(
       'ol',
