@@ -85,7 +85,7 @@ class ContextStore:
     def __repr__(self):
         top = _app_ctx_stack.top
         if top is not None:
-            return "<restfx.g of %r>" % top.app.id
+            return "<restfx.ContextStore of %r>" % top.app.id
         return object.__repr__(self)
 
 

@@ -7,7 +7,7 @@ from ..util import b64
 
 
 class MemorySessionProvider(ISessionProvider):
-    def __init__(self, expired: int):
+    def __init__(self, expired: int = None):
         self.sessions = {}
         super().__init__(expired)
 
@@ -37,7 +37,7 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, expired: int, sessions_root: str):
+    def __init__(self, sessions_root: str, expired: int = None):
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
@@ -118,7 +118,7 @@ class FileSessionProvider(ISessionProvider):
 
 
 class MySQLSessionProvider(IDbSessionProvider):
-    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired=10 * 60):
+    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired: int = None):
         self.table_name = table_name
 
         super().__init__(pool_options, expired)

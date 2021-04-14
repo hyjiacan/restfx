@@ -1,6 +1,9 @@
-import re
+from logging import getLogger
 
+from restfx import __meta__
 from restfx.util import utils
+
+logger = getLogger(__meta__.name)
 
 
 class Logger:
@@ -30,7 +33,8 @@ class Logger:
             # noinspection PyUnresolvedReferences
             self.custom_logger(level, message, e)
             return
-        self.print(level, message)
+        getattr(logger, level)(message)
+        # self.print(level, message)
 
     def debug(self, message):
         self.log('debug', message)

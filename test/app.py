@@ -80,7 +80,7 @@ def sessionid_maker(request, app_id):
 app.register_middleware(
     TimetickMiddleware(),
     HttpAuthMiddleware(on_auth),
-    SessionMiddleware(MemorySessionProvider(20)),
+    SessionMiddleware(MemorySessionProvider()),
     # SessionMiddleware(session_provider, sessid_maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),

@@ -3,7 +3,6 @@ import os
 from werkzeug.local import LocalStack
 
 from restfx import __meta__
-from restfx.middleware import MiddlewareManager
 
 
 class AppConfig:
@@ -36,7 +35,7 @@ class AppConfig:
         self.ROOT = app_root
         self.append_slash = append_slash
         self.strict_mode = strict_mode
-        self.middleware_manager = MiddlewareManager(app_id, self)
+        self.middleware_manager = None
         # 注册的中间件实例集合
         self.middlewares = []
         """

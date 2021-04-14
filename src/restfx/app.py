@@ -6,6 +6,7 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
+from .middleware import MiddlewareManager
 from .routes import Collector
 
 
@@ -53,7 +54,7 @@ class App:
         self.config = AppConfig(self.id, app_root, debug, append_slash,
                                 strict_mode, api_page_enabled, api_page_name,
                                 api_page_expanded, api_page_cache, api_page_addition)
-
+        self.config.middleware_manager = MiddlewareManager(self.id, self.config)
         self._api_prefix = api_prefix
         self._router = Router(self.config)
         self._api_page = ApiPage(self.config)

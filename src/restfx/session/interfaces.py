@@ -16,22 +16,27 @@ class ISessionProvider(ABC):
     def __init__(self, expired: int):
         """
 
-        :param expired: 过期时长，单位为秒
+        :param expired: 过期时长，单位为秒，默认为 10分钟。指定为 0表示不会自动过期
         """
-        self.expired = expired
-        # 每 5 秒执行一次检查
-        self.timer = Timer(5, self._drop_expire_session)
-        self.timer.start()
+        self.expired = 10 * 60 if expired is None else expired
+
+        # 不会过期，不用启动定时器
+        if self.expired > 0:
+            # 每 5 秒执行一次检查
+            self.timer = Timer(5, self._drop_expire_session)
+            self.timer.start()
 
     def _drop_expire_session(self):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
         for session_id in expired_sessions:
-            # print('Drop expired session:' + session.id)
+            # print('Drop expired session:' + session_id)
             self.remove(session_id)
 
     def is_expired(self, session: HttpSession) -> bool:
-        return time.time() - session.last_access_time > self.expired
+        if self.expired > 0:
+            return time.time() - session.last_access_time > self.expired
+        return False
 
     def create(self, session_id: str) -> HttpSession:
         session = HttpSession(session_id, self.set, self.remove)
