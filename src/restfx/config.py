@@ -56,17 +56,15 @@ class AppConfig:
         # 其中存放将被注入到路由函数参数列表上的数据/函数
         self.injections = {}
 
-        self.api_page_options = {
-            # 是否启用 API 页面
-            'api_page_enabled': debug if api_page_enabled is None else api_page_enabled,
-            'api_page_name': api_page_name or 'An awesome %s project' % __meta__.name,
-            'api_page_expanded': api_page_expanded,
-            # 是否缓存API页面的 html 文件 和 接口数据
-            'api_page_cache': not debug if api_page_cache is None else api_page_cache,
-            'api_page_addition': api_page_addition
-        }
+        # 是否启用 API 页面
+        self.api_page_enabled = debug if api_page_enabled is None else api_page_enabled
+        self.api_page_name = api_page_name or 'An awesome %s project' % __meta__.name
+        self.api_page_expanded = api_page_expanded
+        # 是否缓存API页面的 html 文件 和 接口数据
+        self.api_page_cache = not debug if api_page_cache is None else api_page_cache
+        self.api_page_addition = api_page_addition
 
-        if self.api_page_options['api_page_enabled']:
+        if api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
     def __del__(self):

@@ -20,7 +20,7 @@ class MiddlewareManager:
                 break
 
     def handle_shutdown(self):
-        for middleware in self.config.middlewares:
+        for middleware in self.config.reversed_middlewares:
             try:
                 middleware.on_shutdown()
             except Exception as e:
@@ -41,7 +41,7 @@ class MiddlewareManager:
             return result
 
     def handle_leaving(self, request, response):
-        for middleware in self.config.middlewares:
+        for middleware in self.config.reversed_middlewares:
             try:
                 result = middleware.on_leaving(request, response)
             except Exception as e:

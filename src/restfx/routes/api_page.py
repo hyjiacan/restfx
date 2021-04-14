@@ -15,7 +15,7 @@ class ApiPage:
         self.api_page_html_cache = ''
 
     def dispatch(self, request):
-        if not self.config.api_page_options['api_page_enabled']:
+        if not self.config.api_page_enabled:
             from ..util import Logger
             Logger.get(self.config.app_id).info(
                 'API page is disabled, '
@@ -33,8 +33,7 @@ class ApiPage:
         return HttpResponse(status=405)
 
     def do_get(self):
-        api_page_options = self.config.api_page_options
-        if not self.api_page_html_cache or not api_page_options['api_page_cache']:
+        if not self.api_page_html_cache or not self.config.api_page_cache:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_page.html'),
                       encoding='utf-8') as fp:
@@ -44,11 +43,10 @@ class ApiPage:
         return HttpResponse(self.api_page_html_cache, content_type='text/html')
 
     def do_post(self):
-        api_page_options = self.config.api_page_options
-        if not self.routes_cache or not api_page_options['api_page_cache']:
+        if not self.routes_cache or not self.config.api_page_cache:
             from . import Collector
             routes = Collector.get(self.config.app_id).collect(self.config.routes_map)
-            addition_func = api_page_options.get('api_page_addition')
+            addition_func = self.config.api_page_addition
 
             for route in routes:
                 # 附加信息
@@ -87,8 +85,8 @@ class ApiPage:
                 'version': __meta__.version,
                 'url': __meta__.website
             },
-            'name': api_page_options['api_page_name'],
-            'expanded': api_page_options['api_page_expanded'],
+            'name': self.config.api_page_name,
+            'expanded': self.config.api_page_expanded,
             'routes': self.routes_cache,
         }, encoder=FunctionDescription.JSONEncoder)
 
@@ -113,6 +111,6 @@ class ApiPage:
                             content_type='application/markdown;charset=utf8',
                             request=request,
                             attachment='%s[%s].md' % (
-                                self.config.api_page_options['api_page_name'],
+                                self.config.api_page_name,
                                 time.strftime('%Y%m%I%H%M%S'))
                             )

@@ -191,7 +191,7 @@ class App:
         if host in [None, '', '*']:
             host = '0.0.0.0'
 
-        if self.config.api_page_options['api_page_enabled']:
+        if self.config.api_page_enabled:
             if host == '0.0.0.0':
                 from .util import utils
                 ips = utils.get_ip_list()
