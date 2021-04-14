@@ -79,7 +79,7 @@ class Logger:
 
     @classmethod
     def get(cls, app_id: str):
-        logger = cls._LOGGERS.get(app_id, None)
-        if logger is None:
-            logger = Logger(app_id)
-        return logger
+        _logger = cls._LOGGERS.get(app_id, None)
+        if _logger is None:
+            _logger = Logger(app_id)
+        return _logger

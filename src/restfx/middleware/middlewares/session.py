@@ -59,6 +59,7 @@ class SessionMiddleware(MiddlewareBase):
         return b64.enc_str(sid_bytes)
 
     def decode(self, sid):
+        # noinspection PyBroadException
         try:
             sid_bytes = b64.dec_bytes(sid)
             # 使用 secret 解密

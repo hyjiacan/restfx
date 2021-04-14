@@ -2,8 +2,14 @@ from restfx import route
 from ..tools import b64
 
 
+def get_old_value():
+    from restfx.http import current_request, current_store
+    session = current_request.session
+    return session.get('old'), current_store.get('a')
+
+
 @route('', '包路由', auth=False, extname='asp')
-def get(content, session):
+def get(request, content, session):
     """
     这是一个<b>包路由</b>
 
@@ -20,7 +26,8 @@ def get(content, session):
     """
     old = None
     if session:
-        old = session.get('old')
+        with request.context(a=2):
+            old = get_old_value()
         session.set('old', content)
     return {
         'data': '来自包中的数据',

@@ -86,7 +86,6 @@ class MiddlewareManager:
     def after_return(self, request, meta, data):
         """
         在路由函数调用后，对其返回值进行处理
-        :param data:
         :return:
         """
         for middleware in self.config.reversed_middlewares:
@@ -108,7 +107,6 @@ class MiddlewareManager:
     def handle_response(self, request, meta, response):
         """
         在响应前，对响应的数据进行处理
-        :param response:
         :return:
         """
         # 对 response 进行处理

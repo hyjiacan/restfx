@@ -6,6 +6,7 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
+from .http import HttpRequest
 from .middleware import MiddlewareManager
 from .routes import Collector
 
@@ -72,10 +73,6 @@ class App:
 
         super(App, self).__init__()
 
-    def context(self):
-        from restfx.context import AppContext
-        return AppContext(self)
-
     def __del__(self):
         self.config.middleware_manager.handle_shutdown()
 
@@ -99,9 +96,7 @@ class App:
         request = None
         response = None
         try:
-            from restfx.context import RequestContext
-            req_ctx = RequestContext(self, environ)
-            request = req_ctx.request
+            request = HttpRequest(environ, self.id)
             self.config.middleware_manager.handle_coming(request)
 
             adapter = self._url_map.bind_to_environ(environ)
@@ -156,7 +151,7 @@ class App:
         :param host:
         :param port:
         :param threaded:
-        :param kwargs: 适用于 werkzueg 的 run_simple 函数的其它参数
+        :param kwargs: 适用于 werkzeug 的 run_simple 函数的其它参数
         :return:
         """
         from restfx.util import helper
