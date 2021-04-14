@@ -138,3 +138,5 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 
 - [ ] 添加 自定义接口页面JS资源加载，以支持对请求和响应的数据进行额外处理
   - 类似于勾子函数
+- [ ] Use `LocalStack` from werkzeug instead the `MemorySessionProvider` storage.
+- [ ] Add lock onto `MemorySessionProvider` & `FileSessionProvider`

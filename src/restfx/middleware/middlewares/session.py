@@ -1,7 +1,7 @@
 import string
 import time
 
-from ...context import AppContext
+from ...config import AppConfig
 from ...middleware.interface import MiddlewareBase
 from ...session.interfaces import ISessionProvider
 from ...util import md5, b64
@@ -57,9 +57,10 @@ def _decrypt_session_id(session_id, app_id):
 
 
 class SessionMiddleware(MiddlewareBase):
-    def __init__(self, session_provider: ISessionProvider,
-                 session_name='sessionid',
-                 sessid_maker=None,
+    def __init__(self, provider: ISessionProvider,
+                 secret=None,
+                 maker=None,
+                 cookie_name='sessionid',
                  cookie_max_age=None,
                  cookie_expires=None,
                  cookie_path="/",
@@ -70,11 +71,12 @@ class SessionMiddleware(MiddlewareBase):
                  ):
         """
 
-        :param session_provider:
-        :param session_name:
-        :param sessid_maker:session id 的创建算法:
+        :param provider:
+        :param secret: 用于加密 session id 的密钥，设置为 None 时，将使用 app_id
+        :param maker:session id 的创建算法:
             设置为 None 时表示使用默认的加密算法
             设置为函数表示自定义算法
+        :param cookie_name:
         :param cookie_max_age:
         :param cookie_expires:
         :param cookie_path:
@@ -83,10 +85,11 @@ class SessionMiddleware(MiddlewareBase):
         :param cookie_samesite:
         :param cookie_httponly:
         """
-        assert isinstance(session_provider, ISessionProvider)
-        self.sessid_maker = sessid_maker
-        self.session_provider = session_provider
-        self.session_name = session_name
+        assert isinstance(provider, ISessionProvider)
+        self.maker = maker
+        self.secret = secret
+        self.provider = provider
+        self.cookie_name = cookie_name
         self.cookie_max_age = cookie_max_age
         self.cookie_expires = cookie_expires
         self.cookie_path = cookie_path
@@ -111,7 +114,7 @@ class SessionMiddleware(MiddlewareBase):
     def get_old_default_sessionid(self, request, app_id):
         key, encoded_app_id, new_session_id = self.get_new_default_sessionid(request, app_id)
         # 只要 cookie 中没有 session_id 那么就新建一个 session
-        if self.session_name not in request.cookies:
+        if self.cookie_name not in request.cookies:
             return None
 
         from ...util import Logger
@@ -119,7 +122,7 @@ class SessionMiddleware(MiddlewareBase):
 
         # noinspection PyBroadException
         try:
-            old_session_id = request.cookies[self.session_name]
+            old_session_id = request.cookies[self.cookie_name]
             cookie_key = _decrypt_session_id(old_session_id, encoded_app_id)
         except Exception as e:
             logger.warning('Cannot decode session id from cookie: %s' % str(e))
@@ -134,39 +137,43 @@ class SessionMiddleware(MiddlewareBase):
         return old_session_id
 
     def get_new_sessionid(self, request, app_id):
-        if self.sessid_maker:
-            return self.sessid_maker(request, app_id)
+        if self.maker:
+            return self.maker(request, app_id)
         key, encoded_app_id, new_session_id = self.get_new_default_sessionid(request, app_id)
         return new_session_id
+
+    def on_startup(self, app):
+        if self.secret is None:
+            self.secret = app.id
 
     def process_request(self, request, meta):
         # 当指定了 session=False 时，表示此请求此路由时不需要创建 session
         if not meta.get('session', True):
             return
-        context = AppContext.get(request.app_id)
-        if context is None or self.session_provider is None:
+        config = AppConfig.get(request.app_id)
+        if config is None or self.provider is None:
             return
 
-        if self.sessid_maker is None:
-            old_session_id = self.get_old_default_sessionid(request, context.app_id)
+        if self.maker is None:
+            old_session_id = self.get_old_default_sessionid(request, config.app_id)
         else:
-            old_session_id = request.cookies.get(self.session_name)
+            old_session_id = request.cookies.get(self.cookie_name)
 
         if not old_session_id:
-            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
+            request.session = self.provider.create(self.get_new_sessionid(request, config.app_id))
             return
 
-        request.session = self.session_provider.get(old_session_id)
+        request.session = self.provider.get(old_session_id)
 
         # session 已经过期或session被清除
         if request.session is None:
-            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
+            request.session = self.provider.create(self.get_new_sessionid(request, config.app_id))
             return
 
         now = time.time()
         # session 过期
-        if self.session_provider.is_expired(request.session):
-            request.session = self.session_provider.create(self.get_new_sessionid(request, context.app_id))
+        if self.provider.is_expired(request.session):
+            request.session = self.provider.create(self.get_new_sessionid(request, config.app_id))
             return
 
         request.session.last_access_time = now
@@ -176,7 +183,7 @@ class SessionMiddleware(MiddlewareBase):
         if not request.session:
             return
         request.session.flush()
-        response.set_cookie(self.session_name,
+        response.set_cookie(self.cookie_name,
                             request.session.id,
                             max_age=self.cookie_max_age,
                             expires=self.cookie_expires,
@@ -188,4 +195,4 @@ class SessionMiddleware(MiddlewareBase):
                             )
 
     def __del__(self):
-        del self.session_provider
+        del self.provider

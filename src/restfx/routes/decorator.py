@@ -2,10 +2,9 @@ import json
 from collections import OrderedDict
 from functools import wraps
 
-from ..context import AppContext
+from ..config import AppConfig
 from ..http import HttpRequest, HttpServerError
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
-from ..middleware import MiddlewareManager
 from ..routes.meta import RouteMeta
 from ..session import HttpSession
 from ..util import Logger
@@ -44,7 +43,7 @@ def route(module=None, name=None, extname=None, **kwargs):
             if not isinstance(request, HttpRequest) or not isinstance(handler_args, OrderedDict):
                 return handler(*args)
 
-            context = AppContext.get(request.app_id)
+            config = AppConfig.get(request.app_id)
 
             meta = RouteMeta(
                 handler,
@@ -58,72 +57,71 @@ def route(module=None, name=None, extname=None, **kwargs):
                 kwargs=kwargs,
             )
 
-            return _invoke_with_route(request, meta, context)
+            return _invoke_with_route(request, meta, config)
 
         return caller
 
     return invoke_route
 
 
-def _invoke_with_route(request: HttpRequest, meta: RouteMeta, context: AppContext):
-    mgr = MiddlewareManager(
-        request,
-        meta
-    )
-
+def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig):
     handler_args = meta.handler_args
     func = meta.handler
 
+    mgr = config.middleware_manager
+
     # 调用中间件，以处理请求
-    result = mgr.handle_request()
+    result = mgr.handle_request(request, meta)
 
     # 返回了 HttpResponse，直接返回此对象
     if isinstance(result, HttpResponse):
         return mgr.handle_response(result)
 
-    # 返回了 None，表示停止请求，并将结果作为函数的返回值
+    # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
-        return mgr.handle_response(_wrap_http_response(mgr, result))
+        return mgr.handle_response(_wrap_http_response(mgr, request, meta, result))
 
     # 处理请求中的json参数
-    # 处理后可能会在 request 上添加一个 json 的项，此项存放着json格式的 body 内容
-    # noinspection PyTypeChecker
-    _process_json_params(request, context)
+    _process_json_params(request, config)
 
     # 有参数，自动从 queryString, POST 或 json 中获取
     # 匹配参数
+    actual_args = _get_actual_args(request, func, handler_args, config)
 
-    actual_args = _get_actual_args(request, func, handler_args, context)
+    # 只有解析参数出错时才会返回 HttpResponse
+    # 此时中止执行
+    if isinstance(actual_args, HttpResponse):
+        return mgr.handle_response(request, meta, actual_args)
 
-    result = mgr.before_invoke(actual_args)
+    # 调用中间件
+    result = mgr.before_invoke(request, meta, actual_args)
 
     # 返回了 HttpResponse ， 直接返回此对象
     if isinstance(result, HttpResponse):
-        return mgr.handle_response(result)
+        return mgr.handle_response(request, meta, result)
 
-    # 返回了 None，表示停止请求，并将结果作为函数的返回值
+    # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
-        return mgr.handle_response(_wrap_http_response(mgr, result))
+        return mgr.handle_response(request, meta, _wrap_http_response(mgr, request, meta, result))
 
     # 调用路由函数
     arg_len = len(handler_args)
-    if arg_len == 0:
-        return mgr.handle_response(_wrap_http_response(mgr, func()))
 
-    if isinstance(actual_args, HttpResponse):
-        return mgr.handle_response(actual_args)
     try:
-        result = func(**actual_args)
+        if arg_len == 0:
+            result = func()
+        else:
+            result = func(**actual_args)
     except Exception as e:
         message = get_func_info(func)
-        Logger.get(context.app_id).error(message, e, False)
+        Logger.get(config.app_id).error(message, e, False)
         from restfx.util import utils
-        return mgr.handle_response(HttpServerError(utils.get_exception_info(message, e)))
+        return mgr.handle_response(request, meta, HttpServerError(utils.get_exception_info(message, e)))
 
-    return mgr.handle_response(_wrap_http_response(mgr, result))
+    return mgr.handle_response(request, meta, _wrap_http_response(mgr, request, meta, result))
 
 
-def _process_json_params(request: HttpRequest, context: AppContext):
+def _process_json_params(request: HttpRequest, config: AppConfig):
     """
     参数处理
     :return:
@@ -141,7 +139,7 @@ def _process_json_params(request: HttpRequest, context: AppContext):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        Logger.get(context.app_id).warning('Failed to deserialize request body: %s' % str(e))
+        Logger.get(config.app_id).warning('Failed to deserialize request body: %s' % str(e))
 
 
 def _get_parameter_str(args: OrderedDict):
@@ -186,7 +184,7 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, 
     return None, None
 
 
-def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: AppContext) -> dict or HttpResponse:
+def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppConfig) -> dict or HttpResponse:
     method = request.method.lower()
     actual_args = {}
 
@@ -246,7 +244,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                           arg_name,
                           _get_parameter_str(args)
                       )
-                Logger.get(context.app_id).warning(msg)
+                Logger.get(config.app_id).warning(msg)
             # 在 session 未启用时，其值为 None
             actual_args[arg_name] = request.session
             continue
@@ -257,7 +255,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
         # 未找到参数
         if use_default is None:
             msg = 'Missing required argument "%s".' % arg_name
-            Logger.get(context.app_id).warning(msg)
+            Logger.get(config.app_id).warning(msg)
             return HttpBadRequest(msg)
 
         # 使用默认值
@@ -301,7 +299,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
             msg = 'Cannot parse value "%s" into type "%s: %s". (expected: true/false)' % (
                 (arg_value, arg_spec.annotation_name, arg_name))
-            Logger.get(context.app_id).warning(msg)
+            Logger.get(config.app_id).warning(msg)
             return HttpBadRequest(msg)
 
         # 转换失败时，会抛出异常
@@ -317,7 +315,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
                     msg = 'Cannot parse value "%s" into type "%s": %s.' % (
                         arg_value, arg_spec.annotation_name, arg_name
                     )
-                    Logger.get(context.app_id).warning(msg)
+                    Logger.get(config.app_id).warning(msg)
                     return HttpBadRequest(msg)
 
             # 类型一致，直接使用
@@ -333,7 +331,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
             msg = 'Cannot parse value "%s" into type "%s": %s.' % (
                 arg_value, arg_spec.annotation_name, arg_name
             )
-            Logger.get(context.app_id).warning(msg)
+            Logger.get(config.app_id).warning(msg)
             return HttpBadRequest(msg)
 
     # 填充注入参数
@@ -343,14 +341,14 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
         injection_name = arg_name[1:]
         if injection_name in request.injections:
             actual_args[arg_name] = request.injections[injection_name]
-        elif injection_name in context.injections:
-            actual_args[arg_name] = context.injections[injection_name]
+        elif injection_name in config.injections:
+            actual_args[arg_name] = config.injections[injection_name]
         else:
             msg = 'Injection name "%s" not found.' % injection_name
-            if context.debug:
+            if config.debug:
                 msg = '%s\n\t%s' % (get_func_info(func), msg)
-            Logger.get(context.app_id).error(msg)
-            return HttpServerError(msg) if context.debug else HttpServerError()
+            Logger.get(config.app_id).error(msg)
+            return HttpServerError(msg) if config.debug else HttpServerError()
 
     # 填充可变参数
     variable_args = {}
@@ -380,28 +378,28 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, context: App
 
     # 有可变参数，并且未指定 kwargs
     # 未启用严格模式
-    if context.strict_mode is not True:
+    if config.strict_mode is not True:
         return actual_args
 
     # 启用了严格模式
     # 返回 400 响应
     msg = 'Unknown argument(s) found: "%s", Parameters: (%s).' \
           % (','.join(variable_arg_keys), _get_parameter_str(args))
-    Logger.get(context.app_id).warning(msg)
-    if not context.debug:
+    Logger.get(config.app_id).warning(msg)
+    if not config.debug:
         msg = 'Unknown argument(s) found: %s.' % ','.join(variable_arg_keys)
     return HttpBadRequest(msg)
 
 
-def _wrap_http_response(mgr, data):
+def _wrap_http_response(mgr, request, meta, data):
     """
     将数据包装成 HttpResponse 返回
     :param data:
     :return:
     """
 
-    # 处理返回函数
-    data = mgr.after_return(data)
+    # 调用中间件，处理返回函数
+    data = mgr.after_return(request, meta, data)
 
     if data is None:
         return HttpResponse()
@@ -410,15 +408,15 @@ def _wrap_http_response(mgr, data):
         return data
 
     if isinstance(data, bool):
-        return HttpResponse('true' if bool else 'false')
+        return HttpResponse('true' if bool else 'false', content_type='text/plain')
 
     if isinstance(data, (dict, list, set, tuple)):
         return JsonResponse(data)
 
     if isinstance(data, str):
-        return HttpResponse(data.encode())
+        return HttpResponse(data.encode(), content_type='text/plain')
 
     if isinstance(data, bytes):
-        return HttpResponse(data)
+        return HttpResponse(data, content_type='application/octet-stream')
 
-    return HttpResponse(str(data).encode())
+    return HttpResponse(str(data).encode(), content_type='text/plain')

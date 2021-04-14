@@ -1,23 +1,23 @@
 import os
 from collections import OrderedDict
 
-from ..context import AppContext
+from ..config import AppConfig
 from ..http import HttpResponse, JsonResponse, HttpBadRequest
 from ..util.func_util import FunctionDescription
 
 
 class ApiPage:
-    def __init__(self, context: AppContext):
-        self.context = context
+    def __init__(self, config: AppConfig):
+        self.config = config
         # 开发模式的模块缓存，用于API列表
         self.routes_cache = {}
         # API列表页面缓存
         self.api_page_html_cache = ''
 
     def dispatch(self, request):
-        if not self.context.api_page_options['api_page_enabled']:
+        if not self.config.api_page_options['api_page_enabled']:
             from ..util import Logger
-            Logger.get(self.context.app_id).info(
+            Logger.get(self.config.app_id).info(
                 'API page is disabled, '
                 'use "App(..., api_page_enabled=True, ...)" to enable it.')
             return HttpResponse(status=404)
@@ -33,7 +33,7 @@ class ApiPage:
         return HttpResponse(status=405)
 
     def do_get(self):
-        api_page_options = self.context.api_page_options
+        api_page_options = self.config.api_page_options
         if not self.api_page_html_cache or not api_page_options['api_page_cache']:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_page.html'),
@@ -44,10 +44,10 @@ class ApiPage:
         return HttpResponse(self.api_page_html_cache, content_type='text/html')
 
     def do_post(self):
-        api_page_options = self.context.api_page_options
+        api_page_options = self.config.api_page_options
         if not self.routes_cache or not api_page_options['api_page_cache']:
             from . import Collector
-            routes = Collector.get(self.context.app_id).collect(self.context.routes_map)
+            routes = Collector.get(self.config.app_id).collect(self.config.routes_map)
             addition_func = api_page_options.get('api_page_addition')
 
             for route in routes:
@@ -113,6 +113,6 @@ class ApiPage:
                             content_type='application/markdown;charset=utf8',
                             request=request,
                             attachment='%s[%s].md' % (
-                                self.context.api_page_options['api_page_name'],
+                                self.config.api_page_options['api_page_name'],
                                 time.strftime('%Y%m%I%H%M%S'))
                             )

@@ -5,28 +5,22 @@ from restfx.middleware import MiddlewareBase
 
 
 class TimetickMiddleware(MiddlewareBase):
-    route_time = __meta__.name + '-0-route-duration'
-    invoke_time = __meta__.name + '-1-invoke-duration'
-    response_time = __meta__.name + '-2-response-duration'
+    route_time = __meta__.name + '-duration-0-route'
+    process_time = __meta__.name + '-duration-1-process'
+    invoke_time = __meta__.name + '-duration-2-invoke'
+    response_time = __meta__.name + '-duration-3-response'
 
     def __init__(self):
         pass
 
-    @classmethod
-    def on_requesting(cls, e):
-        pass
-
-    @classmethod
-    def on_requested(cls, e):
-        pass
-
-    def late_init(self, app):
-        app.on('requesting', self.on_requesting)
-
-    def process_request(self, request, meta):
+    def on_coming(self, request):
         request.timetick = {
             'request': time.perf_counter()
         }
+
+    def process_request(self, request, meta):
+        if request.timetick:
+            request.timetick['dispatch'] = time.perf_counter()
 
     def process_invoke(self, request, meta, args):
         if request.timetick:
@@ -42,17 +36,20 @@ class TimetickMiddleware(MiddlewareBase):
 
         request.timetick['response'] = time.perf_counter()
 
-        rt = self._get_time(request, 'request', 'invoke')
+        rd = self._get_time(request, 'request', 'dispatch')
+        dt = self._get_time(request, 'dispatch', 'invoke')
         it = self._get_time(request, 'invoke', 'return')
         rpt = self._get_time(request, 'return', 'response')
 
-        print('%s=%s, %s=%s, %s=%s' % (
-            self.route_time, rt,
+        print('%s=%s\n%s=%s\n%s=%s\n%s=%s\n' % (
+            self.route_time, rd,
+            self.process_time, dt,
             self.invoke_time, it,
             self.response_time, rpt
         ))
 
-        response.headers.set(self.route_time, rt)
+        response.headers.set(self.route_time, rd)
+        response.headers.set(self.process_time, dt)
         response.headers.set(self.invoke_time, it)
         response.headers.set(self.response_time, rpt)
 

@@ -7,9 +7,9 @@ from ..util import b64
 
 
 class MemorySessionProvider(ISessionProvider):
-    def __init__(self, expired: int, *args, **kwargs):
+    def __init__(self, expired: int):
         self.sessions = {}
-        super().__init__(expired, *args, **kwargs)
+        super().__init__(expired)
 
     def remove(self, session_id: str):
         if self.exists(session_id):
@@ -37,12 +37,12 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, expired: int, sessions_root: str, *args, **kwargs):
+    def __init__(self, expired: int, sessions_root: str):
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
             # print('mkdir:' + self.sessions_root)
-        super().__init__(expired, *args, **kwargs)
+        super().__init__(expired)
 
     def _get_session_path(self, session_id: str) -> str:
         # session_id 中可能存在 / 符号
@@ -118,16 +118,16 @@ class FileSessionProvider(ISessionProvider):
 
 
 class MySQLSessionProvider(IDbSessionProvider):
-    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired=20, *args, **kwargs):
+    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired=10 * 60):
         self.table_name = table_name
 
-        super().__init__(pool_options, expired, *args, **kwargs)
+        super().__init__(pool_options, expired)
 
     def execute(self, sql: str, *args):
         import pymysql
         conn = self.connect()
 
-        # print('[MySQLSessionProvider] %s (%s)' % (sql, ','.join([str(i) for i in args])))
+        # print('[MySQLSessionProvider] ' + (sql % args))
 
         cursor = None
         try:
@@ -160,11 +160,11 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def create_table(self):
         self.execute("""CREATE TABLE `{table_name}` (
-        id VARCHAR(256) PRIMARY KEY NOT NULL,
-        creation_time LONG NOT NULL,
-        last_access_time LONG NOT NULL,
-        store TEXT,
-        INDEX last_access(last_access_time(8) ASC)
+        `id` VARCHAR(256) PRIMARY KEY NOT NULL,
+        `creation_time` LONG NOT NULL,
+        `last_access_time` LONG NOT NULL,
+        `store` TEXT,
+        INDEX `last_access`(`last_access_time`(8) ASC)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name))
 
     def get_expired_session(self, time_before: float) -> List[str]:

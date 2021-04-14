@@ -1,26 +1,26 @@
 import os
 from typing import Dict, Optional
 
-from ..context import AppContext
+from ..config import AppConfig
 from ..http.response import HttpNotFound, HttpResponse
 from ..util import utils
 from ..util.func_util import FunctionDescription
 
 
 class RouteResolver:
-    def __init__(self, context: AppContext,
+    def __init__(self, config: AppConfig,
                  entry_cache: Dict[str, Optional[FunctionDescription]],
                  method: str,
                  entry: str):
-        self.context = context
+        self.config = config
         self.entry_cache = entry_cache
         self.entry = entry
         self.method = method.lower()
         from ..util import Logger
-        self.logger = Logger.get(context.app_id)
+        self.logger = Logger.get(config.app_id)
 
     def _get_module_abs_path(self, module_name):
-        abs_path = os.path.join(self.context.ROOT, module_name)
+        abs_path = os.path.join(self.config.ROOT, module_name)
 
         if os.path.isdir(abs_path):
             # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
@@ -92,9 +92,9 @@ class RouteResolver:
     def get_route_map(self, route_path):
         # 命中
         hit_route = None
-        for root_path in self.context.routes_map:
+        for root_path in self.config.routes_map:
             if route_path.startswith(root_path):
-                hit_route = root_path, self.context.routes_map[root_path]
+                hit_route = root_path, self.config.routes_map[root_path]
                 break
 
         if hit_route is None:
@@ -130,7 +130,7 @@ class RouteResolver:
         import inspect
         from . import Collector
         filename = inspect.getmodule(func).__file__
-        decorator = Collector.get(self.context.app_id).resolve_routes(filename, func_name)
+        decorator = Collector.get(self.config.app_id).resolve_routes(filename, func_name)
 
         if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (

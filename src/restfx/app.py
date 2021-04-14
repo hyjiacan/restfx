@@ -7,10 +7,9 @@ from werkzeug.exceptions import NotFound
 from werkzeug.routing import Map, Rule
 
 from .routes import Collector
-from .util.event import Event
 
 
-class App(Event):
+class App:
     # APP 实例集合
     _APPS = {}
 
@@ -30,7 +29,7 @@ class App(Event):
         """
 
         :param app_root: 应用的根目录
-        :param app_id: 全局的唯一 id, 用于标识一个APP。可以通过 AppContext.get(id) 获取应用的 Context，若不指定，则自动生成一个 uuid
+        :param app_id: 全局的唯一 id, 用于标识一个APP。
         :param api_prefix: API接口URL前缀
         :param debug: 是否启用调试模式
         :param append_slash: 是否在URL末尾使用 / 符号
@@ -41,7 +40,7 @@ class App(Event):
         :param api_page_cache: 是否缓存接口数据
         :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
         """
-        from .context import AppContext
+        from .config import AppConfig
         from .routes import ApiPage
         from .routes import Router
         from .util import Logger
@@ -51,13 +50,13 @@ class App(Event):
 
         self._APPS[self.id] = self
 
-        self.context = AppContext(self.id, app_root, debug, append_slash,
-                                  strict_mode, api_page_enabled, api_page_name,
-                                  api_page_expanded, api_page_cache, api_page_addition)
+        self.config = AppConfig(self.id, app_root, debug, append_slash,
+                                strict_mode, api_page_enabled, api_page_name,
+                                api_page_expanded, api_page_cache, api_page_addition)
 
         self._api_prefix = api_prefix
-        self._router = Router(self.context)
-        self._api_page = ApiPage(self.context)
+        self._router = Router(self.config)
+        self._api_page = ApiPage(self.config)
 
         self._custom_url_map = {}
 
@@ -65,13 +64,21 @@ class App(Event):
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
+        # 标记是否还没有收到过请求
+        self._has_request = False
 
         Collector.create(app_id, app_root, append_slash)
 
         super(App, self).__init__()
 
+    def context(self):
+        from restfx.context import AppContext
+        return AppContext(self)
+
     def __del__(self):
-        self.emit('shutdown')
+        self.config.middleware_manager.handle_shutdown()
+
+        del self.config.middleware_manager
 
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
@@ -86,14 +93,15 @@ class App(Event):
         :param start_response:
         :return:
         """
-        from .http import HttpServerError, HttpNotFound, HttpRequest
+        from .http import HttpServerError, HttpNotFound
 
         request = None
         response = None
         try:
-            request = HttpRequest(environ, self.context.app_id)
-
-            self.emit('requesting', request=request)
+            from restfx.context import RequestContext
+            req_ctx = RequestContext(self, environ)
+            request = req_ctx.request
+            self.config.middleware_manager.handle_coming(request)
 
             adapter = self._url_map.bind_to_environ(environ)
 
@@ -109,7 +117,7 @@ class App(Event):
         except Exception as e:
             if isinstance(e, NotFound):
                 response = HttpNotFound()
-            elif self.context.debug:
+            elif self.config.debug:
                 response = HttpServerError(e)
             else:
                 response = HttpServerError()
@@ -119,7 +127,7 @@ class App(Event):
                 msg += ':' + request.path
             self._logger.warning(msg)
         finally:
-            self.emit('requested', request=request, response=response)
+            self.config.middleware_manager.handle_leaving(request, response)
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
@@ -129,11 +137,16 @@ class App(Event):
         :param start_response:
         :return:
         """
-        if not self.context.static_map:
+        # 调用中间件，标记中间件的启动
+        if not self._has_request:
+            self.config.middleware_manager.handle_startup(self)
+            self._has_request = True
+
+        if not self.config.static_map:
             return self.handle_wsgi_request(environ, start_response)
 
         from werkzeug.middleware.shared_data import SharedDataMiddleware
-        return SharedDataMiddleware(self.handle_wsgi_request, self.context.static_map)(
+        return SharedDataMiddleware(self.handle_wsgi_request, self.config.static_map)(
             environ, start_response)
 
     def startup(self, host=None, port=9127, threaded=True, **kwargs):
@@ -148,7 +161,7 @@ class App(Event):
         from restfx.util import helper
         from werkzeug.serving import run_simple
 
-        debug = self.context.debug
+        debug = self.config.debug
 
         if debug:
             helper.print_meta('dev-server *DEBUG MODE*')
@@ -178,7 +191,7 @@ class App(Event):
         if host in [None, '', '*']:
             host = '0.0.0.0'
 
-        if self.context.api_page_options['api_page_enabled']:
+        if self.config.api_page_options['api_page_enabled']:
             if host == '0.0.0.0':
                 from .util import utils
                 ips = utils.get_ip_list()
@@ -188,7 +201,7 @@ class App(Event):
             print(' * Table of APIs:')
             for ip in ips:
                 print('\t- http://%s:%s/%s%s' % (
-                    ip, port, self._api_prefix, '/' if self.context.append_slash else ''
+                    ip, port, self._api_prefix, '/' if self.config.append_slash else ''
                 ))
 
         run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
@@ -208,7 +221,7 @@ class App(Event):
         收集路由
         :return:
         """
-        return Collector.get(self.id).collect(self.context.routes_map)
+        return Collector.get(self.id).collect(self.config.routes_map)
 
     def persist(self, filename: str = '', encoding='utf8'):
         """
@@ -217,7 +230,7 @@ class App(Event):
         :param encoding:
         :return:
         """
-        return Collector.get(self.id).persist(self.context.routes_map, filename, encoding)
+        return Collector.get(self.id).persist(self.config.routes_map, filename, encoding)
 
     def set_logger(self, logger):
         """
@@ -249,10 +262,10 @@ class App(Event):
             if not path:
                 raise Exception('Empty route map prefix value')
             pkg = routes_map[path]
-            pkg_path = os.path.join(self.context.ROOT, pkg.replace('.', '/'))
+            pkg_path = os.path.join(self.config.ROOT, pkg.replace('.', '/'))
             if not os.path.exists(pkg_path):
                 self._logger.warning('Route map "%s" does not exist, path=%s' % (pkg, pkg_path))
-            self.context.routes_map[path] = pkg
+            self.config.routes_map[path] = pkg
         return self
 
     def map_static(self, static_map: dict):
@@ -272,9 +285,9 @@ class App(Event):
                     'The prefix of static map is reserved, pick another one please: %s' % prefix)
                 continue
             target_path = static_map[prefix]
-            abs_target_path = os.path.abspath(os.path.join(self.context.ROOT, target_path))
+            abs_target_path = os.path.abspath(os.path.join(self.config.ROOT, target_path))
             # 无论目录是否存在都注册，因为静态目录可能是动态生成的
-            self.context.static_map[prefix] = abs_target_path
+            self.config.static_map[prefix] = abs_target_path
             if os.path.exists(abs_target_path):
                 self._logger.debug('Map static url %s to path %s' % (prefix, abs_target_path))
             else:
@@ -323,13 +336,12 @@ class App(Event):
 
         for middleware in middlewares:
             assert isinstance(middleware, MiddlewareBase)
-            self.context.middlewares.append(middleware)
-            self.context.reversed_middlewares.insert(0, middleware)
-            middleware.late_init(self)
+            self.config.middlewares.append(middleware)
+            self.config.reversed_middlewares.insert(0, middleware)
         return self
 
     def inject(self, **kwargs):
-        self.context.injections.update(**kwargs)
+        self.config.injections.update(**kwargs)
         return self
 
     @classmethod

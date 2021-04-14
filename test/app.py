@@ -89,18 +89,6 @@ app.register_middleware(
 app.inject(injection='try1try')
 
 
-def on_requesting(e):
-    print('requesting')
-
-
-def on_requested(e):
-    print('requested')
-
-
-app.on('requesting', on_requesting)
-app.on('requested', on_requested)
-
-
 def load_routes_map():
     import routes_map
     app.register_routes(routes_map.routes)

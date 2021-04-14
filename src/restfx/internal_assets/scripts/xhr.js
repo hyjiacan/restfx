@@ -20,7 +20,7 @@
     xhr.responseType = 'arraybuffer'
     xhr.open(method.toUpperCase(), url, true)
     xhr.setRequestHeader('accept', 'application/json;text/*;image/*;*/*')
-    xhr.setRequestHeader('requested-with', 'XmlHttpRequest')
+    xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest')
     xhr.send(options.data)
   }
 

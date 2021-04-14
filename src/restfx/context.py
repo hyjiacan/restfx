@@ -1,80 +1,216 @@
-import os
+import sys
+from functools import partial
 
-from restfx import __meta__
+from werkzeug.local import LocalProxy
+from werkzeug.local import LocalStack
+
+from restfx.http import HttpRequest
+
+_request_ctx_err_msg = """\
+Working outside of request context.
+
+This typically means that you attempted to use functionality that needed
+an active HTTP request.  Consult the documentation on testing for
+information about how to avoid this problem.\
+"""
+_app_ctx_err_msg = """\
+Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+to interface with the current application object in some way. To solve
+this, set up an application context with app.app_context().  See the
+documentation for more information.\
+"""
+
+
+def _lookup_req_object(name):
+    top = _request_ctx_stack.top
+    if top is None:
+        raise RuntimeError(_request_ctx_err_msg)
+    return getattr(top, name)
+
+
+def _lookup_app_object(name):
+    top = _app_ctx_stack.top
+    if top is None:
+        raise RuntimeError(_app_ctx_err_msg)
+    return getattr(top, name)
+
+
+def _find_app():
+    top = _app_ctx_stack.top
+    if top is None:
+        raise RuntimeError(_app_ctx_err_msg)
+    return top.app
+
+
+# context locals
+_request_ctx_stack = LocalStack()
+_app_ctx_stack = LocalStack()
+current_app = LocalProxy(_find_app)
+current_request = LocalProxy(partial(_lookup_req_object, "request"))
+current_session = LocalProxy(partial(_lookup_req_object, "session"))
+g = LocalProxy(partial(_lookup_app_object, "g"))
+
+# a singleton sentinel value for parameter defaults
+_sentinel = object()
+
+
+class ContextStore:
+    """
+    上下文中数据存储支持
+    """
+
+    def __init__(self):
+        self.store = {}
+
+    def get(self, name, default=None):
+        return self.store.get(name, default)
+
+    def pop(self, name, default=_sentinel):
+        if default is _sentinel:
+            return self.store.pop(name)
+        else:
+            return self.store.pop(name, default)
+
+    def setdefault(self, name, default=None):
+        return self.store.setdefault(name, default)
+
+    def __contains__(self, item):
+        return item in self.store
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __repr__(self):
+        top = _app_ctx_stack.top
+        if top is not None:
+            return "<restfx.g of %r>" % top.app.id
+        return object.__repr__(self)
 
 
 class AppContext:
-    """
-    应用的上下文环境
-    """
+    def __init__(self, app):
+        self.app = app
+        self.store = ContextStore()
+        # Like request context, app contexts can be pushed multiple times
+        # but there a basic "refcount" is enough to track them.
+        # self._refcnt = 0
 
-    # 所有应用的上下文集合
-    _CONTEXTS = {}
+    def push(self):
+        """Binds the app context to the current context."""
+        # self._refcnt += 1
+        _app_ctx_stack.push(self)
 
-    def __init__(self, app_id: str,
-                 app_root: str,
-                 debug: bool,
-                 append_slash: bool,
-                 strict_mode: bool,
-                 api_page_enabled: bool,
-                 api_page_name: str,
-                 api_page_expanded: bool,
-                 api_page_cache: bool,
-                 api_page_addition):
+    def pop(self, exc=_sentinel):
+        rv = _app_ctx_stack.pop()
+        assert rv is self, "Popped wrong app context.  (%r instead of %r)" % (rv, self)
+
+    def __enter__(self):
+        self.push()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.pop(exc_value)
+
+
+class RequestContext:
+    def __init__(self, app, environ):
+        self.app = app
+        self.request = HttpRequest(environ, app.id)
+        # self.session = session
+        self.store = ContextStore()
+        # Request contexts can be pushed multiple times and interleaved with
+        # other request contexts.  Now only if the last level is popped we
+        # get rid of them.  Additionally if an application context is missing
+        # one is created implicitly so for each level we add this information
+        self._implicit_app_ctx_stack = []
+
+    def push(self):
+        # Before we push the request context we have to ensure that there
+        # is an application context.
+        app_ctx = _app_ctx_stack.top
+        if app_ctx is None or app_ctx.app != self.app:
+            app_ctx = self.app.context()
+            app_ctx.push()
+            self._implicit_app_ctx_stack.append(app_ctx)
+        else:
+            self._implicit_app_ctx_stack.append(None)
+
+        _request_ctx_stack.push(self)
+
+        # Open the session at the moment that the request context is available.
+        # This allows a custom open_session method to use the request context.
+        # Only open a new session if this is the first time the request was
+        # pushed, otherwise stream_with_context loses the session.
+        if self.session is None:
+            session_interface = self.app.session_interface
+            self.session = session_interface.open_session(self.app, self.request)
+
+            if self.session is None:
+                self.session = session_interface.make_null_session(self.app)
+
+    def pop(self, exc=_sentinel):
+        """Pops the request context and unbinds it by doing that.  This will
+        also trigger the execution of functions registered by the
+        :meth:`~flask.Flask.teardown_request` decorator.
+
+        .. versionchanged:: 0.9
+           Added the `exc` argument.
         """
+        app_ctx = self._implicit_app_ctx_stack.pop()
+        clear_request = False
 
-        """
-        self._CONTEXTS[app_id] = self
-        self.app_id = app_id
-        # 是否启用DEBUG模式
-        self.debug = debug
-        # 工作目录
-        self.ROOT = app_root
-        self.append_slash = append_slash
-        self.strict_mode = strict_mode
-        # 注册的中间件实例集合
-        self.middlewares = []
-        """
-        :type: List[MiddlewareBase]
-        """
-        self.reversed_middlewares = []
-        """
-        :type: List[MiddlewareBase]
-        """
+        try:
+            if not self._implicit_app_ctx_stack:
+                self.preserved = False
+                self._preserved_exc = None
+                if exc is _sentinel:
+                    exc = sys.exc_info()[1]
+                self.app.do_teardown_request(exc)
 
-        # 路由映射表，其键为请求的路径，其值为映射的目录
-        self.routes_map = {}
+                request_close = getattr(self.request, "close", None)
+                if request_close is not None:
+                    request_close()
+                clear_request = True
+        finally:
+            rv = _request_ctx_stack.pop()
 
-        self.static_map = {}
+            # get rid of circular dependencies at the end of the request
+            # so that we don't require the GC to be active.
+            if clear_request:
+                rv.request.environ["werkzeug.request"] = None
 
-        # 注入数据/函数集合
-        # 其中存放将被注入到路由函数参数列表上的数据/函数
-        self.injections = {}
+            # Get rid of the app as well if necessary.
+            if app_ctx is not None:
+                app_ctx.pop(exc)
 
-        self.api_page_options = {
-            # 是否启用 API 页面
-            'api_page_enabled': debug if api_page_enabled is None else api_page_enabled,
-            'api_page_name': api_page_name or 'An awesome %s project' % __meta__.name,
-            'api_page_expanded': api_page_expanded,
-            # 是否缓存API页面的 html 文件 和 接口数据
-            'api_page_cache': not debug if api_page_cache is None else api_page_cache,
-            'api_page_addition': api_page_addition
-        }
+            assert (
+                    rv is self
+            ), "Popped wrong request context. (%r instead of %r)" % (rv, self)
 
-        if self.api_page_options['api_page_enabled']:
-            self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
+    def auto_pop(self, exc):
+        if self.request.environ.get("flask._preserve_context") or (
+                exc is not None and self.app.preserve_context_on_exception
+        ):
+            self.preserved = True
+            self._preserved_exc = exc
+        else:
+            self.pop(exc)
 
-    def __del__(self):
-        if self.app_id in self._CONTEXTS:
-            del self._CONTEXTS[self.app_id]
-        del self.middlewares
+    def __enter__(self):
+        self.push()
+        return self
 
-    @classmethod
-    def get(cls, app_id: str):
-        """
+    def __exit__(self, exc_type, exc_value, tb):
+        # do not pop the request stack if we are in debug mode and an
+        # exception happened.  This will allow the debugger to still
+        # access the request object in the interactive shell.  Furthermore
+        # the context can be force kept alive for the test client.
+        # See flask.testing for how this works.
+        self.auto_pop(exc_value)
 
-        :param app_id:
-        :return:
-        :rtype: AppContext
-        """
-        return cls._CONTEXTS.get(app_id)
+    def __repr__(self):
+        return ("<%s %r [%s] of %s>" % (
+            type(self).__name__, self.request.url, self.request.method, self.app.name
+        ))

@@ -1,14 +1,14 @@
 from types import FunctionType
 
 from .route_resolver import RouteResolver
-from ..context import AppContext
+from ..config import AppConfig
 from ..http import HttpNotFound, HttpResponse
 from ..http.request import HttpRequest
 
 
 class Router:
-    def __init__(self, context: AppContext):
-        self.context = context
+    def __init__(self, config: AppConfig):
+        self.config = config
         # 函数缓存，减少 inspect 反射调用次数
         self.entry_cache = {}
         """
@@ -24,10 +24,10 @@ class Router:
         :param entry: 入口地址
         :return:
         """
-        if not self.context.debug:
+        if not self.config.debug:
             return self.route_for_production(request, '/' + entry)
 
-        resolver = RouteResolver(self.context,
+        resolver = RouteResolver(self.config,
                                  self.entry_cache,
                                  request.method, entry)
 
@@ -52,4 +52,4 @@ class Router:
             return func(request, args)
         except Exception as e:
             from ..util import Logger, func_util
-            Logger.get(self.context.app_id).error(func_util.get_func_info(func), e)
+            Logger.get(self.config.app_id).error(func_util.get_func_info(func), e)
