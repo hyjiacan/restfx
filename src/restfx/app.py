@@ -10,6 +10,38 @@ from .http import HttpRequest
 from .middleware import MiddlewareManager
 from .routes import Collector
 
+from restfx.globals import _app_ctx_stack
+
+from restfx.util import ContextStore
+
+
+class AppContext:
+    def __init__(self, app):
+        self.app = app
+        self.store = ContextStore(_app_ctx_stack)
+        self.ref_count = 0
+
+    def push(self):
+        top = _app_ctx_stack.top
+        if not top or top != self:
+            _app_ctx_stack.push(self)
+        self.ref_count += 1
+
+    def pop(self):
+        if _app_ctx_stack.top != self:
+            return
+        self.ref_count -= 1
+        if self.ref_count > 0:
+            return
+        _app_ctx_stack.pop()
+        del self.store
+
+    def __enter__(self):
+        self.push()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.pop()
+
 
 class App:
     # APP 实例集合
@@ -66,10 +98,11 @@ class App:
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
-        # 标记是否还没有收到过请求
-        self._has_request = False
 
         Collector.create(app_id, app_root, append_slash)
+
+        self.context = AppContext(self)
+        self.context.push()
 
         super(App, self).__init__()
 
@@ -80,7 +113,7 @@ class App:
 
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
-
+        self.context.pop()
         if self.id in self._APPS:
             del self._APPS[self.id]
 
@@ -96,7 +129,8 @@ class App:
         request = None
         response = None
         try:
-            request = HttpRequest(environ, self.id)
+            request = HttpRequest(environ, self)
+            request.context().push()
             self.config.middleware_manager.handle_coming(request)
 
             adapter = self._url_map.bind_to_environ(environ)
@@ -124,6 +158,7 @@ class App:
             self._logger.warning(msg)
         finally:
             self.config.middleware_manager.handle_leaving(request, response)
+            request.context().pop()
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
@@ -133,11 +168,6 @@ class App:
         :param start_response:
         :return:
         """
-        # 调用中间件，标记中间件的启动
-        if not self._has_request:
-            self.config.middleware_manager.handle_startup(self)
-            self._has_request = True
-
         if not self.config.static_map:
             return self.handle_wsgi_request(environ, start_response)
 
@@ -334,6 +364,9 @@ class App:
             assert isinstance(middleware, MiddlewareBase)
             self.config.middlewares.append(middleware)
             self.config.reversed_middlewares.insert(0, middleware)
+            # 调用中间件，标记中间件的启动
+            middleware.on_startup(self)
+
         return self
 
     def inject(self, **kwargs):

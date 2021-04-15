@@ -3,9 +3,8 @@ from ..tools import b64
 
 
 def get_old_value():
-    from restfx.http import current_request, current_store
-    session = current_request.session
-    return session.get('old'), current_store.get('a')
+    from restfx.globals import session, req_store
+    return session.get('old'), req_store.get('a')
 
 
 @route('', '包路由', auth=False, extname='asp')
@@ -26,6 +25,10 @@ def get(request, content, session):
     """
     old = None
     if session:
+        # 当需要指定参数时，使用 request.context(a=2)
+        # 或者使用
+        # from restfx.globals import req_store
+        # req_store.setdefault('a', 2)
         with request.context(a=2):
             old = get_old_value()
         session.set('old', content)

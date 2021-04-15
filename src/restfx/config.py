@@ -63,7 +63,7 @@ class AppConfig:
         self.api_page_cache = not debug if api_page_cache is None else api_page_cache
         self.api_page_addition = api_page_addition
 
-        if api_page_enabled:
+        if self.api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
     def __del__(self):

@@ -1,12 +1,9 @@
 import uuid
-from functools import partial
-
 from werkzeug import Request
-from werkzeug.local import LocalProxy
-from werkzeug.local import LocalStack
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage
 
 from restfx.util import ContextStore
+from restfx.globals import _request_ctx_stack, _app_ctx_stack
 
 
 def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
@@ -24,49 +21,46 @@ def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
     return ImmutableDict(args)
 
 
-_request_ctx_err_msg = """\
-Working outside of request context.
-
-This typically means that you attempted to use functionality that needed
-an active HTTP request.  Consult the documentation on testing for
-information about how to avoid this problem.\
-"""
-
-
-def _lookup_req_object(name):
-    top = _request_ctx_stack.top
-    if top is None:
-        raise RuntimeError(_request_ctx_err_msg)
-    return getattr(top, name)
-
-
-_request_ctx_stack = LocalStack()
-current_request = LocalProxy(partial(_lookup_req_object, 'request'))
-current_store = LocalProxy(partial(_lookup_req_object, 'store'))
-
-
 class RequestContext:
     def __init__(self, request):
         self.request = request
         self.store = ContextStore(_request_ctx_stack)
+        self.ref_count = 0
 
     @property
     def session(self):
         return self.request.session
 
-    def __enter__(self):
-        _request_ctx_stack.push(self)
+    def push(self):
+        top = _app_ctx_stack.top
+        if not top or top != self.request.app:
+            self.request.app.context.push()
+        if _request_ctx_stack.top != self:
+            _request_ctx_stack.push(self)
+        self.ref_count += 1
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def pop(self):
+        if _request_ctx_stack.top != self:
+            return
+        self.ref_count -= 1
+        if self.ref_count > 0:
+            return
         _request_ctx_stack.pop()
         del self.store
 
+    def __enter__(self):
+        self.push()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.pop()
+
 
 class HttpRequest(Request):
-    def __init__(self, environ, app_id: str):
+    def __init__(self, environ, app):
         super().__init__(environ)
         self.id = str(uuid.uuid4())
-        self.app_id = app_id
+        self.app = app
+        self.app_id = app.id
         self.GET = _get_request_data(self.args)
         self.POST = _get_request_data(self.form)
         self.BODY = self.data
@@ -74,14 +68,15 @@ class HttpRequest(Request):
         self.COOKIES = self.cookies
         self.session = None
         self.injections = {}
+        # 在同一个请求中，使用同一个请求上下文
+        self._ctx = RequestContext(self)
 
     def inject(self, **kwargs):
         self.injections.update(kwargs)
 
     def context(self, **kwargs):
-        ctx = RequestContext(self)
-        ctx.store.update(kwargs)
-        return ctx
+        self._ctx.store.update(kwargs)
+        return self._ctx
 
 
 class HttpFile(FileStorage):

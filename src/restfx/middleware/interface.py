@@ -8,7 +8,7 @@ class MiddlewareBase(ABC):
 
     def on_startup(self, app):
         """
-        在第一次收到请求时调用
+        在注册中间件后立即调用
         :param app: App 实例
         :return: 不需要返回任何值
         """

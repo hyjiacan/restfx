@@ -11,13 +11,13 @@ class MiddlewareManager:
         self.config = config
         self.logger = Logger.get(app_id)
 
-    def handle_startup(self, app):
-        for middleware in self.config.middlewares:
-            try:
-                middleware.on_startup(app)
-            except Exception as e:
-                self.logger.error(utils.get_func_info(middleware.on_startup), e)
-                break
+    # def handle_startup(self, app):
+    #     for middleware in self.config.middlewares:
+    #         try:
+    #             middleware.on_startup(app)
+    #         except Exception as e:
+    #             self.logger.error(utils.get_func_info(middleware.on_startup), e)
+    #             break
 
     def handle_shutdown(self):
         for middleware in self.config.reversed_middlewares:
