@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from .interfaces import ISessionProvider, IDbSessionProvider
 from .session import HttpSession
-from ..util import b64
 
 
 class MemorySessionProvider(ISessionProvider):
@@ -181,18 +180,15 @@ class MySQLSessionProvider(IDbSessionProvider):
             session_id)
         if rows == 0:
             return None
-        # item = data[0]
-        # item['store'] = b64.dec_bytes(item['store'])
         return self.parse(data[0])
 
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        # data = b64.enc_str(store)
         # 检查存储数据长度，如果大于 65535 则抛出异常
         store_len = len(store)
-        MAX = 65535
-        if store_len > MAX:
+        max_value = 65535
+        if store_len > max_value:
             raise RuntimeError('Entity is too large (%s) for session storage, the max value is %s.' % (
-                store_len, 65535))
+                store_len, max_value))
 
         self.execute("""INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
         last_access_time=%s, store=%s""".format(table_name=self.table_name),
@@ -213,3 +209,4 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def dispose(self):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))
+        super().dispose()

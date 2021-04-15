@@ -91,10 +91,10 @@ class ISessionProvider(ABC):
     @abstractmethod
     def dispose(self):
         """
-        清空所有的 session，
         回收 session provider
         :return:
         """
+        self.timer.cancel()
         self.timer.join()
 
 
@@ -152,3 +152,4 @@ class IDbSessionProvider(ISessionProvider):
     @abstractmethod
     def dispose(self):
         self.pool.close()
+        super(IDbSessionProvider, self).dispose()

@@ -140,3 +140,4 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
   - 类似于勾子函数
 - [ ] Use `LocalStack` from werkzeug instead the `MemorySessionProvider` storage.
 - [ ] Add lock onto `MemorySessionProvider` & `FileSessionProvider`
+- [ ] 添加 接口页面上，自定义请求头以及渲染响应头支持
