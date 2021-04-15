@@ -163,7 +163,7 @@ class MySQLSessionProvider(IDbSessionProvider):
         `id` VARCHAR(256) PRIMARY KEY NOT NULL,
         `creation_time` LONG NOT NULL,
         `last_access_time` LONG NOT NULL,
-        `store` TEXT,
+        `store` BLOB,
         INDEX `last_access`(`last_access_time`(8) ASC)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name))
 
@@ -181,21 +181,27 @@ class MySQLSessionProvider(IDbSessionProvider):
             session_id)
         if rows == 0:
             return None
-        item = data[0]
-        item['store'] = b64.dec_bytes(item['store'])
-        return self.parse(item)
+        # item = data[0]
+        # item['store'] = b64.dec_bytes(item['store'])
+        return self.parse(data[0])
 
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        data = b64.enc_str(store)
+        # data = b64.enc_str(store)
+        # 检查存储数据长度，如果大于 65535 则抛出异常
+        store_len = len(store)
+        MAX = 65535
+        if store_len > MAX:
+            raise RuntimeError('Entity is too large (%s) for session storage, the max value is %s.' % (
+                store_len, 65535))
 
         self.execute("""INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
         last_access_time=%s, store=%s""".format(table_name=self.table_name),
                      session_id,
                      int(creation_time),
                      int(last_access_time),
-                     data,
+                     store,
                      int(last_access_time),
-                     data)
+                     store)
 
     def exists(self, session_id: str) -> bool:
         rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=%s limit 1""".format(

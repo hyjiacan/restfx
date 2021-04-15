@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from functools import wraps
+from functools import wraps, partial
 
 from ..config import AppConfig
 from ..http import HttpRequest, HttpServerError
@@ -73,13 +73,17 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
     # 调用中间件，以处理请求
     result = mgr.handle_request(request, meta)
 
+    # 使用函数代理，减少相同调用的参数传递
+    handle_response = partial(mgr.handle_response, request, meta)
+    wrap_response = partial(_wrap_http_response, mgr, request, meta)
+
     # 返回了 HttpResponse，直接返回此对象
     if isinstance(result, HttpResponse):
-        return mgr.handle_response(result)
+        return handle_response(result)
 
     # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
-        return mgr.handle_response(_wrap_http_response(mgr, request, meta, result))
+        return handle_response(wrap_response(result))
 
     # 处理请求中的json参数
     _process_json_params(request, config)
@@ -91,18 +95,18 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
     # 只有解析参数出错时才会返回 HttpResponse
     # 此时中止执行
     if isinstance(actual_args, HttpResponse):
-        return mgr.handle_response(request, meta, actual_args)
+        return handle_response(actual_args)
 
     # 调用中间件
     result = mgr.before_invoke(request, meta, actual_args)
 
     # 返回了 HttpResponse ， 直接返回此对象
     if isinstance(result, HttpResponse):
-        return mgr.handle_response(request, meta, result)
+        return handle_response(result)
 
     # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
-        return mgr.handle_response(request, meta, _wrap_http_response(mgr, request, meta, result))
+        return handle_response(wrap_response(result))
 
     # 调用路由函数
     arg_len = len(handler_args)
@@ -116,9 +120,9 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
         message = get_func_info(func)
         Logger.get(config.app_id).error(message, e, False)
         from restfx.util import utils
-        return mgr.handle_response(request, meta, HttpServerError(utils.get_exception_info(message, e)))
+        return handle_response(HttpServerError(utils.get_exception_info(message, e)))
 
-    return mgr.handle_response(request, meta, _wrap_http_response(mgr, request, meta, result))
+    return handle_response(wrap_response(result))
 
 
 def _process_json_params(request: HttpRequest, config: AppConfig):
