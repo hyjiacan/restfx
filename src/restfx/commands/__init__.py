@@ -10,8 +10,8 @@ from .commands import (
 )
 
 register('help', command_help, 'Show this help message')
-register('version', command_version, 'Print the installed version')
-register('create', command_create, 'Create restfx project structure')
+register('version', command_version, 'Show the version information')
+register('create', command_create, 'Create restfx project structure', 'project-name')
 
 
 def execute(argv=None):

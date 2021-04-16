@@ -21,7 +21,30 @@ def get(request, content, session):
     这是第伍行
 
         这是第六行 (这行前面有空白字符)
-    :return:
+    :param content: 这是请求时携带的内容参数
+
+    这里面也可以写代码：
+        var a = 5;
+        ajax.get('/api/test.asp', {content: 5})
+    但是在导出的文件中，参数中的代码块不能换行。
+    :return: 返回值没有什么特殊的
+
+    但是我想在此添加一个代码块
+
+        def func(a: int, b: bool):
+            val_a = a
+            val_b = b
+
+            return {
+                'a': a,
+                'b': b
+            }
+
+
+        def func2():
+            pass
+
+    遇到缩进消失，或者连续两个空行时，表示代码段结束，这与 markdown 语法是一样的
     """
     old = None
     if session:

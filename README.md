@@ -1,6 +1,6 @@
 # restfx
 
-Python3 的 restful 多应用自动路由框架。
+Python3 的 restful 自动路由框架。
 
 > 底层基于 [werkzeug](https://werkzeug.palletsprojects.com/)
 

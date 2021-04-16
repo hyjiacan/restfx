@@ -37,15 +37,24 @@ function el(tag, attrs, children) {
 }
 
 function formatComment(comment) {
-  return comment.split('\n').map(function (line) {
-    return line
-      .replace(/\t/g, '    ')
-      .replace(/ /g, '&nbsp;')
-      .replace(/`(.+?)`/g, function (match, code) {
-        return '<code>' + code + '</code>'
-      })
-  }).join('<br/>')
-
+  if (Object.prototype.toString.call(comment) !== '[object Array]') {
+    return comment
+  }
+  return comment.map(function (item) {
+    if (item.type === 'code') {
+      return '<pre><code>' + item.lines.join('') + '</code></pre>'
+    }
+    if (!$.trim(item.lines[0])) {
+      item.lines.shift()
+    }
+    return item.lines.map(function (line) {
+      return line.replace(/\t/g, '    ')
+        .replace(/ /g, '&nbsp;')
+        .replace(/`(.+?)`/g, function (match, code) {
+          return '<code>' + code + '</code>'
+        })
+    }).join('').replace(/\n/g, '<br/>')
+  }).join('')
 }
 
 function render(list, data) {
@@ -388,7 +397,6 @@ function renderArgs(args, editable, append) {
   }
 
   return el('table', {'class': 'args-table'}, [
-    el('caption', null, '参数信息'),
     el('colgroup', null, [
       el('col', {style: 'width: 200px'}, null),
       el('col', {style: 'width: 150px'}, null),

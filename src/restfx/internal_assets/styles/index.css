@@ -76,6 +76,7 @@ footer a:hover {
 code {
     color: #006fff;
     font-size: 12px;
+    font-family: Consolas, Monospaced, FangSong, serif;
 }
 
 .hide {
@@ -151,8 +152,14 @@ header h1 {
 }
 
 #app-name {
+    display: inline-block;
     font-weight: normal;
     margin-left: 20px;
+    width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: keep-all;
+    white-space: nowrap;
 }
 
 #tools {
@@ -242,7 +249,7 @@ details summary .module-name:before {
     background-color: #fafafa;
     padding: 10px;
     border-radius: 4px;
-    line-height: 2;
+    line-height: 1.6;
 }
 
 .route-count {
@@ -491,6 +498,12 @@ details[open] summary {
     color: #555555;
 }
 
+.comment pre {
+    line-height: 1.4;
+    margin: 5px 0;
+    padding: 0 5px;
+}
+
 .route-name {
     font-size: 15px;
     margin-right: 10px;
@@ -498,7 +511,7 @@ details[open] summary {
 
 .return-info {
     font-size: 1em;
-    line-height: 2;
+    line-height: 1.6;
 }
 
 .return-info code {
@@ -852,7 +865,7 @@ tr.test-row--tool {
 }
 
 .theme-dark code {
-    color: #0098ff;
+    color: #b0a529;
 }
 
 .theme-dark .method {

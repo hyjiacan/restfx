@@ -8,10 +8,11 @@ from restfx.util import helper
 _COMMANDS = {}
 
 
-def register(command_name: str, handler, description: str = None):
+def register(command_name: str, handler, description: str = None, args: str = None):
     _COMMANDS[command_name] = {
         'name': command_name,
         'handler': handler,
+        'arguments': args,
         'description': '' if description is None else description
     }
 
@@ -37,7 +38,11 @@ def get_command(command_name: str):
 
 def get_commands():
     return [
-        '%s\t%s' % (command['name'], command['description'])
+        '%s%s\t%s' % (
+            command['name'],
+            (' <%s>' % command['arguments']) if command['arguments'] else '',
+            command['description']
+        )
         for command in _COMMANDS.values()
     ]
 
@@ -45,14 +50,15 @@ def get_commands():
 # noinspection PyUnusedLocal
 def command_help(*argv):
     commands = get_commands()
-    print("""Commands:
-    {commands}
+    print("""Usage: {name} <command> [arguments]
+
+Commands:
+\t{commands}
 
 Documentation links:
     https://gitee.com/hyjiacan/restfx
     https://github.com/hyjiacan/restfx
 """.format(name=__meta__.name,
-           version=__meta__.version,
            commands='\n\t'.join(commands)))
 
 

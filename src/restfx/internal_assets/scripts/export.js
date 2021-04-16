@@ -6,12 +6,29 @@
     }).join('')
   }
 
-  function formatComment(comment, seperator) {
-    return comment.split('\n').map(function (line) {
-      return line
-        .replace(/\t/g, '    ')
-        .replace(/ {2}/g, '&nbsp;&nbsp;')
-    }).join(seperator)
+  function formatCommentItem(item, isArg, seperator) {
+    if (item.type === 'code') {
+      if (isArg) {
+        return seperator + '`' + $.trim(item.lines.join('').replace(/\n/g, ' ')) + '`' + seperator
+      }
+      return seperator + seperator + '```' + seperator +
+        $.trim(item.lines.join('')) + seperator + '```' + seperator
+    }
+    return item.lines.map(function (line) {
+      return line.replace(/\t/g, '    ')
+        .replace(/ /g, '&nbsp;')
+    }).join('')
+  }
+
+  function formatComment(comment, isArg) {
+    var seperator = isArg ? '<br/>' : '\n'
+    if (Object.prototype.toString.call(comment) !== '[object Array]') {
+      return comment
+    }
+    var result = comment.map(function (item) {
+      return formatCommentItem(item, isArg, seperator)
+    }).join('')
+    return $.trim(result).replace(/\n/g, seperator + (isArg ? '' : '> '))
   }
 
   function padIndex(index, width) {
@@ -47,7 +64,7 @@
   }
 
   function renderReturn(route) {
-    return '> 返回:' + formatComment(route.handler_info.return_description || '-', '\n> ')
+    return '> 返回:' + formatComment(route.handler_info.return_description || '-', false)
   }
 
   function renderArg(arg) {
@@ -70,7 +87,7 @@
       argName,
       arg.has_annotation ? code(argType) : argType,
       arg.has_default ? code(getArgDefaultValue(arg)) : '-',
-      formatComment(arg.comment || '-', '<br/>')
+      formatComment(arg.comment || '-', '<br/>', true)
     ]
   }
 
@@ -80,8 +97,6 @@
     }
 
     var table = [
-      '参数信息',
-      '',
       '|参数名称/别名|参数类型|默认值|描述|',
       '|---|---|---|---|'
     ]
@@ -105,7 +120,7 @@
     return [
       h(3, index + '. [路由] ' + (route.name || '_<未命名>_')),
       route.handler_info.description ?
-        '\n> ' + formatComment(route.handler_info.description, '\n> ') : '',
+        '\n> ' + formatComment(route.handler_info.description, false) + '\n' : '',
       renderUrlInfo(route),
       route.addition_info ? (route.addition_info + '\n') : '',
       renderArgs(route.handler_info.arguments),
@@ -152,14 +167,16 @@
     content.push('---')
     content.push('')
     content.push([
-      '<footer style="text-align: center">Powered by <a href="',
-      data.meta.url + '?from=dist.md',
-      '&version=' + data.meta.version,
-      '">',
+      'Powered by ',
+      '[',
       data.meta.name,
       '@',
       data.meta.version,
-      '</a></footer>'
+      ']',
+      '(',
+      data.meta.url + '?from=dist.md',
+      '&version=' + data.meta.version,
+      ')'
     ].join(''))
 
     // 在结尾处追加空行
@@ -167,7 +184,6 @@
     var md = content.join('\n')
 
     // console.log(md)
-    // return
 
     var form = $('#export-proxy')
     form.attr('action', urlRoot + '/' + apiPrefix + '?export=md')

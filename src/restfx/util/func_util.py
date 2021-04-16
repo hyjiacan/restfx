@@ -283,12 +283,67 @@ class FunctionDescription:
             end -= 1
 
         temp = []
+        # 提供代码段解析支持
+        # 按缩进量处理
+        found_code = False
+        buffer2 = []
+        is_first_line = True
+        last_line_is_blank = False
+        first_indent = 0
         for line in buffer[start:end]:
-            if line.strip():
-                temp.append(line)
-            else:
-                temp.append('\n')
-        return ''.join(temp)
+            stripped_line = line.strip()
+            indent = len(line) - len(line.lstrip())
+            # 当前行有缩进 (>=2)，就表示其为代码段
+            if indent >= 2 or (found_code and not stripped_line):
+                if not stripped_line:
+                    if last_line_is_blank:
+                        found_code = False
+                        continue
+                    last_line_is_blank = True
+                else:
+                    last_line_is_blank = False
+                is_first_line = False
+                if not first_indent:
+                    first_indent = indent
+                if not found_code:
+                    # 重置临时数据
+                    buffer2 = ['\n']
+                    temp.append({
+                        'type': 'code',
+                        'lines': buffer2
+                    })
+                buffer2.append(line[first_indent:] + '\n')
+                found_code = True
+                continue
+
+            first_indent = 0
+            if is_first_line:
+                temp.append({
+                    'type': 'text',
+                    'lines': buffer2
+                })
+                is_first_line = False
+            elif found_code:
+                # 重置临时数据
+                buffer2 = []
+                temp.append({
+                    'type': 'text',
+                    'lines': buffer2
+                })
+
+            if stripped_line:
+                if last_line_is_blank is True:
+                    # 这个判断用于合并连续的多个空行为一个
+                    buffer2.append('\n')
+                    last_line_is_blank = False
+                buffer2.append(line)
+            elif not found_code:
+                # 忽略代码块后的第一个空行
+                last_line_is_blank = True
+
+            found_code = False
+        # return ''.join(temp)
+        return temp
 
     class JSONEncoder(json.JSONEncoder):
         def default(self, o):
