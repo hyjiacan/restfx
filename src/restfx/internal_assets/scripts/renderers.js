@@ -148,7 +148,10 @@ function goToAnchor() {
   }
 }
 
-function renderModule(data, moduleName, expanded) {
+function renderModule(routes, moduleName, expanded) {
+  routes.sort(function (item1, item2) {
+    return item1.path > item2.path ? 1 : -1
+  })
   var encodedModuleName = encodeURI(moduleName)
   return el('details', {
     open: expanded ? 'open' : undefined
@@ -170,15 +173,15 @@ function renderModule(data, moduleName, expanded) {
       el('span', {
         'class': 'route-count',
         title: '此模块中包含的路由数量'
-      }, '*' + data.length)
+      }, '*' + routes.length)
     ]),
     el(
       'ol',
       {'class': 'api-list'},
-      data.map(function (route) {
+      routes.map(function (route) {
           var id = route.method + '#' + route.path
           API_LIST[id] = route
-          var encodedRoutePath = encodeURI(route.path)
+          var encodedRoutePath = encodeURI(route.method + ':' + route.path)
           return el('li', {'class': 'api-item'}, [
             el('div', null, [
               el(
