@@ -70,6 +70,9 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
 
     mgr = config.middleware_manager
 
+    # 处理请求中的json参数
+    _process_json_args(request, config)
+
     # 调用中间件，以处理请求
     result = mgr.handle_request(request, meta)
 
@@ -84,9 +87,6 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
     # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
         return handle_response(wrap_response(result))
-
-    # 处理请求中的json参数
-    _process_json_params(request, config)
 
     # 有参数，自动从 queryString, POST 或 json 中获取
     # 匹配参数
@@ -125,7 +125,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
     return handle_response(wrap_response(result))
 
 
-def _process_json_params(request: HttpRequest, config: AppConfig):
+def _process_json_args(request: HttpRequest, config: AppConfig):
     """
     参数处理
     :return:
@@ -343,8 +343,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
         # 注入名称不包含前缀 _
         # 所以要 [1:]
         injection_name = arg_name[1:]
-        if injection_name in request.injections:
-            actual_args[arg_name] = request.injections[injection_name]
+        if injection_name in request._injections:
+            actual_args[arg_name] = request._injections[injection_name]
         elif injection_name in config.injections:
             actual_args[arg_name] = config.injections[injection_name]
         else:

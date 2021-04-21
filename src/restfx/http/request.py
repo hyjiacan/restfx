@@ -67,16 +67,44 @@ class HttpRequest(Request):
         self.FILES = self.files
         self.COOKIES = self.cookies
         self.session = None
-        self.injections = {}
+        self._injections = {}
+        # 用于存放一些用户的数据
+        self._user_data = {}
         # 在同一个请求中，使用同一个请求上下文
         self._ctx = RequestContext(self)
 
     def inject(self, **kwargs):
-        self.injections.update(kwargs)
+        self._injections.update(kwargs)
 
     def context(self, **kwargs):
         self._ctx.store.update(kwargs)
         return self._ctx
+
+    def get(self, key: str, default=None):
+        """
+        读取附加到 request 上的自定义数据
+        :param key:
+        :param default:
+        :return:
+        """
+        return self._user_data.get(key, default)
+
+    def set(self, key: str, value):
+        """
+        设置附加到 request 上的自定义数据
+        :param key:
+        :param value:
+        :return:
+        """
+        return self._user_data.setdefault(key, value)
+
+    def remove(self, key: str):
+        """
+        移除附加到 request 上的自定义数据
+        :param key:
+        :return:
+        """
+        return self._user_data.pop(key)
 
 
 class HttpFile(FileStorage):
