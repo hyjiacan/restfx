@@ -43,6 +43,8 @@ class ArgumentSpecification:
         self.comment = None
         # 别名，当路由函数中声明的是 abc_def_xyz 时，自动处理为 abcDefXyz
         self.alias = None
+        # TODO 校验器
+        self.validator = None
 
         if self.is_injection:
             return

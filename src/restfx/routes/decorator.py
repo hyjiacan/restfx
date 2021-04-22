@@ -1,7 +1,10 @@
 import json
 from collections import OrderedDict
 from functools import wraps, partial
+from typing import Tuple, Union
 
+import settings
+from .validator import Validator
 from ..config import AppConfig
 from ..http import HttpRequest, HttpServerError
 from ..http import HttpResponse, HttpBadRequest, JsonResponse
@@ -11,7 +14,7 @@ from ..util import Logger
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
-def route(module=None, name=None, extname=None, **kwargs):
+def route(module=None, name=None, extname=None, validators: Union[Tuple[Validator], Validator] = None, **kwargs):
     """
     用于控制路由的访问权限，路由均需要添加此装饰器，若未添加，则不可访问
     用法：
@@ -21,7 +24,13 @@ def route(module=None, name=None, extname=None, **kwargs):
     :param module: str 路由所属模块，一般在查询权限时会用到
     :param name: str 路由名称，一般在查询权限时会用到
     :param extname: 给路径指定一个扩展名，不能包含 . 符号
+    :param validators: 指定参数应用的校验规则，每个需要校验的参数为元组的一个项
     """
+
+    # 支持错误的元组写法: (aaa)
+    # 正确写法应该为: (aaa,)
+    if not isinstance(validators, tuple):
+        validators = (validators,)
 
     def invoke_route(handler):
         @wraps(handler)
@@ -57,14 +66,46 @@ def route(module=None, name=None, extname=None, **kwargs):
                 kwargs=kwargs,
             )
 
-            return _invoke_with_route(request, meta, config)
+            return _invoke_with_route(request, meta, config, validators)
 
         return caller
 
     return invoke_route
 
 
-def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig):
+def validate_args(func, validators: Tuple[Validator], args: dict):
+    if not validators:
+        return True
+
+    if not args:
+        return True
+
+    param_name = None
+    result = None
+    for validator in validators:
+        param_name = validator._param_name
+        result = validator.validate(args)
+        if result is None:
+            continue
+        break
+    if result is None:
+        return result
+
+    if settings.DEBUG:
+        func_info = get_func_info(func)
+        return '%s\n\tFailed to validate parameter "%s": %s' % (
+            func_info,
+            param_name,
+            result
+        )
+
+    return 'Failed to validate parameter "%s": %s' % (
+        param_name,
+        result
+    )
+
+
+def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig, validators: tuple):
     handler_args = meta.handler_args
     func = meta.handler
 
@@ -107,6 +148,11 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig)
     # 返回了非 None，表示停止请求，并将结果作为路由的返回值
     if result is not None:
         return handle_response(wrap_response(result))
+
+    # 执行校验
+    result = validate_args(func, validators, actual_args)
+    if result is not None:
+        return HttpBadRequest(result, content_type='text/plain')
 
     # 调用路由函数
     arg_len = len(handler_args)

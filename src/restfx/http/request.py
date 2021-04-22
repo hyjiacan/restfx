@@ -108,4 +108,18 @@ class HttpRequest(Request):
 
 
 class HttpFile(FileStorage):
-    pass
+    @property
+    def size(self):
+        """
+        此功能处于试用阶段，尚未知晓其可能产生的副作用
+        :return:
+        """
+        if not self.stream.seekable():
+            # 不支持此功能，使用 content_length
+            return self.content_length
+        # 保留其原始的位置
+        position = self.stream.tell()
+        self.stream.seek(0, 2)
+        size = self.stream.tell()
+        self.stream.seek(position, 0)
+        return size

@@ -1,5 +1,6 @@
 from restfx import route
 from ..tools import b64
+from ..tools.validators import MyValidator
 
 
 def get_old_value():
@@ -7,7 +8,9 @@ def get_old_value():
     return session.get('old'), req_store.get('a')
 
 
-@route('', '包路由', auth=False, extname='asp')
+@route('', '包路由', auth=False, extname='asp', validators=(
+        MyValidator('content').range(10, 120).all_a(),
+))
 def get(request, content, session):
     """
     这是一个<b>包路由</b>

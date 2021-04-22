@@ -1,11 +1,14 @@
 from test.tools.enums import OpTypes
 
+import restfx
 from restfx import route
 from restfx.http import HttpFile
 from restfx.http import HttpRequest
 
 
-@route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False, op_type=OpTypes.Query)
+@route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False, op_type=OpTypes.Query, validators=(
+    route.val()
+))
 def get(request, _injection, param1=(1, 2), param2=5):
     """
 
