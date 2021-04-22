@@ -29,7 +29,7 @@ def route(module=None, name=None, extname=None, validators: Union[Tuple[Validato
 
     # 支持错误的元组写法: (aaa)
     # 正确写法应该为: (aaa,)
-    if not isinstance(validators, tuple):
+    if not isinstance(validators, tuple) and validators is not None:
         validators = (validators,)
 
     def invoke_route(handler):
