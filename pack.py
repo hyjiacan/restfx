@@ -53,20 +53,14 @@ def package_sample():
 
 def renew_version():
     # 用法
-    # build m 更新主版本号
-    # build s 更新次版本号
-    # build b 更新 build 版本号 (默认值)
-    # build x 不更新版本号
-    command = 'b' if len(sys.argv) == 1 else sys.argv[1]
-    if command == 'x':
+    # build 版本号
+    # 未传版本号参数时表示不更新版本号
+
+    new_version = None if len(sys.argv) == 1 else sys.argv[1]
+    if new_version is None:
         return
 
-    if command not in ('m', 's', 'b'):
-        print('Unknown version command %r' % command)
-        exit(1)
-        return
-
-    print('Renewing version with command %r...' % command)
+    print('Renewing version onto %r...' % new_version)
 
     root = os.path.dirname(__file__)
     meta_file = os.path.abspath(os.path.join(root, 'src/restfx/__meta__.py'))
@@ -78,19 +72,19 @@ def renew_version():
         version_line = lines[1].strip()
         version = version_line.split('=')[1].strip(' \'')
         print('The old version is %s' % version)
-        [major, second, build] = version.split('.')
-
-        if command == 'm':
-            major = int(major) + 1
-            second = 0
-            build = 0
-        elif command == 's':
-            second = int(second) + 1
-            build = 0
-        else:
-            build = int(build) + 1
-
-        new_version = '%s.%s.%s' % (major, second, build)
+        # [major, second, build] = version.split('.')
+        #
+        # if command == 'm':
+        #     major = int(major) + 1
+        #     second = 0
+        #     build = 0
+        # elif command == 's':
+        #     second = int(second) + 1
+        #     build = 0
+        # else:
+        #     build = int(build) + 1
+        #
+        # new_version = '%s.%s.%s' % (major, second, build)
 
         print('The new version is %r' % new_version)
 
