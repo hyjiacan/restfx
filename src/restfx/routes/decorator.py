@@ -75,10 +75,10 @@ def route(module=None, name=None, extname=None, validators: Union[Tuple[Validato
 
 def validate_args(func, validators: Tuple[Validator], args: dict):
     if not validators:
-        return True
+        return None
 
     if not args:
-        return True
+        return None
 
     param_name = None
     result = None

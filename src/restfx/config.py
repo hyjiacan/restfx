@@ -22,7 +22,11 @@ class AppConfig:
                  api_page_name: str,
                  api_page_expanded: bool,
                  api_page_cache: bool,
-                 api_page_addition):
+                 api_page_addition,
+                 api_page_header: str,
+                 api_page_footer: str,
+                 api_page_assets: tuple,
+                 ):
         """
 
         """
@@ -61,7 +65,10 @@ class AppConfig:
         self.api_page_expanded = api_page_expanded
         # 是否缓存API页面的 html 文件 和 接口数据
         self.api_page_cache = not debug if api_page_cache is None else api_page_cache
+        self.api_page_header = api_page_header
+        self.api_page_footer = api_page_footer
         self.api_page_addition = api_page_addition
+        self.api_page_assets = api_page_assets
 
         if self.api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')

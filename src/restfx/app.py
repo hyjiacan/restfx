@@ -58,7 +58,10 @@ class App:
                  api_page_name: str = None,
                  api_page_expanded=False,
                  api_page_cache=None,
-                 api_page_addition=None
+                 api_page_addition=None,
+                 api_page_header=None,
+                 api_page_footer=None,
+                 api_page_assets: tuple = None,
                  ):
         """
 
@@ -73,6 +76,9 @@ class App:
         :param api_page_expanded: 是否展示接口列表
         :param api_page_cache: 是否缓存接口数据
         :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
+        :param api_page_header: 接口页面上，需要自定义展示在页面顶部的信息
+        :param api_page_footer: 接口页面上，需要自定义展示在页面底部的信息
+        :param api_page_assets: 接口页面上，需要自定义的JS和CSS以及其它资源 (通过 static 托管，此接口仅填写地址)
         """
         from .config import AppConfig
         from .routes import ApiPage
@@ -86,7 +92,8 @@ class App:
 
         self.config = AppConfig(self.id, app_root, debug, append_slash,
                                 strict_mode, api_page_enabled, api_page_name,
-                                api_page_expanded, api_page_cache, api_page_addition)
+                                api_page_expanded, api_page_cache, api_page_addition,
+                                api_page_header, api_page_footer, api_page_assets)
         self.config.middleware_manager = MiddlewareManager(self.id, self.config)
         self._api_prefix = api_prefix
         self._router = Router(self.config)
