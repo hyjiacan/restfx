@@ -63,6 +63,30 @@ class DefaultValidators:
                 return msg
         return None
 
+    @classmethod
+    def empty(cls, allow, msg, param_name: str, args: dict):
+        """
+        返回 true 表示继续后续的校验
+
+        返回 false 表中止后续校验
+
+        返回 其它(字符串)表示校验失败
+        :param allow:
+        :param msg:
+        :param param_name:
+        :param args:
+        :return:
+        """
+        value = args.get(param_name)
+
+        if value:
+            return True
+
+        if allow:
+            return False
+
+        return msg
+
 
 class Validator:
     """
@@ -71,7 +95,7 @@ class Validator:
     如果需要自定义校验器，那么请继承此类，添加自定义的方法即可
 
     在自定义的方法中，需要调用self._append_rule() 方法，以将自定义的校验加入到校验链中
-    
+
     注意：自定义的方法必须返回 self，以支持链式调用
     """
 
@@ -121,13 +145,21 @@ class Validator:
 
     def enum(self, enums: tuple, msg='Value out of range'):
         """
-        用于指定允许可以使用的值
+        用于指定允许可以使用的值枚举。但更建议将参数类型指定为 枚举类型
         :param enums:
         :param msg:
         :return:
         """
         if enums:
             self._append_rule(DefaultValidators.enums, (enums, msg))
+        return self
+
+    def empty(self, allow=True, msg='Value must not be empty'):
+        """
+        是否允许输入为空 (包括空串，空列表，空元组)，这应该是校验的第一个接口
+        :return:
+        """
+        self._append_rule(DefaultValidators.empty, (allow, msg))
         return self
 
     def regex(self, pattern: str = None, flags=0, msg='Invalid Value'):
@@ -200,6 +232,9 @@ class Validator:
         common_args = [self._param_name, args]
         for fn, pre_args in self._rule_chain:
             result = fn(*pre_args, *common_args)
+            if result is False and fn == DefaultValidators.empty:
+                # 允许为空，并且值为空，不再进行后续的校验
+                return None
             if result is not None:
                 return result
 

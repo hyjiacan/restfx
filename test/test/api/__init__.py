@@ -1,5 +1,6 @@
 from restfx import route
 from ..tools import b64
+from ..tools.enums import OpTypes
 from ..tools.validators import MyValidator
 
 
@@ -11,7 +12,7 @@ def get_old_value():
 @route('', '包路由', auth=False, extname='asp', validators=(
         MyValidator('content').range(10, 120).all_a(),
 ))
-def get(request, content, session):
+def get(request, content, session, e: OpTypes):
     """
     这是一个<b>包路由</b>
 
@@ -61,7 +62,8 @@ def get(request, content, session):
     return {
         'data': '来自包中的数据',
         'content': content,
-        'old': old
+        'old': old,
+        'enum': e
     }
 
 

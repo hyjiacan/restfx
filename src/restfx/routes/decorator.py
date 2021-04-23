@@ -1,9 +1,9 @@
 import json
 from collections import OrderedDict
+from enum import Enum
 from functools import wraps, partial
 from typing import Tuple, Union
 
-import settings
 from .validator import Validator
 from ..config import AppConfig
 from ..http import HttpRequest, HttpServerError
@@ -91,15 +91,7 @@ def validate_args(func, validators: Tuple[Validator], args: dict):
     if result is None:
         return result
 
-    if settings.DEBUG:
-        func_info = get_func_info(func)
-        return '%s\n\tFailed to validate parameter "%s": %s' % (
-            func_info,
-            param_name,
-            result
-        )
-
-    return 'Failed to validate parameter "%s": %s' % (
+    return 'Incorrect value of parameter "%s": %s' % (
         param_name,
         result
     )
@@ -234,6 +226,19 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, 
     return None, None
 
 
+def _get_enum_value(arg_spec, arg_value):
+    # 此处的判断，始终忽略大小写
+    tv = str(arg_value).lower()
+    for enum_item in arg_spec.annotation:
+        # 先判断值
+        # 再判断名称
+        if str(enum_item.value).lower() == tv or str(enum_item.name).lower() == tv:
+            # 命中了此枚举项
+            return enum_item
+    # 没有命中
+    return None
+
+
 def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppConfig) -> dict or HttpResponse:
     method = request.method.lower()
     actual_args = {}
@@ -347,10 +352,24 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
                 used_args.append(arg_name)
                 continue
 
-            msg = 'Cannot parse value "%s" into type "%s: %s". (expected: true/false)' % (
+            msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
                 (arg_value, arg_spec.annotation_name, arg_name))
             Logger.get(config.app_id).warning(msg)
             return HttpBadRequest(msg)
+
+        # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
+        if issubclass(arg_spec.annotation, Enum):
+            result = _get_enum_value(arg_spec, arg_value)
+            if result is None:
+                msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
+                    arg_value, arg_spec.annotation_name, arg_name
+                )
+                Logger.get(config.app_id).warning(msg)
+                return HttpBadRequest(msg)
+
+            actual_args[arg_name] = result
+            used_args.append(arg_name)
+            continue
 
         # 转换失败时，会抛出异常
         # noinspection PyBroadException
@@ -362,7 +381,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
                     arg_value = json.loads(arg_value)
                 except Exception:
                     # 此处的异常直接忽略即可
-                    msg = 'Cannot parse value "%s" into type "%s": %s.' % (
+                    msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
                         arg_value, arg_spec.annotation_name, arg_name
                     )
                     Logger.get(config.app_id).warning(msg)
@@ -378,7 +397,7 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
             actual_args[arg_name] = arg_spec.annotation(arg_value)
             used_args.append(arg_name)
         except Exception:
-            msg = 'Cannot parse value "%s" into type "%s": %s.' % (
+            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
                 arg_value, arg_spec.annotation_name, arg_name
             )
             Logger.get(config.app_id).warning(msg)
