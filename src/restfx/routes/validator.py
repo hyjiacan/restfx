@@ -235,7 +235,7 @@ class Validator:
             if result is False and fn == DefaultValidators.empty:
                 # 允许为空，并且值为空，不再进行后续的校验
                 return None
-            if result is not None:
+            if isinstance(result, str):
                 return result
 
         return None
