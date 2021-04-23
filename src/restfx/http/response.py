@@ -1,4 +1,5 @@
 import json
+from typing import IO, Tuple, Union
 
 from werkzeug.exceptions import InternalServerError
 from werkzeug.utils import escape
@@ -20,13 +21,16 @@ class JsonResponse(HttpResponse):
 
 
 class FileResponse(HttpResponse):
-    def __init__(self, fp, attachment: str = None, content_type='application/octet-stream',
+    def __init__(self, fp: Union[str, IO], attachment: str = None,
+                 content_type='application/octet-stream',
+                 ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
         """
 
         :param fp:
         :param attachment: 指定一个字符串，作为返回附件的文件名
         :param content_type:
+        :param ranges: 用于指定返回数据的分块起始位置
         :param kwargs:
         """
         # 如果是字符串，就认为是文件路径
@@ -35,22 +39,68 @@ class FileResponse(HttpResponse):
         else:
             self.fp = fp
 
+        # 需要分块返回文件
+        if ranges:
+            if not self._get_file_chunk(ranges, kwargs):
+                super(FileResponse, self).__init__(status=416)
+                return
+            status_code = 206
+        else:
+            status_code = 200
+
         if attachment:
             self._set_attachment_header(request, attachment, kwargs)
 
-        super().__init__(self.fp, direct_passthrough=True, content_type=content_type, **kwargs)
+        super().__init__(self.fp, status=status_code, direct_passthrough=True,
+                         content_type=content_type, **kwargs)
+
+    def _get_file_chunk(self, ranges: Tuple[int, int], kwargs):
+        from io import BytesIO
+
+        pos = self.fp.tell()
+        self.fp.seek(0, 2)
+        file_size = self.fp.tell()
+        self.fp.seek(pos, 0)
+
+        start, end = ranges
+
+        if start >= file_size or end >= file_size:
+            return False
+
+        if end == 0:
+            # to the end
+            self.fp.seek(start)
+            chunk_size = file_size - start
+        else:
+            chunk = BytesIO()
+            # The fetched data size
+            # -1: avoid to fetch the file end unexpected
+            chunk_size = end - start - 1
+            self.fp.seek(start)
+            buffer = self.fp.read(chunk_size)
+            self.fp.close()
+            chunk.write(buffer)
+            chunk.seek(0)
+            self.fp = chunk
+
+        # set the response headers
+        headers = kwargs.get('headers')
+        if headers is None:
+            headers = {}
+            kwargs['headers'] = headers
+
+        headers['Accept-Ranges'] = 'bytes'
+        headers['Content-Length'] = str(chunk_size)
+        headers['Content-Range'] = 'bytes %s-%s/%s' % (start, end, file_size)
+        return True
 
     # noinspection PyMethodMayBeStatic
     def _set_attachment_header(self, request, filename, kwargs):
         from urllib.parse import unquote, quote
 
-        headers = {}
-        for name in kwargs:
-            if name.lower() == 'headers':
-                headers = kwargs[name]
-                break
-
-        if not headers:
+        headers = kwargs.get('headers')
+        if headers is None:
+            headers = {}
             kwargs['headers'] = headers
 
         if not request:
@@ -58,7 +108,7 @@ class FileResponse(HttpResponse):
             Logger.print('warning',
                          'You are using FileResponse for attachment,'
                          'it is recommended to fill the "request" parameter.'
-                         'Otherwise, you may got an encoding issue of the filename.'
+                         'Otherwise, you may got an encoding issue of the filename on Firefox.'
                          )
 
         user_agent = request and request.headers.environ['HTTP_USER_AGENT']
