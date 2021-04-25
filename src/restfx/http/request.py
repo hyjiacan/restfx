@@ -21,6 +21,17 @@ def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
     return ImmutableDict(args)
 
 
+def _get_files(files):
+    if not files:
+        return None
+    result = {}
+    for name in files:
+        file = files.get(name)
+        result[name] = HttpFile.inherit(file)
+
+    return ImmutableMultiDict(result)
+
+
 class RequestContext:
     def __init__(self, request):
         self.request = request
@@ -64,7 +75,7 @@ class HttpRequest(Request):
         self.GET = _get_request_data(self.args)
         self.POST = _get_request_data(self.form)
         self.BODY = self.data
-        self.FILES = self.files
+        self.FILES = _get_files(self.files)
         self.COOKIES = self.cookies
         self.session = None
         self._injections = {}
@@ -114,12 +125,22 @@ class HttpFile(FileStorage):
         此功能处于试用阶段，尚未知晓其可能产生的副作用
         :return:
         """
-        if not self.stream.seekable():
-            # 不支持此功能，使用 content_length
+        try:
+            position = self.stream.tell()
+            self.stream.seek(0, 2)
+            size = self.stream.tell()
+            self.stream.seek(position, 0)
+            return size
+        except:
             return self.content_length
-        # 保留其原始的位置
-        position = self.stream.tell()
-        self.stream.seek(0, 2)
-        size = self.stream.tell()
-        self.stream.seek(position, 0)
-        return size
+
+    @staticmethod
+    def inherit(file: FileStorage):
+        return HttpFile(
+            stream=file.stream,
+            filename=file.filename,
+            name=file.name,
+            content_type=file.content_type,
+            content_length=file.content_length,
+            headers=file.headers
+        )
