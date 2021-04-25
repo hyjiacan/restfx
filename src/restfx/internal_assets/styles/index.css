@@ -138,6 +138,7 @@ button:active {
     padding: 20px;
     background-color: #ebebeb;
     line-height: 1.5em;
+    word-break: break-word;
 }
 
 /* ----------------- header ------------------------ */

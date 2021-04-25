@@ -14,7 +14,7 @@ from ..util import Logger
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
-def route(module=None, name=None, extname=None, validators: Union[Tuple[Validator], Validator] = None, **kwargs):
+def route(module=None, name=None, extname=None, validators: Union[Tuple[Validator, ...], Validator] = None, **kwargs):
     """
     用于控制路由的访问权限，路由均需要添加此装饰器，若未添加，则不可访问
     用法：
@@ -73,7 +73,7 @@ def route(module=None, name=None, extname=None, validators: Union[Tuple[Validato
     return invoke_route
 
 
-def validate_args(validators: Tuple[Validator], args: dict):
+def validate_args(validators: Tuple[Validator, ...], args: dict):
     if not validators:
         return None
 

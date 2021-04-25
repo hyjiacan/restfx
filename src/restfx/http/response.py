@@ -148,5 +148,5 @@ class HttpNotFound(HttpResponse):
 class HttpServerError(HttpResponse, InternalServerError):
     def __init__(self, content=None):
         if isinstance(content, Exception):
-            content = str(content)
+            content = content.args[0]
         super().__init__(content, status=500, content_type='text/plain')

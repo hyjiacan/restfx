@@ -69,7 +69,7 @@ class Logger:
         # 修改异常消息
         # new_msg = '%s\n\t%s' % (temp, e.args[0]) if len(e.args) > 0 else temp
         e.args = (temp,)
-        e.msg = temp
+        # e.msg = temp
         raise e
 
     @classmethod
