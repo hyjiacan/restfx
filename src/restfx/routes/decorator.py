@@ -34,23 +34,23 @@ def route(module=None, name=None, extname=None, validators: Union[Tuple[Validato
 
     def invoke_route(handler):
         @wraps(handler)
-        def caller(*args):
+        def caller(*args_def):
             # 参数长度不为 2 时，认为是用户调用
-            if len(args) != 2:
-                return handler(*args)
+            if len(args_def) != 2:
+                return handler(*args_def)
 
             # Http 请求对象
             # :type HttpRequest
-            request = args[0]
+            request = args_def[0]
             # 函数声明时定义的参数列表
             # :type OrderedDict
-            handler_args = args[1]
+            handler_args = args_def[1]
 
             # 如果传入的参数第一个不是 request，第二个不是 OrderedDict，
             # 那么就认为是用户调用，而不是路由调用
             # 此时直接将原参数传给 handler 进行调用
             if not isinstance(request, HttpRequest) or not isinstance(handler_args, OrderedDict):
-                return handler(*args)
+                return handler(*args_def)
 
             config = AppConfig.get(request.app_id)
 
@@ -73,7 +73,7 @@ def route(module=None, name=None, extname=None, validators: Union[Tuple[Validato
     return invoke_route
 
 
-def validate_args(func, validators: Tuple[Validator], args: dict):
+def validate_args(validators: Tuple[Validator], args: dict):
     if not validators:
         return None
 
@@ -142,7 +142,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
         return handle_response(wrap_response(result))
 
     # 执行校验
-    result = validate_args(func, validators, actual_args)
+    result = validate_args(validators, actual_args)
     if result is not None:
         return HttpBadRequest(result, content_type='text/plain')
 
@@ -184,8 +184,8 @@ def _process_json_args(request: HttpRequest, config: AppConfig):
         Logger.get(config.app_id).warning('Failed to deserialize request body: %s' % str(e))
 
 
-def _get_parameter_str(args: OrderedDict):
-    return ', '.join(filter(lambda n: n[0] != '_', [str(args[arg]) for arg in args]))
+def _get_parameter_str(args_def: OrderedDict):
+    return ', '.join(filter(lambda n: n[0] != '_', [str(args_def[arg]) for arg in args_def]))
 
 
 def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, backup2):
@@ -239,7 +239,145 @@ def _get_enum_value(arg_spec, arg_value):
     return None
 
 
-def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppConfig) -> dict or HttpResponse:
+def _get_input_value(arg_spec, arg_name, arg_value, config):
+    # 未指定类型
+    if not arg_spec.has_annotation:
+        return arg_value
+
+    # 当值为 None 时，不作数据类型校验
+    if arg_value is None:
+        return arg_value
+
+    # 检查类型是否一致 #
+
+    # 类型一致，直接使用
+    if isinstance(arg_value, arg_spec.annotation):
+        return arg_value
+
+    # 类型不一致，尝试转换类型
+
+    # 当声明的参数类型是布尔类型时，收到的值可能是一个字符串（其值为 true 、 false）
+    if arg_spec.annotation is bool and isinstance(arg_value, str):
+        if arg_value == 'true':
+            return True
+        if arg_value == 'false':
+            return False
+
+        msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
+            (arg_value, arg_spec.annotation_name, arg_name))
+        Logger.get(config.app_id).warning(msg)
+        return HttpBadRequest(msg)
+
+    # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
+    if issubclass(arg_spec.annotation, Enum):
+        result = _get_enum_value(arg_spec, arg_value)
+        if result is None:
+            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
+                arg_value, arg_spec.annotation_name, arg_name
+            )
+            Logger.get(config.app_id).warning(msg)
+            return HttpBadRequest(msg)
+
+        return result
+
+    # 转换失败时，会抛出异常
+    # noinspection PyBroadException
+    try:
+        # 当 arg_value 是字符串，arg_spec的类型是对象时，尝试解析成 json
+        if arg_spec.annotation in (dict, list) and isinstance(arg_value, str):
+            # noinspection PyBroadException
+            try:
+                arg_value = json.loads(arg_value)
+            except Exception:
+                # 此处的异常直接忽略即可
+                msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
+                    arg_value, arg_spec.annotation_name, arg_name
+                )
+                Logger.get(config.app_id).warning(msg)
+                return HttpBadRequest(msg)
+
+        # 类型一致，直接使用
+        if isinstance(arg_value, arg_spec.annotation):
+            # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
+            # 虽然在发起请求的时候并不能指定为 tuple，但还是想兼容一下
+            return tuple(arg_value) if arg_spec.is_tuple else arg_value
+        return arg_spec.annotation(arg_value)
+    except Exception:
+        msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
+            arg_value, arg_spec.annotation_name, arg_name
+        )
+        Logger.get(config.app_id).warning(msg)
+        return HttpBadRequest(msg)
+
+
+def _fill_session(request, func, arg_spec, arg_name, args_def, config):
+    # 以下情况将传入 HttpSession 对象
+    # 1. 当参数名称是 session 并且未指定类型
+    # 2. 当参数类型是 HttpSession 时 (不论参数名称，包括 session)
+    # 但是，参数名称是 session 但其类型不是 HttpSession ，就会被当作一般参数处理
+    is_session = False
+    if arg_name == 'session' and not arg_spec.has_annotation:
+        is_session = True
+    elif arg_spec.annotation == HttpSession:
+        is_session = True
+
+    if is_session:
+        if request.session is None:
+            msg = '%s\n\tParameter "%s" of type "HttpSession" is not available, ' \
+                  'the value will always be "None", ' \
+                  'please make sure that you have registered the Session-Middleware correctly, ' \
+                  'Parameters: (%s)' % (
+                      get_func_info(func),
+                      arg_name,
+                      _get_parameter_str(args_def)
+                  )
+            Logger.get(config.app_id).warning(msg)
+        # 在 session 未启用时，其值为 None
+        return request.session
+    return None
+
+
+def _fill_injections(request, func, injection_args, actual_args, config):
+    # 填充注入参数
+    for arg_name in injection_args:
+        # 注入名称不包含前缀 _
+        # 所以要 [1:]
+        injection_name = arg_name[1:]
+        if injection_name in request._injections:
+            actual_args[arg_name] = request._injections[injection_name]
+            continue
+
+        if injection_name in config.injections:
+            actual_args[arg_name] = config.injections[injection_name]
+            continue
+
+        msg = 'Injection name "%s" not found.' % injection_name
+        if config.debug:
+            msg = '%s\n\t%s' % (get_func_info(func), msg)
+        Logger.get(config.app_id).error(msg)
+        return HttpServerError(msg) if config.debug else HttpServerError()
+    return None
+
+
+def _get_variable_args(request, arg_source, used_args, actual_args):
+    # 填充可变参数
+    variable_args = {}
+    for item in arg_source:
+        if item in used_args:
+            continue
+        variable_args[item] = arg_source[item]
+
+    # noinspection PyUnresolvedReferences
+    if isinstance(request.BODY, dict):
+        for item in request.BODY:
+            if item in used_args:
+                continue
+            # noinspection PyUnresolvedReferences
+            variable_args[item] = request.BODY[item]
+    return variable_args
+
+
+def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: AppConfig) -> dict or HttpResponse:
     method = request.method.lower()
     actual_args = {}
 
@@ -254,8 +392,8 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
     # 声明的注入参数集合
     injection_args = []
 
-    for arg_name in args.keys():
-        arg_spec = args.get(arg_name)
+    for arg_name in args_def.keys():
+        arg_spec = args_def.get(arg_name)
 
         if arg_spec.is_injection:
             injection_args.append(arg_name)
@@ -279,29 +417,10 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
             actual_args[arg_name] = request
             continue
 
-        # 以下情况将传入 HttpSession 对象
-        # 1. 当参数名称是 session 并且未指定类型
-        # 2. 当参数类型是 HttpSession 时 (不论参数名称，包括 session)
-        # 但是，参数名称是 session 但其类型不是 HttpSession ，就会被当作一般参数处理
-        is_session = False
-        if arg_name == 'request' and not arg_spec.has_annotation:
-            is_session = True
-        elif arg_spec.annotation == HttpSession:
-            is_session = True
-
-        if is_session:
-            if request.session is None:
-                msg = '%s\n\tParameter "%s" of type "HttpSession" is not available, ' \
-                      'the value will always be "None", ' \
-                      'please make sure that you have registered the Session-Middleware correctly, ' \
-                      'Parameters: (%s)' % (
-                          get_func_info(func),
-                          arg_name,
-                          _get_parameter_str(args)
-                      )
-                Logger.get(config.app_id).warning(msg)
-            # 在 session 未启用时，其值为 None
-            actual_args[arg_name] = request.session
+        # 填充 session
+        sess = _fill_session(request, func, arg_spec, arg_name, args_def, config)
+        if sess:
+            actual_args[arg_name] = sess
             continue
 
         # noinspection PyUnresolvedReferences
@@ -319,125 +438,20 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
             used_args.append(arg_name)
             continue
 
-        # 未指定类型
-        if not arg_spec.has_annotation:
-            actual_args[arg_name] = arg_value
-            used_args.append(arg_name)
-            continue
+        val = _get_input_value(arg_spec, arg_name, arg_value, config)
+        if isinstance(val, HttpResponse):
+            return val
+        actual_args[arg_name] = val
+        used_args.append(arg_name)
 
-        # 当值为 None 时，不作数据类型校验
-        if arg_value is None:
-            actual_args[arg_name] = arg_value
-            used_args.append(arg_name)
-            continue
+    result = _fill_injections(request, func, injection_args, actual_args, config)
+    if isinstance(result, HttpResponse):
+        return result
 
-        # 检查类型是否一致 #
-
-        # 类型一致，直接使用
-        if isinstance(arg_value, arg_spec.annotation):
-            actual_args[arg_name] = arg_value
-            used_args.append(arg_name)
-            continue
-
-        # 类型不一致，尝试转换类型
-
-        # 当声明的参数类型是布尔类型时，收到的值可能是一个字符串（其值为 true 、 false）
-        if arg_spec.annotation is bool and isinstance(arg_value, str):
-            if arg_value == 'true':
-                actual_args[arg_name] = True
-                used_args.append(arg_name)
-                continue
-            if arg_value == 'false':
-                actual_args[arg_name] = False
-                used_args.append(arg_name)
-                continue
-
-            msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
-                (arg_value, arg_spec.annotation_name, arg_name))
-            Logger.get(config.app_id).warning(msg)
-            return HttpBadRequest(msg)
-
-        # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
-        if issubclass(arg_spec.annotation, Enum):
-            result = _get_enum_value(arg_spec, arg_value)
-            if result is None:
-                msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
-                    arg_value, arg_spec.annotation_name, arg_name
-                )
-                Logger.get(config.app_id).warning(msg)
-                return HttpBadRequest(msg)
-
-            actual_args[arg_name] = result
-            used_args.append(arg_name)
-            continue
-
-        # 转换失败时，会抛出异常
-        # noinspection PyBroadException
-        try:
-            # 当 arg_value 是字符串，arg_spec的类型是对象时，尝试解析成 json
-            if arg_spec.annotation in (dict, list) and isinstance(arg_value, str):
-                # noinspection PyBroadException
-                try:
-                    arg_value = json.loads(arg_value)
-                except Exception:
-                    # 此处的异常直接忽略即可
-                    msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
-                        arg_value, arg_spec.annotation_name, arg_name
-                    )
-                    Logger.get(config.app_id).warning(msg)
-                    return HttpBadRequest(msg)
-
-            # 类型一致，直接使用
-            if isinstance(arg_value, arg_spec.annotation):
-                # 如果原始声明是 tuple 类型，那么把 list 转换成 tuple
-                # 虽然在发起请求的时候并不能指定为 tuple，但还是想兼容一下
-                actual_args[arg_name] = tuple(arg_value) if arg_spec.is_tuple else arg_value
-                used_args.append(arg_name)
-                continue
-            actual_args[arg_name] = arg_spec.annotation(arg_value)
-            used_args.append(arg_name)
-        except Exception:
-            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
-                arg_value, arg_spec.annotation_name, arg_name
-            )
-            Logger.get(config.app_id).warning(msg)
-            return HttpBadRequest(msg)
-
-    # 填充注入参数
-    for arg_name in injection_args:
-        # 注入名称不包含前缀 _
-        # 所以要 [1:]
-        injection_name = arg_name[1:]
-        if injection_name in request._injections:
-            actual_args[arg_name] = request._injections[injection_name]
-        elif injection_name in config.injections:
-            actual_args[arg_name] = config.injections[injection_name]
-        else:
-            msg = 'Injection name "%s" not found.' % injection_name
-            if config.debug:
-                msg = '%s\n\t%s' % (get_func_info(func), msg)
-            Logger.get(config.app_id).error(msg)
-            return HttpServerError(msg) if config.debug else HttpServerError()
-
-    # 填充可变参数
-    variable_args = {}
-    for item in arg_source:
-        if item in used_args:
-            continue
-        variable_args[item] = arg_source[item]
-
-    # noinspection PyUnresolvedReferences
-    if isinstance(request.BODY, dict):
-        for item in request.BODY:
-            if item in used_args:
-                continue
-            # noinspection PyUnresolvedReferences
-            variable_args[item] = request.BODY[item]
-
-    variable_arg_keys = variable_args.keys()
+    variable_args = _get_variable_args(request, arg_source, used_args, actual_args)
 
     # 没有可变参数
-    if not variable_arg_keys:
+    if not variable_args:
         return actual_args
 
     # 有可变参数，并且指定了 kwargs
@@ -452,8 +466,9 @@ def _get_actual_args(request: HttpRequest, func, args: OrderedDict, config: AppC
 
     # 启用了严格模式
     # 返回 400 响应
+    variable_arg_keys = variable_args.keys()
     msg = 'Unknown argument(s) found: "%s", Parameters: (%s).' \
-          % (','.join(variable_arg_keys), _get_parameter_str(args))
+          % (','.join(variable_arg_keys), _get_parameter_str(args_def))
     Logger.get(config.app_id).warning(msg)
     if not config.debug:
         msg = 'Unknown argument(s) found: %s.' % ','.join(variable_arg_keys)

@@ -1,3 +1,4 @@
+import atexit
 import os
 import sys
 import uuid
@@ -113,6 +114,8 @@ class App:
 
         super(App, self).__init__()
 
+    # @atexit.register
+    # def dispose(self):
     def __del__(self):
         self.config.middleware_manager.handle_shutdown()
 
