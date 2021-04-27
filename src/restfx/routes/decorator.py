@@ -83,6 +83,7 @@ def validate_args(validators: Tuple[Validator, ...], args: dict):
     param_name = None
     result = None
     for validator in validators:
+        # noinspection PyProtectedMember
         param_name = validator._param_name
         result = validator.validate(args)
         if result is None:
@@ -343,7 +344,9 @@ def _fill_injections(request, func, injection_args, actual_args, config):
         # 注入名称不包含前缀 _
         # 所以要 [1:]
         injection_name = arg_name[1:]
+        # noinspection PyProtectedMember
         if injection_name in request._injections:
+            # noinspection PyProtectedMember
             actual_args[arg_name] = request._injections[injection_name]
             continue
 
@@ -359,7 +362,7 @@ def _fill_injections(request, func, injection_args, actual_args, config):
     return None
 
 
-def _get_variable_args(request, arg_source, used_args, actual_args):
+def _get_variable_args(request, arg_source, used_args):
     # 填充可变参数
     variable_args = {}
     for item in arg_source:
@@ -448,7 +451,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
     if isinstance(result, HttpResponse):
         return result
 
-    variable_args = _get_variable_args(request, arg_source, used_args, actual_args)
+    variable_args = _get_variable_args(request, arg_source, used_args)
 
     # 没有可变参数
     if not variable_args:

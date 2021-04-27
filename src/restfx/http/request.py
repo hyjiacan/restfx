@@ -125,13 +125,14 @@ class HttpFile(FileStorage):
         此功能处于试用阶段，尚未知晓其可能产生的副作用
         :return:
         """
+        # noinspection PyBroadException
         try:
             position = self.stream.tell()
             self.stream.seek(0, 2)
             size = self.stream.tell()
             self.stream.seek(position, 0)
             return size
-        except:
+        except Exception:
             return self.content_length
 
     @staticmethod

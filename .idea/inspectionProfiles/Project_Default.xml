@@ -27,6 +27,13 @@
         </value>
       </option>
     </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="_ast.expr.args" />
+        </list>
+      </option>
+    </inspection_tool>
     <inspection_tool class="SpellCheckingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="processCode" value="true" />
       <option name="processLiterals" value="true" />

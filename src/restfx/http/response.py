@@ -21,7 +21,7 @@ class JsonResponse(HttpResponse):
 
 
 class FileResponse(HttpResponse):
-    def __init__(self, fp: Union[str, IO], attachment: str = None,
+    def __init__(self, fp: Union[str, IO, bytes], attachment: str = None,
                  content_type=None,
                  ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
