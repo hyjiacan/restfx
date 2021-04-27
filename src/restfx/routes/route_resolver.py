@@ -2,7 +2,7 @@ import os
 from typing import Dict, Optional
 
 from ..config import AppConfig
-from ..http.response import HttpNotFound, HttpResponse
+from ..http.response import NotFoundResponse, HttpResponse
 from ..util import utils
 from ..util.func_util import FunctionDescription
 
@@ -47,7 +47,7 @@ class RouteResolver:
         if module_name is None:
             self.logger.warning(
                 'Cannot find route "%s" in routes_map' % self.entry)
-            return HttpNotFound()
+            return NotFoundResponse()
 
         func_name = self.method
         module_path = module_name.replace('.', os.path.sep)
@@ -62,7 +62,7 @@ class RouteResolver:
             module_abs_path = self._get_module_abs_path(module_path)
 
             if module_abs_path is None:
-                return HttpNotFound()
+                return NotFoundResponse()
 
             module_name = module_abs_path.replace(os.path.sep, '.')
 
@@ -78,14 +78,14 @@ class RouteResolver:
         except Exception as e:
             message = 'Failed to load entry "%s": %s' % (self.entry, fullname)
             self.logger.error(message, e)
-            return HttpNotFound()
+            return NotFoundResponse()
 
         # 检查 extname 是否一致
         if isinstance(desc, FunctionDescription) and desc.decorator['extname'] != extname:
             message = 'Failed to load entry "%s": extname "%s" is not exactly match with "%s"' % (
                 self.entry, extname, desc.decorator['extname'])
             self.logger.warning(message)
-            return HttpNotFound()
+            return NotFoundResponse()
 
         return desc
 
@@ -116,13 +116,13 @@ class RouteResolver:
         except Exception as e:
             message = 'Failed to load module "%s"' % module_name
             self.logger.error(message, e)
-            return HttpNotFound()
+            return NotFoundResponse()
 
         # 模块中也没有这个函数
         if not hasattr(entry_define, func_name):
             # 函数不存在，更新缓存
             self.entry_cache[func_name] = None
-            return HttpNotFound()
+            return NotFoundResponse()
 
         # 模块中有这个函数
         # 通过反射从模块加载函数
@@ -140,7 +140,7 @@ class RouteResolver:
             self.logger.warning(msg)
             # 没有配置装饰器@route，则认为函数不可访问，更新缓存
             self.entry_cache[func_name] = None
-            return HttpNotFound()
+            return NotFoundResponse()
 
         func_desc = FunctionDescription(func)
         func_desc.decorator = decorator

@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 
 from ..config import AppConfig
-from ..http import HttpResponse, JsonResponse, HttpBadRequest
+from ..http import HttpResponse, JsonResponse, BadRequestResponse
 from ..util.func_util import FunctionDescription
 
 
@@ -92,7 +92,7 @@ class ApiPage:
 
     def do_export(self, request):
         if 'data' not in request.POST:
-            return HttpBadRequest()
+            return BadRequestResponse()
 
         content = request.POST['data']
 
@@ -102,7 +102,7 @@ class ApiPage:
             content = b64.dec_bytes(content)
         except Exception:
             # This exception can be ignored safety
-            return HttpBadRequest()
+            return BadRequestResponse()
 
         import time
 

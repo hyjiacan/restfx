@@ -10,7 +10,7 @@ class HttpAuthMiddleware(MiddlewareBase):
     def process_request(self, request, meta):
         if self.on_auth(request, meta):
             return
-        from restfx.http.response import HttpUnauthorized
-        response = HttpUnauthorized()
+        from restfx.http.response import UnauthorizedResponse
+        response = UnauthorizedResponse()
         response.headers.set('WWW-Authenticate', '%s realm="%s"' % (self.auth_type, self.realm))
         return response

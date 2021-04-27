@@ -6,8 +6,8 @@ from typing import Tuple, Union
 
 from .validator import Validator
 from ..config import AppConfig
-from ..http import HttpRequest, HttpServerError
-from ..http import HttpResponse, HttpBadRequest, JsonResponse
+from ..http import HttpRequest, ServerErrorResponse
+from ..http import HttpResponse, BadRequestResponse, JsonResponse
 from ..routes.meta import RouteMeta
 from ..session import HttpSession
 from ..util import Logger
@@ -144,7 +144,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
     # 执行校验
     result = validate_args(validators, actual_args)
     if result is not None:
-        return HttpBadRequest(result, content_type='text/plain')
+        return BadRequestResponse(result, content_type='text/plain')
 
     # 调用路由函数
     arg_len = len(handler_args)
@@ -158,7 +158,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
         message = get_func_info(func)
         Logger.get(config.app_id).error(message, e, False)
         from restfx.util import utils
-        return handle_response(HttpServerError(utils.get_exception_info(message, e)))
+        return handle_response(ServerErrorResponse(utils.get_exception_info(message, e)))
 
     return handle_response(wrap_response(result))
 
@@ -266,7 +266,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
         msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
             (arg_value, arg_spec.annotation_name, arg_name))
         Logger.get(config.app_id).warning(msg)
-        return HttpBadRequest(msg)
+        return BadRequestResponse(msg)
 
     # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
     if issubclass(arg_spec.annotation, Enum):
@@ -276,7 +276,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
                 arg_value, arg_spec.annotation_name, arg_name
             )
             Logger.get(config.app_id).warning(msg)
-            return HttpBadRequest(msg)
+            return BadRequestResponse(msg)
 
         return result
 
@@ -294,7 +294,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
                     arg_value, arg_spec.annotation_name, arg_name
                 )
                 Logger.get(config.app_id).warning(msg)
-                return HttpBadRequest(msg)
+                return BadRequestResponse(msg)
 
         # 类型一致，直接使用
         if isinstance(arg_value, arg_spec.annotation):
@@ -307,7 +307,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             arg_value, arg_spec.annotation_name, arg_name
         )
         Logger.get(config.app_id).warning(msg)
-        return HttpBadRequest(msg)
+        return BadRequestResponse(msg)
 
 
 def _fill_session(request, func, arg_spec, arg_name, args_def, config):
@@ -355,7 +355,7 @@ def _fill_injections(request, func, injection_args, actual_args, config):
         if config.debug:
             msg = '%s\n\t%s' % (get_func_info(func), msg)
         Logger.get(config.app_id).error(msg)
-        return HttpServerError(msg) if config.debug else HttpServerError()
+        return ServerErrorResponse(msg) if config.debug else ServerErrorResponse()
     return None
 
 
@@ -430,7 +430,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
         if use_default is None:
             msg = 'Missing required argument "%s".' % arg_name
             Logger.get(config.app_id).warning(msg)
-            return HttpBadRequest(msg)
+            return BadRequestResponse(msg)
 
         # 使用默认值
         if use_default is True:
@@ -472,7 +472,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
     Logger.get(config.app_id).warning(msg)
     if not config.debug:
         msg = 'Unknown argument(s) found: %s.' % ','.join(variable_arg_keys)
-    return HttpBadRequest(msg)
+    return BadRequestResponse(msg)
 
 
 def _wrap_http_response(mgr, request, meta, data):

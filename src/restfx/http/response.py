@@ -22,22 +22,29 @@ class JsonResponse(HttpResponse):
 
 class FileResponse(HttpResponse):
     def __init__(self, fp: Union[str, IO], attachment: str = None,
-                 content_type='application/octet-stream',
+                 content_type=None,
                  ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
         """
 
-        :param fp:
+        :param fp: 如果指定的 fp 是文件名（字符串），那么认为返回的是文件名
         :param attachment: 指定一个字符串，作为返回附件的文件名
-        :param content_type:
+        :param content_type: 当未指定此值时，如果指定的 fp 是文件名，那么会自动根据文件的扩展名进行识别
         :param ranges: 用于指定返回数据的分块起始位置
         :param kwargs:
         """
         # 如果是字符串，就认为是文件路径
         if isinstance(fp, str):
+            # 根据文件的扩展名自动识别 mime
+            if content_type is None:
+                import mimetypes
+                (content_type, _) = mimetypes.guess_type(fp)
             self.fp = open(fp, mode='rb')
         else:
             self.fp = fp
+
+        if content_type is None:
+            content_type = 'application/octet-stream'
 
         # 需要分块返回文件
         if ranges:
@@ -123,29 +130,29 @@ class FileResponse(HttpResponse):
         headers['Content-Disposition'] = 'attachment;filename=%s' % filename
 
 
-class HttpBadRequest(HttpResponse):
+class BadRequestResponse(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=400, **kwargs)
 
 
-class HttpRedirect(HttpResponse):
+class RedirectResponse(HttpResponse):
     def __init__(self, location, status=302, **kwargs):
         super().__init__(None, status=status, headers={
             'Location': escape(location)
         }, **kwargs)
 
 
-class HttpUnauthorized(HttpResponse):
+class UnauthorizedResponse(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=401, **kwargs)
 
 
-class HttpNotFound(HttpResponse):
+class NotFoundResponse(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=404, **kwargs)
 
 
-class HttpServerError(HttpResponse, InternalServerError):
+class ServerErrorResponse(HttpResponse, InternalServerError):
     def __init__(self, content=None):
         if isinstance(content, Exception):
             content = content.args[0]

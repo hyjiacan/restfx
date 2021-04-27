@@ -2,7 +2,7 @@ from types import FunctionType
 
 from .route_resolver import RouteResolver
 from ..config import AppConfig
-from ..http import HttpNotFound, HttpResponse
+from ..http import NotFoundResponse, HttpResponse
 from ..http.request import HttpRequest
 
 
@@ -43,7 +43,7 @@ class Router:
         try:
             route = self.production_routes['%s#%s' % (entry, method)]
         except Exception:
-            return HttpNotFound()
+            return NotFoundResponse()
 
         return self.invoke_handler(request, route['func'], route['args'])
 
