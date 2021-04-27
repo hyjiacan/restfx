@@ -21,13 +21,14 @@ class JsonResponse(HttpResponse):
 
 
 class FileResponse(HttpResponse):
-    def __init__(self, fp: Union[str, IO, bytes], attachment: str = None,
+    def __init__(self, fp: Union[str, bytes, IO], attachment: str = None,
                  content_type=None,
                  ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
         """
 
-        :param fp: 如果指定的 fp 是文件名（字符串），那么认为返回的是文件名
+        :param fp: 文件名或内容。如果指定的 fp 是文件名（字符串），那么认为返回的是文件名。
+        如果需要返回的内容是字符串，那么需要先处理成 bytes
         :param attachment: 指定一个字符串，作为返回附件的文件名
         :param content_type: 当未指定此值时，如果指定的 fp 是文件名，那么会自动根据文件的扩展名进行识别
         :param ranges: 用于指定返回数据的分块起始位置
@@ -48,6 +49,8 @@ class FileResponse(HttpResponse):
 
         # 需要分块返回文件
         if ranges:
+            if not isinstance(fp, IO):
+                raise TypeError('FileResponse with "ranges" works with type "IO" only')
             if not self._get_file_chunk(ranges, kwargs):
                 super(FileResponse, self).__init__(status=416)
                 return
