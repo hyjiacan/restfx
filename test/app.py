@@ -7,7 +7,7 @@ import pymysql
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
-from restfx.http.response import RedirectResponse
+from restfx.http.response import Redirect
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware
 from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
@@ -54,7 +54,7 @@ app.map_routes({
 }).map_static({
     '/': 'static'
 }).map_urls({
-    '/': lambda request: RedirectResponse('/index.html'),
+    '/': lambda request: Redirect('/index.html'),
     '/test/<param>': lambda request, param: HttpResponse(param)
 })
 

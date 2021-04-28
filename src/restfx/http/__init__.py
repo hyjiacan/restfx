@@ -1,22 +1,23 @@
 from .request import HttpRequest, HttpFile
 from .response import (
     HttpResponse,
-    ServerErrorResponse,
-    BadRequestResponse,
-    NotFoundResponse,
+    ServerError,
+    BadRequest,
+    NotFound,
     JsonResponse,
     FileResponse,
-    RedirectResponse
+    Redirect, Unauthorized
 )
 
 __all__ = [
     'HttpFile',
     'HttpRequest',
     'HttpResponse',
-    'ServerErrorResponse',
-    'BadRequestResponse',
-    'NotFoundResponse',
-    'JsonResponse',
     'FileResponse',
-    'RedirectResponse'
+    'JsonResponse',
+    'Redirect',
+    'BadRequest',
+    'Unauthorized',
+    'NotFound',
+    'ServerError'
 ]

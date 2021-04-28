@@ -133,29 +133,29 @@ class FileResponse(HttpResponse):
         headers['Content-Disposition'] = 'attachment;filename=%s' % filename
 
 
-class BadRequestResponse(HttpResponse):
+class BadRequest(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=400, **kwargs)
 
 
-class RedirectResponse(HttpResponse):
+class Redirect(HttpResponse):
     def __init__(self, location, status=302, **kwargs):
         super().__init__(None, status=status, headers={
             'Location': escape(location)
         }, **kwargs)
 
 
-class UnauthorizedResponse(HttpResponse):
+class Unauthorized(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=401, **kwargs)
 
 
-class NotFoundResponse(HttpResponse):
+class NotFound(HttpResponse):
     def __init__(self, content=None, **kwargs):
         super().__init__(content, status=404, **kwargs)
 
 
-class ServerErrorResponse(HttpResponse, InternalServerError):
+class ServerError(HttpResponse, InternalServerError):
     def __init__(self, content=None):
         if isinstance(content, Exception):
             content = content.args[0]
