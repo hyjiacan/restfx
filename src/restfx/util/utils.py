@@ -23,7 +23,7 @@ def load_module(module_name: str, level=0):
 def get_func_info(func):
     source_lines = inspect.getsourcelines(func)
     line = source_lines[1]
-    return 'File "%s", line %d, in %s' % (
+    return 'File "%s", line %d, code %s' % (
         inspect.getmodule(func).__file__,
         line,
         func.__name__

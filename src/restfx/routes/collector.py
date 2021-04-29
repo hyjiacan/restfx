@@ -151,7 +151,7 @@ class Collector:
                 module = utils.load_module(pkg)
             except Exception as e:
                 from ..util import Logger
-                msg = 'File "%s", line %d, in %s\n\t%s' % (
+                msg = 'File "%s", line %d, code %s\n\t%s' % (
                     fullname, router_info['lineno'], func_name,
                     'Cannot load module "%s"' % pkg
                 )
@@ -271,7 +271,7 @@ class Collector:
                         type_def = self.global_types[type_name]
                         type_val = value.attr
                         if not hasattr(type_def, type_val):
-                            msg = 'File "%s", line %d, in %s\n\t%s' % (
+                            msg = 'File "%s", line %d, code %s\n\t%s' % (
                                 filename, func_def.lineno, func_def.name,
                                 'Cannot retrieve value "%s.%s" from type "%s"' % (type_name, type_val, type_name)
                             )
@@ -312,7 +312,7 @@ class Collector:
             else:
                 # 写了使用 @route 的方式（不带括号）
                 # 这样的写法是错误的，应该写为  @route()
-                msg = 'File "%s", line %d, in %s\n\t%s' % (
+                msg = 'File "%s", line %d, code %s\n\t%s' % (
                     filename, func_def.lineno, func_def.name,
                     'Unexpected usage with "@route", use "@route()" instead.')
                 logger.error(msg)
