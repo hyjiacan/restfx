@@ -84,8 +84,7 @@ class FileResponse(HttpResponse):
         else:
             chunk = BytesIO()
             # The fetched data size
-            # -1: avoid to fetch the file end unexpected
-            chunk_size = end - start - 1
+            chunk_size = end - start
             self.fp.seek(start)
             buffer = self.fp.read(chunk_size)
             self.fp.close()
@@ -158,5 +157,5 @@ class NotFound(HttpResponse):
 class ServerError(HttpResponse, InternalServerError):
     def __init__(self, content=None):
         if isinstance(content, Exception):
-            content = content.args[0]
+            content = content.args[0] if content.args else str(content)
         super().__init__(content, status=500, content_type='text/plain')

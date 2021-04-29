@@ -134,7 +134,7 @@ class App:
         :param start_response:
         :return:
         """
-        from .http import ServerError, NotFound
+        from .http import ServerError, NotFound as NewNotFound
 
         request = None
         response = None
@@ -153,10 +153,10 @@ class App:
             elif endpoint in self._custom_url_map:
                 response = self._custom_url_map[endpoint](request, **values)
             else:
-                response = NotFound()
+                response = NewNotFound()
         except Exception as e:
             if isinstance(e, NotFound):
-                response = NotFound()
+                response = NewNotFound()
             elif self.config.debug:
                 response = ServerError(e)
             else:

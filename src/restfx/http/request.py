@@ -117,6 +117,21 @@ class HttpRequest(Request):
         """
         return self._user_data.pop(key)
 
+    @property
+    def range(self):
+        import re
+        request_range = self.headers.get('range')
+        if not request_range:
+            return None
+        match = re.fullmatch(r'\s*(?P<unit>(bytes))=(?P<start>([0-9]+))-(?P<end>([0-9]*))?\s*', request_range)
+        if not match:
+            from restfx.util import Logger
+            from restfx.http import BadRequest
+            Logger.get(self.app_id).warning('Invalid value of request header "range": %r' % request_range)
+            return BadRequest()
+
+        return match.group('unit'), int(match.group('start')), int(match.group('end') or 0)
+
 
 class HttpFile(FileStorage):
     @property
