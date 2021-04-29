@@ -158,13 +158,13 @@ class App:
             if isinstance(e, NotFound):
                 response = NewNotFound()
             elif self.config.debug:
-                response = ServerError(e)
+                response = ServerError(repr(e))
             else:
                 response = ServerError()
 
-            msg = str(e)
+            msg = repr(e)
             if request:
-                msg += ':' + request.path
+                msg = 'Error occured during handle request %r:\n\t%s' % (request.path, msg)
             self._logger.warning(msg)
         finally:
             self.config.middleware_manager.handle_leaving(request, response)

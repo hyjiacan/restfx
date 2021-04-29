@@ -67,8 +67,9 @@ class Logger:
             raise Exception(message)
 
         # 修改异常消息
-        # new_msg = '%s\n\t%s' % (temp, e.args[0]) if len(e.args) > 0 else temp
-        e.args = (temp,)
+        new_msg = '%s\n\t%s' % (temp, *e.args) if len(e.args) > 0 else temp
+        e.args = new_msg
+        # e.args = (temp,)
         # e.msg = temp
         raise e
 
