@@ -551,6 +551,14 @@ details[open] summary {
     max-height: 100%;
 }
 
+#test-panel .url-info .method {
+    line-height: 28px;
+}
+
+#test-panel .url-info {
+    grid-template-columns: 60px 1fr 80px;
+}
+
 #test-panel td {
     padding: 2px 5px 0 5px;
 }
@@ -673,6 +681,7 @@ textarea.arg-value:active {
 .response-content > pre {
     word-break: break-all;
     line-height: 1.5;
+    white-space: break-spaces;
 }
 
 .required {

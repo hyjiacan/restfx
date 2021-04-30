@@ -1,10 +1,14 @@
 (function () {
-  function serializeParams(params) {
+  function serializeParams(url, params) {
     var temp = []
     for (var key in params) {
       temp.push(key + '=' + params[key])
     }
-    return '?' + temp.join('&')
+    if (url.indexOf('?') === -1) {
+      url += '?'
+    }
+    url += '&' + temp.join('&')
+    return url
   }
 
   function request(method, url, options) {
@@ -15,7 +19,7 @@
       }
     }
     if (options.param) {
-      url += serializeParams(options.param)
+      url = serializeParams(url, options.param)
     }
     xhr.responseType = 'arraybuffer'
     xhr.open(method.toUpperCase(), url, true)

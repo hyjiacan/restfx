@@ -4,6 +4,8 @@ from enum import Enum
 from functools import wraps, partial
 from typing import Tuple, Union
 
+from werkzeug.datastructures import MultiDict
+
 from .validator import Validator
 from ..config import AppConfig
 from ..http import HttpRequest, ServerError
@@ -189,7 +191,7 @@ def _get_parameter_str(args_def: OrderedDict):
     return ', '.join(filter(lambda n: n[0] != '_', [str(args_def[arg]) for arg in args_def]))
 
 
-def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, backup2):
+def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
     """
 
     :param data:
@@ -197,34 +199,45 @@ def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification, backup1, 
     :param arg_spec:
     :return: True 表示使用默认值 False 表示未使用默认值 None 表示无值
     """
-    if name in data:
-        return False, data[name]
-
     alias = arg_spec.alias
+    # 提供对 a[]=1&a[]=2 的支持
+    name_arr = name + '[]'
+    alias_arr = alias + '[]' if alias else None
+    is_arr = False
+    if name in data:
+        result = False, data.getlist(name)
+    elif alias and alias in data:
+        result = False, data.getlist(alias)
+    elif name_arr in data:
+        is_arr = True
+        result = False, data.getlist(name_arr)
+    elif alias_arr and alias_arr in data:
+        is_arr = True
+        result = False, data.getlist(alias_arr)
+    elif arg_spec.has_default:
+        # 使用默认值
+        result = True, arg_spec.default
+    else:
+        # 缺少无默认值的参数
+        result = None, None
 
-    if alias is not None and alias in data:
-        return False, data[alias]
+    use_default, value = result
 
-    if isinstance(backup1, dict):
-        if name in backup1:
-            return False, backup1[name]
+    if use_default is not False:
+        return result
 
-        if alias is not None and alias in backup1:
-            return False, backup1[alias]
+    if is_arr:
+        # 返回为 tuple 类型
+        return result, tuple(value)
 
-    if isinstance(backup2, dict):
-        if name in backup2:
-            return False, backup2[name]
-
-        if alias is not None and alias in backup2:
-            return False, backup2[alias]
-
-    # 使用默认值
-    if arg_spec.has_default:
-        return True, arg_spec.default
-
-    # 缺少无默认值的参数
-    return None, None
+    # 校验值的类型 (list, tuple) 或者未指定类型时，允许其值为数组
+    if (not arg_spec.has_annotation and len(value) > 1) or arg_spec.annotation is tuple:
+        # 未指定类型时，使用 tuple 而不是 list
+        return tuple(result)
+    if arg_spec.annotation is list:
+        return result
+    # 其它类型时，取值列表中的最后一个值
+    return use_default, value[-1]
 
 
 def _get_enum_value(arg_spec, arg_value):
@@ -362,26 +375,24 @@ def _fill_injections(request, func, injection_args, actual_args, config):
     return None
 
 
-def _get_variable_args(request, arg_source, used_args):
+def _get_variable_args(arg_source, used_args):
     # 填充可变参数
     variable_args = {}
     for item in arg_source:
         if item in used_args:
             continue
-        variable_args[item] = arg_source[item]
+        value = arg_source.getlist(item)
+        # 当值长度大于1时，使用 tuple
+        # 或者 item 以 [] 结尾
+        if item.endswith('[]'):
+            variable_args[item[:-2]] = tuple(value)
+            continue
+        variable_args[item] = tuple(value) if len(value) > 1 else value[-1]
 
-    # noinspection PyUnresolvedReferences
-    if isinstance(request.BODY, dict):
-        for item in request.BODY:
-            if item in used_args:
-                continue
-            # noinspection PyUnresolvedReferences
-            variable_args[item] = request.BODY[item]
     return variable_args
 
 
 def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: AppConfig) -> dict or HttpResponse:
-    method = request.method.lower()
     actual_args = {}
 
     # 已使用的参数名称，用于后期填充可变参数时作排除用
@@ -389,8 +400,14 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
     # 是否声明了可变参数
     has_variable_args = False
 
-    # noinspection PyUnresolvedReferences
-    arg_source = request.GET if method in ['delete', 'get'] else request.POST
+    # 合并参数成一个对象
+    # 注意：不同来源（get/post）的参数会被覆盖 (post 覆盖 get) 的值
+    arg_source = MultiDict(request.GET)
+    arg_source.update(request.POST)
+    if isinstance(request.BODY, dict):
+        arg_source.update(request.BODY)
+    if isinstance(request.FILES, dict):
+        arg_source.update(request.FILES)
 
     # 声明的注入参数集合
     injection_args = []
@@ -426,8 +443,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
             actual_args[arg_name] = sess
             continue
 
-        # noinspection PyUnresolvedReferences
-        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec, request.BODY, request.FILES)
+        use_default, arg_value = _get_value(arg_source, arg_name, arg_spec)
 
         # 未找到参数
         if use_default is None:
@@ -451,7 +467,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
     if isinstance(result, HttpResponse):
         return result
 
-    variable_args = _get_variable_args(request, arg_source, used_args)
+    variable_args = _get_variable_args(arg_source, used_args)
 
     # 没有可变参数
     if not variable_args:

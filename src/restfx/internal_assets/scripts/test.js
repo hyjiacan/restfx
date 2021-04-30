@@ -16,7 +16,7 @@
     responseStatus.addClass(xhr.status === 200 ? 'status-success' : 'status-failure')
 
     if (xhr.status === 0) {
-        return
+      return
     }
 
     statusCode.text(xhr.status)
@@ -61,7 +61,7 @@
         renderResponseInfo(response, start)
 
         if (response.status === 0) {
-            return
+          return
         }
         renderTestResponse(response, url)
       }
@@ -162,8 +162,8 @@
     var api = API_LIST[id]
     $('.module', testPanel).text(api.module)
     $('.name', testPanel).text(api.name)
-    $('.info', testPanel).empty()
-    $('.info', testPanel).append(renderUrlInfo(api))
+    $('.url-info .method', testPanel).text(api.method)
+    $('.url-info .url', testPanel).val(urlRoot + '/' + apiPrefix + api.path)
 
     if (api.addition_info) {
       $('.addition-info', testPanel).html(api.addition_info).show()
@@ -253,7 +253,7 @@
 
   $('#btn-send-test', testPanel).on('click', function () {
     var method = $('.method', testPanel).text().trim()
-    var url = $('.url', testPanel).text().trim()
+    var url = $('.url', testPanel).val().trim()
     sendTest(method, url)
   })
 

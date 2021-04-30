@@ -12,7 +12,7 @@ def get_old_value():
 @route('', '包路由', auth=False, extname='asp', validators=(
         MyValidator('content').range(10, 120).all_a(),
 ))
-def get(request, content, session, e: OpTypes):
+def get(request, content, session, a, e: OpTypes, **kwargs):
     """
     这是一个<b>包路由</b>
 
@@ -63,7 +63,9 @@ def get(request, content, session, e: OpTypes):
         'data': '来自包中的数据',
         'content': content,
         'old': old,
-        'enum': e
+        'enum': e.name,
+        'a': a,
+        'b[]': kwargs.get('b')
     }
 
 
