@@ -1,4 +1,5 @@
 import inspect
+import re
 
 
 def load_module(module_name: str, level=0):
@@ -49,20 +50,18 @@ def get_ip_list():
 
 
 def get_exception_info(message: str, e: Exception = None):
-    messages = [message]
+    messages = []
     if e:
         tb = e.__traceback__
 
         while tb:
-            msg = str(tb.tb_frame)
-            # 移除前面的 '<frame at 0x0000016FE8839208, f' 字样
-            # 和
-            # 后面的 '>' 字样
-            m = 'F' + msg[31:-1].replace('\\\\', '\\').replace("'", '"')
-            messages.append(m)
+            msg = str(tb.tb_frame.f_code)
+            match = re.match(r'^<code object (?P<name>([a-zA-Z0-9_]+?)) at.+?, file (?P<file>(.+?)),.+$', msg)
+            if match:
+                msg = 'File %s, line %s, code %s' % (match.group('file'), tb.tb_frame.f_lineno, match.group('name'))
+            messages.append(msg)
 
             tb = tb.tb_next
 
-        messages.append('\t' + str(e))
-
+    messages.append(message)
     return '\n\t'.join(messages)

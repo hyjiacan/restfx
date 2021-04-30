@@ -1,6 +1,7 @@
 # import atexit
 import os
 import sys
+import urllib.parse
 import uuid
 from types import FunctionType
 
@@ -155,7 +156,7 @@ class App:
             else:
                 response = NewNotFound()
         except Exception as e:
-            msg = repr(e)
+            msg = '\n\t'.join(e.args)
             if request:
                 msg = 'Error occured during handle request %r:\n\t%s' % (request.path, msg)
 
@@ -164,7 +165,7 @@ class App:
             if isinstance(e, NotFound):
                 response = NewNotFound()
             elif self.config.debug:
-                response = ServerError(msg)
+                response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
             else:
                 response = ServerError()
         finally:
