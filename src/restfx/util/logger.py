@@ -46,7 +46,7 @@ class Logger:
         self.log('warning', message)
 
     def error(self, message, e=None, _raise=True):
-        temp = utils.get_exception_info(message, e)
+        temp = utils.get_exception_info(e, message)
 
         # 非开发模式时，始终不会输出堆栈信息
         if not self.debug:

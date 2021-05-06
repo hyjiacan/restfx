@@ -49,19 +49,22 @@ def get_ip_list():
     return ips
 
 
-def get_exception_info(message: str, e: Exception = None):
+def get_exception_info(e: Exception, message: str = None, as_str=False):
     messages = []
     if e:
         tb = e.__traceback__
 
         while tb:
             msg = str(tb.tb_frame.f_code)
-            match = re.match(r'^<code object (?P<name>([a-zA-Z0-9_]+?)) at.+?, file (?P<file>(.+?)),.+$', msg)
+            match = re.match(r'^<code object (?P<name>(<module>|[a-zA-Z0-9_]+?)) at.+?, file (?P<file>(.+?)),.+$', msg)
             if match:
                 msg = 'File %s, line %s, code %s' % (match.group('file'), tb.tb_frame.f_lineno, match.group('name'))
             messages.append(msg)
 
             tb = tb.tb_next
 
-    messages.append(message)
+    if message:
+        messages.append(message)
+    else:
+        messages.append(str(e))
     return '\n\t'.join(messages)

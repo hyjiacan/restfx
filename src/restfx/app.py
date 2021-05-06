@@ -1,20 +1,17 @@
 # import atexit
 import os
 import sys
-import urllib.parse
 import uuid
 from types import FunctionType
 
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
 
-from .http import HttpRequest
+from restfx.globals import _app_ctx_stack
+from restfx.util import ContextStore, utils
+from .http import HttpRequest, NotFound, ServerError
 from .middleware import MiddlewareManager
 from .routes import Collector
-
-from restfx.globals import _app_ctx_stack
-
-from restfx.util import ContextStore
 
 
 class AppContext:
@@ -135,7 +132,6 @@ class App:
         :param start_response:
         :return:
         """
-        from .http import ServerError, NotFound as NewNotFound
 
         request = None
         response = None
@@ -154,16 +150,16 @@ class App:
             elif endpoint in self._custom_url_map:
                 response = self._custom_url_map[endpoint](request, **values)
             else:
-                response = NewNotFound()
+                response = NotFound()
         except Exception as e:
-            msg = '\n\t'.join(e.args)
+            msg = '\n\t'.join(utils.get_exception_info(e, as_str=True))
             if request:
                 msg = 'Error occured during handle request %r:\n\t%s' % (request.path, msg)
 
             self._logger.warning(msg)
 
-            if isinstance(e, NotFound):
-                response = NewNotFound()
+            if isinstance(e, SuperNotFound):
+                response = NotFound()
             elif self.config.debug:
                 response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
             else:

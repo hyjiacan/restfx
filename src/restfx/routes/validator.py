@@ -154,6 +154,14 @@ class Validator:
             self._append_rule(DefaultValidators.enums, (enums, msg))
         return self
 
+    def when(self, **kwargs):
+        """
+        当满足指定的条件时执行校验
+        :param kwargs: 指定字段和值，如果值为 tuple ，表示字段值在某范围内
+        :return:
+        """
+        raise NotImplemented()
+
     def empty(self, allow=True, msg='Value must not be empty'):
         """
         是否允许输入为空 (包括空串，空列表，空元组)，这应该是校验的第一个接口

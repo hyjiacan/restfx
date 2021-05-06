@@ -161,7 +161,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
         message = get_func_info(func)
         Logger.get(config.app_id).error(message, e, False)
         from restfx.util import utils
-        return handle_response(ServerError(utils.get_exception_info(message, e)))
+        return handle_response(ServerError(utils.get_exception_info(e, message, True)))
 
     return handle_response(wrap_response(result))
 
