@@ -1,4 +1,4 @@
-# import atexit
+import atexit
 import os
 import sys
 import uuid
@@ -112,9 +112,7 @@ class App:
 
         super(App, self).__init__()
 
-    # @atexit.register
-    # def dispose(self):
-    def __del__(self):
+    def dispose(self):
         self.config.middleware_manager.handle_shutdown()
 
         del self.config.middleware_manager
@@ -152,11 +150,11 @@ class App:
             else:
                 response = NotFound()
         except Exception as e:
-            msg = '\n\t'.join(utils.get_exception_info(e, as_str=True))
+            msg = utils.get_exception_info(e)
             if request:
-                msg = 'Error occured during handle request %r:\n\t%s' % (request.path, msg)
+                msg = 'Error occurred during handling request %r:\n\t%s' % (request.path, msg)
 
-            self._logger.warning(msg)
+            self._logger.error(msg)
 
             if isinstance(e, SuperNotFound):
                 response = NotFound()
@@ -387,6 +385,15 @@ class App:
         获取指定的应用
         :param app_id:
         :return:
-        :rtype: AppContext
+        :rtype: App
         """
         return cls._APPS.get(app_id)
+
+
+@atexit.register
+def _destroy_apps():
+    # Parse the ids into list to avoid the error "RuntimeError: dictionary changed size during iteration"
+    app_ids = list(App._APPS.keys())
+    for app_id in app_ids:
+        app = App.get(app_id)
+        app.dispose()

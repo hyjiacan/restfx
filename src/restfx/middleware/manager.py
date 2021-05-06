@@ -11,21 +11,13 @@ class MiddlewareManager:
         self.config = config
         self.logger = Logger.get(app_id)
 
-    # def handle_startup(self, app):
-    #     for middleware in self.config.middlewares:
-    #         try:
-    #             middleware.on_startup(app)
-    #         except Exception as e:
-    #             self.logger.error(utils.get_func_info(middleware.on_startup), e)
-    #             break
-
     def handle_shutdown(self):
         for middleware in self.config.reversed_middlewares:
             try:
                 middleware.on_shutdown()
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.on_shutdown), e)
-                break
+                raise e
 
     def handle_coming(self, request):
         for middleware in self.config.middlewares:
@@ -33,7 +25,7 @@ class MiddlewareManager:
                 result = middleware.on_coming(request)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.on_coming), e)
-                break
+                raise e
             # 返回的值为 None，继续执行下一个中间件
             if result is None:
                 continue
@@ -46,7 +38,7 @@ class MiddlewareManager:
                 result = middleware.on_leaving(request, response)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.on_leaving), e)
-                break
+                raise e
             # 返回的值为 None，继续执行下一个中间件
             if result is None:
                 continue
@@ -59,7 +51,7 @@ class MiddlewareManager:
                 result = middleware.process_request(request, meta)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.process_request), e)
-                break
+                raise e
             # 返回的值为 None，继续执行下一个中间件
             if result is None:
                 continue
@@ -76,7 +68,7 @@ class MiddlewareManager:
                 result = middleware.process_invoke(request, meta, args)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.process_invoke), e)
-                break
+                raise e
             # 返回的值为 None，继续执行下一个中间件
             if result is None:
                 continue
@@ -93,7 +85,7 @@ class MiddlewareManager:
                 result = middleware.process_return(request, meta, data=data)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.process_return), e)
-                break
+                raise e
             # 返回的值为 None，继续执行下一个中间件
             if result is None:
                 continue
@@ -115,7 +107,7 @@ class MiddlewareManager:
                 result = middleware.process_response(request, meta, response=response)
             except Exception as e:
                 self.logger.error(utils.get_func_info(middleware.process_response), e)
-                break
+                raise e
             # 返回 None，那么继续执行下一个中间件
             if result is None:
                 continue

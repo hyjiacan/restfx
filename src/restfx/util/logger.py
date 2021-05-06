@@ -45,30 +45,9 @@ class Logger:
     def warning(self, message):
         self.log('warning', message)
 
-    def error(self, message, e=None, _raise=True):
-        temp = utils.get_exception_info(e, message)
-
-        # 非开发模式时，始终不会输出堆栈信息
-        if not self.debug:
-            self.log('error', temp, e)
-            return
-
-        # print('\033[1;31;47m {0} \033[0m'.format(temp))
-        # if e is not None:
-        #     print(repr(e.__traceback__.tb_frame))
-
-        # 不需要抛出异常
-        if not _raise:
-            self.log('error', temp, e)
-            return
-
-        # 抛出新的异常
-        if e is None:
-            raise Exception(message)
-
-        # 修改异常消息
-        e.args = (temp, *e.args)
-        raise e
+    def error(self, message, e=None):
+        # self.log('error', utils.get_exception_info(e, message))
+        self.log('error', message)
 
     @classmethod
     def remove(cls, app_id: str):

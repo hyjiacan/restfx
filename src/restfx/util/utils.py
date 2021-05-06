@@ -49,7 +49,7 @@ def get_ip_list():
     return ips
 
 
-def get_exception_info(e: Exception, message: str = None, as_str=False):
+def get_exception_info(e: Exception, message: str = None):
     messages = []
     if e:
         tb = e.__traceback__
@@ -67,4 +67,5 @@ def get_exception_info(e: Exception, message: str = None, as_str=False):
         messages.append(message)
     else:
         messages.append(str(e))
+
     return '\n\t'.join(messages)

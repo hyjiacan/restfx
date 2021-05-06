@@ -156,7 +156,7 @@ class Collector:
                     'Cannot load module "%s"' % pkg
                 )
                 Logger.get(self.app_id).error(msg, e)
-                return
+                raise e
             handler_obj = getattr(module, func_name)
             handler_info = FunctionDescription(handler_obj)
 
@@ -276,6 +276,7 @@ class Collector:
                                 'Cannot retrieve value "%s.%s" from type "%s"' % (type_name, type_val, type_name)
                             )
                             logger.error(msg)
+                            raise Exception(msg)
                         arg_value = getattr(type_def, type_val)
                     else:
                         # 其它类型暂时不支持
@@ -315,8 +316,7 @@ class Collector:
                 msg = 'File "%s", line %d, code %s\n\t%s' % (
                     filename, func_def.lineno, func_def.name,
                     'Unexpected usage with "@route", use "@route()" instead.')
-                logger.error(msg)
-                continue
+                raise Exception(msg)
 
             return {
                 'lineno': func_def.lineno,

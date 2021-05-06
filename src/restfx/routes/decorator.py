@@ -1,15 +1,15 @@
 import json
 from collections import OrderedDict
 from enum import Enum
-from functools import wraps, partial
+from functools import partial, wraps
 from typing import Tuple, Union
 
 from werkzeug.datastructures import MultiDict
 
 from .validator import Validator
+from .parameter_interface import IParam
 from ..config import AppConfig
-from ..http import HttpRequest, ServerError
-from ..http import HttpResponse, BadRequest, JsonResponse
+from ..http import BadRequest, HttpRequest, HttpResponse, JsonResponse, ServerError
 from ..routes.meta import RouteMeta
 from ..session import HttpSession
 from ..util import Logger
@@ -159,9 +159,11 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
             result = func(**actual_args)
     except Exception as e:
         message = get_func_info(func)
-        Logger.get(config.app_id).error(message, e, False)
+        Logger.get(config.app_id).error(message, e)
+        if config.debug:
+            raise e
         from restfx.util import utils
-        return handle_response(ServerError(utils.get_exception_info(e, message, True)))
+        return handle_response(ServerError(message))
 
     return handle_response(wrap_response(result))
 
@@ -292,6 +294,11 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             Logger.get(config.app_id).warning(msg)
             return BadRequest(msg)
 
+        return result
+
+    # 声明的类型为 IParam，调用  parse 进行转换
+    if issubclass(arg_spec.annotation, IParam):
+        result = arg_spec.annotation.parse(arg_value)
         return result
 
     # 转换失败时，会抛出异常
@@ -458,6 +465,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
             continue
 
         val = _get_input_value(arg_spec, arg_name, arg_value, config)
+
         if isinstance(val, HttpResponse):
             return val
         actual_args[arg_name] = val

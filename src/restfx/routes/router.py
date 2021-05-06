@@ -2,7 +2,7 @@ from types import FunctionType
 
 from .route_resolver import RouteResolver
 from ..config import AppConfig
-from ..http import NotFound, HttpResponse
+from ..http import HttpResponse, NotFound
 from ..http.request import HttpRequest
 
 
@@ -53,3 +53,4 @@ class Router:
         except Exception as e:
             from ..util import Logger, func_util
             Logger.get(self.config.app_id).error(func_util.get_func_info(func), e)
+            raise e
