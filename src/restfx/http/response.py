@@ -7,14 +7,14 @@ from werkzeug.wrappers import Response
 
 
 class HttpResponse(Response):
-    def __init__(self, content=None, content_type='text/html;charset=utf8',
+    def __init__(self, content=None, content_type='text/html;charset=utf-8',
                  status=200, headers=None, **kwargs):
         super().__init__(content, content_type=content_type, status=status,
                          headers=headers, **kwargs)
 
 
 class JsonResponse(HttpResponse):
-    def __init__(self, obj, encoder=None, content_type='application/json;charset=utf8',
+    def __init__(self, obj, encoder=None, content_type='application/json;charset=utf-8',
                  ensure_ascii=True, **kwargs):
         content = json.dumps(obj, ensure_ascii=ensure_ascii, cls=encoder)
         super().__init__(content, content_type=content_type, **kwargs)

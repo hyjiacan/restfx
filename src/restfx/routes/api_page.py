@@ -108,7 +108,7 @@ class ApiPage:
 
         from restfx.http import FileResponse
         return FileResponse(content,
-                            content_type='application/markdown;charset=utf8',
+                            content_type='application/markdown;charset=utf-8',
                             request=request,
                             attachment='%s[%s].md' % (
                                 self.config.api_page_name,
