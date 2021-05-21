@@ -1,5 +1,6 @@
 import json
-from typing import IO, Tuple, Union
+from io import IOBase
+from typing import Tuple, Union
 
 from werkzeug.exceptions import InternalServerError
 from werkzeug.utils import escape
@@ -21,7 +22,7 @@ class JsonResponse(HttpResponse):
 
 
 class FileResponse(HttpResponse):
-    def __init__(self, fp: Union[str, bytes, IO], attachment: str = None,
+    def __init__(self, fp: Union[str, bytes, IOBase], attachment: str = None,
                  content_type=None,
                  ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
@@ -49,8 +50,9 @@ class FileResponse(HttpResponse):
 
         # 需要分块返回文件
         if ranges:
-            if not isinstance(fp, IO):
-                raise TypeError('FileResponse with "ranges" works with type "IO" only')
+            # fix https://gitee.com/hyjiacan/restfx/issues/I3SBXR
+            if not isinstance(self.fp, IOBase):
+                raise TypeError('FileResponse with "ranges" works with type "IOBase" only')
             if not self._get_file_chunk(ranges, kwargs):
                 super(FileResponse, self).__init__(status=416)
                 return

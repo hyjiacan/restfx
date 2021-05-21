@@ -6,8 +6,8 @@ from typing import Tuple, Union
 
 from werkzeug.datastructures import MultiDict
 
-from .validator import Validator
 from .parameter_interface import IParam
+from .validator import Validator
 from ..config import AppConfig
 from ..http import BadRequest, HttpRequest, HttpResponse, JsonResponse, ServerError
 from ..routes.meta import RouteMeta
@@ -229,16 +229,11 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
         return result
 
     if is_arr:
+        # 请求参数本就为数组: param[]
         # 返回为 tuple 类型
-        return result, tuple(value)
+        return use_default, tuple(value)
 
-    # 校验值的类型 (list, tuple) 或者未指定类型时，允许其值为数组
-    if (not arg_spec.has_annotation and len(value) > 1) or arg_spec.annotation is tuple:
-        # 未指定类型时，使用 tuple 而不是 list
-        return tuple(result)
-    if arg_spec.annotation is list:
-        return result
-    # 其它类型时，取值列表中的最后一个值
+    # 当请求的不是数组时，使用最后一个值
     return use_default, value[-1]
 
 
@@ -271,6 +266,11 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
         return arg_value
 
     # 类型不一致，尝试转换类型
+    if arg_spec.annotation is tuple and isinstance(arg_value, list):
+        return tuple(arg_value)
+
+    if arg_spec.annotation is list and isinstance(arg_value, tuple):
+        return list(arg_value)
 
     # 当声明的参数类型是布尔类型时，收到的值可能是一个字符串（其值为 true 、 false）
     if arg_spec.annotation is bool and isinstance(arg_value, str):
