@@ -24,7 +24,7 @@ class RouteResolver:
 
         if os.path.isdir(abs_path):
             # 如果 module_name 是目录，那么就查找 __init__.py 是否存在
-            self.logger.info('Entry "%s" is package, auto load module "__init__.py"' % module_name)
+            self.logger.info('Entry "%s" is a package, auto load module "__init__.py"' % module_name)
             return '%s%s%s' % (module_name, os.path.sep, '__init__')
 
         if os.path.exists('%s.py' % abs_path):

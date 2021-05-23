@@ -51,6 +51,7 @@ class FileResponse(HttpResponse):
         # 需要分块返回文件
         if ranges:
             # fix https://gitee.com/hyjiacan/restfx/issues/I3SBXR
+            # IOBase for BufferedReader(with open(xxx)) and BytesIO, etc.
             if not isinstance(self.fp, IOBase):
                 raise TypeError('FileResponse with "ranges" works with type "IOBase" only')
             if not self._get_file_chunk(ranges, kwargs):
