@@ -1,9 +1,29 @@
 (function () {
-  function parseChsNumber(value) {
-    var chs = '零一二三四五六七八九'
-    return value.toString().split('').map(function (item) {
-      return chs[parseInt(item)]
-    }).join('')
+  function parseChsNumber(num) {
+    var keys = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+    var count = ['', '十', '百', '千']
+    var str = ''
+    var nums = num.toString().split('').reverse()
+
+    nums.map(function (value, index) {
+      str = keys[value] +
+        (value == 0 ? '' : count[index > 3 ? index % 4 : index]) +
+        (index == 4 ? '万' : '') +
+        str
+    })
+
+    /*
+     * 需要去掉的零：
+     * 1.后面跟着零的零
+     * 2.最后连续的零
+     * 3.万前面的零
+     *
+     * 将 一十 开头的处理成 十
+     */
+    return str.replace(/^一(?=十)|零(?=零)|零$|零(?=万)/g, '')
+    // ————————————————
+    // 版权声明：本文为CSDN博主「web_wyj」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+    // 原文链接：https://blog.csdn.net/web_wyj/article/details/79477769
   }
 
   function formatCommentItem(item, isArg, seperator) {
@@ -16,7 +36,6 @@
     }
     return item.lines.map(function (line) {
       return line.replace(/\t/g, '    ')
-        .replace(/ /g, '&nbsp;')
     }).join('')
   }
 
@@ -118,7 +137,7 @@
 
   function renderRoute(route, index) {
     return [
-      h(3, index + '. [路由] ' + (route.name || '_<未命名>_')),
+      h(3, index + '. ' + (route.name || '_<未命名>_')),
       route.handler_info.description ?
         '\n> ' + formatComment(route.handler_info.description, false) + '\n' : '',
       renderUrlInfo(route),
@@ -135,9 +154,7 @@
     var routes = window.apiData.modules[moduleName]
 
     var data = [
-      h(2, parseChsNumber(index + 1) + '、 [模块] ' +
-        (moduleName || '_<未命名>_') +
-        ' <span style="font-size: 0.8em;font-weight: normal;color: #0977c0;margin-left: 20px;"> *' + routes.length + '</span>')
+      h(2, parseChsNumber(index + 1) + '、' + (moduleName || '_<未命名>_'))
     ]
 
     var routeCount = routes.length
