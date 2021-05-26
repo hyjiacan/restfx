@@ -49,7 +49,6 @@ function formatComment(comment) {
     }
     return item.lines.map(function (line) {
       return line.replace(/\t/g, '    ')
-        .replace(/ /g, '&nbsp;')
         .replace(/`(.+?)`/g, function (match, code) {
           return '<code>' + code + '</code>'
         })
@@ -341,6 +340,8 @@ function renderArg(arg, editable) {
       argType = 'file'
     } else if (argType === 'list') {
       argType = 'array'
+    } else if (argType === 'dict') {
+      argType = 'object'
     }
   } else {
     argType = '-'
