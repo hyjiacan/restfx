@@ -134,6 +134,8 @@ function goToAnchor() {
     if (anchor.parent().is('summary')) {
       // 锚点是模块，那么直接滚动到其位置
       anchor.get(0).scrollIntoView()
+      // 然后展开其模块节点
+      anchor.parent().parent().prop('open', 'open')
       break
     }
     // 锚点是路由，那么展开其所在模块，然后滚动到其位置
