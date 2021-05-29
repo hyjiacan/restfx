@@ -390,7 +390,10 @@ function renderArgs(args, editable, append) {
       ]))
     ])
   }
+  return renderArgRows(args, editable, append)
+}
 
+function renderArgRows(args, editable, append) {
   var rows = args.filter(function (arg) {
     // 编辑时不渲染 可变参数
     return !editable || !arg.is_variable

@@ -10,7 +10,8 @@
   var hlItems = []
 
   window.addEventListener('keydown', function (e) {
-    if (!e.ctrlKey || e.keyCode !== 70) {
+    // Ctrl K 查找
+    if (!e.ctrlKey || e.keyCode !== 75) {
       return
     }
     e.preventDefault()

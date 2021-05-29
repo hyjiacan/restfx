@@ -25,7 +25,7 @@
     <div id="tools">
       <div class="buttons">
         <input type="text" id="search-input" title="按 Esc 取消查找" maxlength="64"
-               placeholder="查找接口: 快捷键 Ctrl-F"/>
+               placeholder="查找接口: 快捷键 Ctrl-K"/>
         <i></i>
         <button onclick="collapseAll()">全部收起</button>
         <button onclick="expandAll()">全部展开</button>
@@ -73,108 +73,147 @@
     <div class="panel-body">
       <div class="url-info">
         <span class="method"></span>
-        <input class="url" type="url" maxlength="1024" />
+        <input class="url" type="url" maxlength="1024"/>
         <button id="btn-send-test">发送</button>
       </div>
       <div class="addition-info"></div>
-      <table class="args-table">
-        <caption>
-          参数信息
-        </caption>
-        <colgroup>
-          <col style="width: 200px"/>
-          <col style="width: 200px"/>
-          <col style="width: 200px"/>
-          <col style="width: auto"/>
-        </colgroup>
-        <thead>
-        <tr>
-          <th>名称</th>
-          <th>类型</th>
-          <th>值</th>
-          <th>描述</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="response">
-        <p>
-          <span>响应</span>
-          <span class="response-status">
+      <div class="tabs-layout">
+        <ul class="tabs-header">
+          <li data-index="0" class="active">参数</li>
+          <li data-index="1">请求头</li>
+        </ul>
+        <div class="tabs-content">
+          <table class="tabs-item args-table active">
+            <caption>
+              参数信息
+            </caption>
+            <colgroup>
+              <col style="width: 200px"/>
+              <col style="width: 200px"/>
+              <col style="width: 200px"/>
+              <col style="width: auto"/>
+            </colgroup>
+            <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th>值</th>
+              <th>描述</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <table class="tabs-item header-table">
+            <colgroup>
+              <col style="width: 40px;">
+              <col style="width: 30%">
+              <col style="width: 50%">
+              <col style="width: 60px">
+            </colgroup>
+            <thead>
+            <tr>
+              <td>启用</td>
+              <td>名称</td>
+              <td>值</td>
+              <td></td>
+            </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tabs-layout response">
+        <ul class="tabs-header">
+          <li data-index="0" class="active">响应内容</li>
+          <li data-index="1">响应头</li>
+          <li class="response-meta">
+            <span></span>
+            <span class="response-status">
                 <span class="status-code"></span>
                 <span class="status-text"></span>
               </span>
-          <span class="response-time"></span>
-          <span class="response-type"></span>
-          <span class="response-length"></span>
-        </p>
-        <div class="response-content"></div>
+            <span class="response-time"></span>
+            <span class="response-type"></span>
+            <span class="response-length"></span>
+          </li>
+        </ul>
+        <div class="tabs-content">
+          <div class="tabs-item response-content active"></div>
+          <table class="tabs-item response-header">
+            <thead>
+            <tr>
+              <td>名称</td>
+              <td>值</td>
+            </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-</div>
-<div id="option-panel">
-  <div class="panel">
-    <div class="panel-heading">
-      <span>选项</span>
+  <div id="option-panel">
+    <div class="panel">
+      <div class="panel-heading">
+        <span>选项</span>
 
-      <div class="panel-heading--buttons">
-        <button class="btn-fullscreen">全屏</button>
-        <button class="btn-close">关闭</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="options">
-        <div>
-          <span>URL选择策略:</span>
-          <select id="option-select-type">
-            <option value="0" selected>无</option>
-            <option value="1" selected>整个 URL</option>
-            <option value="2">从前缀开始(包含 /)</option>
-            <option value="3">从前缀开始(不含 /)</option>
-            <option value="4">仅路径(包含 /)</option>
-            <option value="5">仅路径(不含 /)</option>
-          </select>
-        </div>
-        <div>
-          <label for="expanded-on-load">
-            <input type="checkbox" id="expanded-on-load"/>
-            <span>加载后展开所有项</span>
-          </label>
-        </div>
-        <div>
-          <label for="dark-mode">
-            <input type="checkbox" id="dark-mode"/>
-            <span>启用深色模式</span>
-          </label>
+        <div class="panel-heading--buttons">
+          <button class="btn-fullscreen">全屏</button>
+          <button class="btn-close">关闭</button>
         </div>
       </div>
-    </div>
-    <div class="option-tip">
-      这些配置会保存在 <code>localStorage</code> 中
+      <div class="panel-body">
+        <div class="options">
+          <div>
+            <span>URL选择策略:</span>
+            <select id="option-select-type">
+              <option value="0" selected>无</option>
+              <option value="1" selected>整个 URL</option>
+              <option value="2">从前缀开始(包含 /)</option>
+              <option value="3">从前缀开始(不含 /)</option>
+              <option value="4">仅路径(包含 /)</option>
+              <option value="5">仅路径(不含 /)</option>
+            </select>
+          </div>
+          <div>
+            <label for="expanded-on-load">
+              <input type="checkbox" id="expanded-on-load"/>
+              <span>加载后展开所有项</span>
+            </label>
+          </div>
+          <div>
+            <label for="dark-mode">
+              <input type="checkbox" id="dark-mode"/>
+              <span>启用深色模式</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="option-tip">
+        这些配置会保存在 <code>localStorage</code> 中
+      </div>
     </div>
   </div>
-</div>
-<div id="btn-back-to-top" title="回到顶部"></div>
-<form action="" id="export-proxy" style="display: none" target="_blank" method="post">
-  <input type="hidden" name="data" id="md-content"/>
-</form>
-<script>
-var urlRoot = window.location.protocol + '//' + window.location.host
-var apiPrefix = window.location.pathname.substring(1)
-var API_LIST = Object.create(null)
-var list = $('#api-list')
-var testPanel = $('#test-panel')
-var optionPanel = $('#option-panel')
-</script>
-<script src="/internal_assets/scripts/renderers.js"></script>
-<script src="/internal_assets/scripts/index.js"></script>
-<script src="/internal_assets/scripts/panel.js" defer></script>
-<script src="/internal_assets/scripts/test.js" defer></script>
-<script src="/internal_assets/scripts/options.js" defer></script>
-<script src="/internal_assets/scripts/export.js" defer></script>
-<script src="/internal_assets/scripts/base64.js" defer></script>
-<script src="/internal_assets/scripts/jsonviewer.js" defer></script>
-<script src="/internal_assets/scripts/search.js" defer></script>
+  <div id="btn-back-to-top" title="回到顶部"></div>
+  <form action="" id="export-proxy" style="display: none" target="_blank" method="post">
+    <input type="hidden" name="data" id="md-content"/>
+  </form>
+  <script>
+  var urlRoot = window.location.protocol + '//' + window.location.host
+  var apiPrefix = window.location.pathname.substring(1)
+  var API_LIST = Object.create(null)
+  var list = $('#api-list')
+  var testPanel = $('#test-panel')
+  var optionPanel = $('#option-panel')
+  </script>
+  <script src="/internal_assets/scripts/renderers.js"></script>
+  <script src="/internal_assets/scripts/index.js"></script>
+  <script src="/internal_assets/scripts/panel.js" defer></script>
+  <script src="/internal_assets/scripts/test.js" defer></script>
+  <script src="/internal_assets/scripts/options.js" defer></script>
+  <script src="/internal_assets/scripts/export.js" defer></script>
+  <script src="/internal_assets/scripts/base64.js" defer></script>
+  <script src="/internal_assets/scripts/jsonviewer.js" defer></script>
+  <script src="/internal_assets/scripts/search.js" defer></script>
 </body>
 </html>

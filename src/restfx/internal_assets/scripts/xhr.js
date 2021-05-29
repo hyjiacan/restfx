@@ -7,7 +7,11 @@
     if (url.indexOf('?') === -1) {
       url += '?'
     }
-    url += '&' + temp.join('&')
+    var and = ''
+    if (url.indexOf('&') !== -1) {
+      and = '&'
+    }
+    url += and + temp.join('&')
     return url
   }
 
@@ -25,6 +29,11 @@
     xhr.open(method.toUpperCase(), url, true)
     xhr.setRequestHeader('accept', 'application/json;text/*;image/*;*/*')
     xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest')
+    if (options.headers) {
+      for (var headerName in options.headers) {
+        xhr.setRequestHeader(headerName, options.headers[headerName])
+      }
+    }
     xhr.send(options.data)
   }
 
@@ -50,6 +59,7 @@
   function getResponse(xhr, callback) {
     var data = xhr.response
     var headers = Object.create(null)
+    var rawHeaders = Object.create(null)
     xhr
       .getAllResponseHeaders()
       .split('\r\n')
@@ -58,7 +68,10 @@
         if (!temp[0]) {
           return
         }
-        headers[temp[0].trim()] = (temp[1] || '').trim()
+        var hn = temp[0].trim()
+        var hv = (temp[1] || '').trim()
+        headers[hn] = hv
+        rawHeaders[hn] = hv
       })
     var contentType = headers['content-type']
     if (!contentType) {
@@ -78,6 +91,7 @@
         data: data,
         isText: isText,
         headers: headers,
+        rawHeaders: rawHeaders,
         status: xhr.status,
         statusText: xhr.statusText
       })

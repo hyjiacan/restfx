@@ -1,5 +1,8 @@
 (function () {
+  var argsTable = $('table.args-table', testPanel)
+  var headerTable = $('table.header-table', testPanel)
   var responseContent = $('div.response-content', testPanel)
+  var responseHeader = $('table.response-header tbody', testPanel)
   var responseStatus = $('.response-status', testPanel)
   var statusCode = $('.status-code', testPanel)
   var statusText = $('.status-text', testPanel)
@@ -8,12 +11,22 @@
   var responseType = $('.response-type', testPanel)
 
   function renderResponseInfo(xhr, start) {
-
     var end = new Date().getTime()
     responseTime.text('耗时: ' + (end - start) + 'ms')
 
     responseStatus.removeClass('status-success status-failure')
     responseStatus.addClass(xhr.status === 200 ? 'status-success' : 'status-failure')
+
+    // 渲染响应头
+    responseHeader.empty()
+    for (var headerName in xhr.rawHeaders) {
+      responseHeader.append(el('tr', {
+        'class': 'response-header--row'
+      }, [
+        el('td', null, headerName),
+        el('td', null, xhr.rawHeaders[headerName])
+      ]))
+    }
 
     if (xhr.status === 0) {
       return
@@ -30,7 +43,7 @@
   }
 
   function sendTest(method, url) {
-    responseContent.empty().hide()
+    responseContent.empty()
     responseStatus.removeClass('status-success status-failure')
     statusCode.empty()
     statusText.empty()
@@ -38,7 +51,7 @@
     responseLength.empty()
 
     var fields = Object.create(null)
-    $('input.arg-value, textarea.arg-value', testPanel).each(function () {
+    $('input.arg-value, textarea.arg-value', argsTable).each(function () {
       var field = $(this)
       field.removeClass('required')
       field = field[0]
@@ -89,6 +102,22 @@
     } else {
       option.param = formData
     }
+
+    var headers = {}
+    headerTable.find('tr.test-row--header').each(function () {
+      var row = $(this)
+      if (!row.find('input[type=checkbox]').is(':checked')) {
+        return
+      }
+      var name = row.find('input.test-header--name').val().trim()
+      var value = row.find('input.test-header--value').val().trim()
+      if (!name) {
+        return
+      }
+      headers[name] = value
+    })
+
+    option.headers = headers
 
     xhr(method, url, option)
   }
@@ -157,6 +186,51 @@
     nameField.focus()
   }
 
+  function initHeaders() {
+    var table = headerTable.find('tbody')
+    // table.empty()
+
+    var toolRow = null
+
+    var button = el('a', {href: 'javascript:', id: 'btn-add-test-header'}, '添加头')
+    // 有可变参数，添加字段工具行
+    toolRow = el('tr', {
+      'class': 'test-row--tool'
+    }, [
+      el('td', null, button),
+      el('td'),
+      el('td'),
+      el('td')
+    ])
+    button.addEventListener('click', function () {
+      var removeButton = el('a', {
+        href: 'javascript:',
+        'class': 'btn-remove-test-header'
+      }, '移除')
+      var newRow = el('tr', {'class': 'test-row--header'}, [
+        el('td', null, el('input', {
+          type: 'checkbox', 'class': 'test-header--checkbox', checked: 'checked'
+        })),
+        el('td', null, el('input', {
+          type: 'text', 'class': 'test-header--name arg-value', maxlength: 1024
+        })),
+        el('td', null, el('input', {
+          type: 'text', 'class': 'test-header--value arg-value', maxlength: 1024
+        })),
+        el('td', null, removeButton)
+      ])
+      table.get(0).insertBefore(newRow, toolRow)
+      removeButton.addEventListener('click', function () {
+        newRow.parentElement.removeChild(newRow)
+      })
+    })
+    table.append(toolRow)
+    // // 默认添加3行
+    // button.click()
+    // button.click()
+    // button.click()
+  }
+
   function openTestPanel(e) {
     var id = e.target.getAttribute('data-api')
     var api = API_LIST[id]
@@ -171,7 +245,12 @@
       $('.addition-info', testPanel).hide()
     }
 
-    var table = $('table', testPanel)
+    // 先中第一个 tab
+    $('.tabs-layout', testPanel).each(function () {
+      $(this).find('li').first().click()
+    })
+
+    var table = $('table.args-table', testPanel).empty()
 
     var toolRow = null
     if (api.handler_info.arguments.some(function (item) {
@@ -192,11 +271,14 @@
       })
     }
 
-    table.replaceWith(renderArgs(api.handler_info.arguments, true, toolRow))
+    table.append(renderArgRows(api.handler_info.arguments, true, toolRow))
+
+    initHeaders()
 
     statusCode.empty()
     statusText.empty()
-    responseContent.empty().hide()
+    responseContent.empty()
+    responseHeader.empty()
     responseTime.empty()
     responseType.empty()
     responseLength.empty()
@@ -213,7 +295,6 @@
       image.classList.add('response-image')
       image.src = data
       responseContent.append(image)
-      responseContent.show()
       return
     }
 
@@ -227,8 +308,6 @@
       } else {
         responseContent.jsonViewer(data)
       }
-
-      responseContent.show()
       return
     }
 
@@ -248,7 +327,6 @@
     label.innerHTML = '此类型的数据不支持预览，'
     responseContent.append(label)
     responseContent.append(link)
-    responseContent.show()
   }
 
   $('#btn-send-test', testPanel).on('click', function () {
@@ -260,6 +338,14 @@
   list.on('click', '.btn-open-test', function (e) {
     openTestPanel(e)
   })
+
+  var tabsHeader = $('.tabs-header')
+  tabsHeader.on('click', 'li[data-index]', function () {
+    var idx = this.dataset.index
+    $(this).addClass('active').siblings().removeClass('active')
+    $(this).parent().next().children().eq(idx).addClass('active').siblings().removeClass('active')
+  })
+
   initPanel(testPanel)
 })
 ()
