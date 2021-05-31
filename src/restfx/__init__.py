@@ -10,5 +10,5 @@ __all__ = [
     'App',
     'route',
     'val',
-    'IParameter'
+    'IParam'
 ]
