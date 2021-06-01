@@ -1,6 +1,6 @@
 import pickle
 import time
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from threading import Timer
 from typing import List, Optional
 
@@ -103,6 +103,8 @@ class IDbSessionProvider(ISessionProvider):
         from dbutils.pooled_db import PooledDB
         self.pool_option = pool_options
         self.pool = PooledDB(**pool_options)
+        # fixme 如果启动时数据库无法连接，也应该允许程序启动，而不是抛出异常
+        # 更好的做法是在第一次执行 execute 时作此检查
         if not self.table_exists():
             self.create_table()
         super().__init__(expired)
