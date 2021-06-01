@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from .interfaces import ISessionProvider, IDbSessionProvider
+from .interfaces import IDbSessionProvider, ISessionProvider
 from .session import HttpSession
 
 
@@ -160,8 +160,8 @@ class MySQLSessionProvider(IDbSessionProvider):
     def create_table(self):
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(256) PRIMARY KEY NOT NULL,
-        `creation_time` LONG NOT NULL,
-        `last_access_time` LONG NOT NULL,
+        `creation_time` BIGINT NOT NULL,
+        `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
         INDEX `last_access`(`last_access_time`(8) ASC)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name))
