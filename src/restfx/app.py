@@ -230,10 +230,12 @@ class App:
             else:
                 ips = [host]
 
+            protocol = 'https' if kwargs.get('ssl_context') else 'http'
+
             print(' * Table of APIs:')
             for ip in ips:
-                print('\t- http://%s:%s/%s%s' % (
-                    ip, port, self._api_prefix, '/' if self.config.append_slash else ''
+                print('\t- %s://%s:%s/%s%s' % (
+                    protocol, ip, port, self._api_prefix, '/' if self.config.append_slash else ''
                 ))
 
         run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
