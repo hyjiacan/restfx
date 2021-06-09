@@ -1046,6 +1046,11 @@ tr.test-row--tool {
     border-collapse: collapse;
 }
 
+.response-header td {
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
 .test-header--checkbox {
     cursor: pointer;
 }

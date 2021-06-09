@@ -60,6 +60,17 @@ class FileResponse(HttpResponse):
             status_code = 206
         else:
             status_code = 200
+            # fix https://gitee.com/hyjiacan/restfx/issues/I3UN41
+            headers = kwargs.get('headers')
+            if headers is None:
+                headers = {}
+                kwargs['headers'] = headers
+            if 'content-length' not in headers:
+                pos = self.fp.tell()
+                self.fp.seek(0, 2)
+                file_size = self.fp.tell()
+                self.fp.seek(pos, 0)
+                headers['Content-Length'] = str(file_size)
 
         if attachment:
             self._set_attachment_header(request, attachment, kwargs)

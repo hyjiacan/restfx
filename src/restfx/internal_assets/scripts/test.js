@@ -38,7 +38,7 @@
     var type = xhr.headers['content-type'].split(';')[0]
     responseType.text('Content-Type: ' + type)
 
-    var len = ((xhr.headers['content-length'] / 1024).toFixed(2) * 100) / 100
+    var len = xhr.headers['content-length'] ? ((xhr.headers['content-length'] / 1024).toFixed(2) * 100) / 100 : 0
     responseLength.text('Content-Length: ' + xhr.headers['content-length'] + ' (' + len + 'KB)')
   }
 
