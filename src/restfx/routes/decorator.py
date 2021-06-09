@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from enum import Enum
 from functools import partial, wraps
+from types import FunctionType
 from typing import Tuple, Union
 
 from werkzeug.datastructures import MultiDict
@@ -16,7 +17,13 @@ from ..util import Logger
 from ..util.func_util import ArgumentSpecification, get_func_info
 
 
-def route(module=None, name=None, extname=None, validators: Union[Tuple[Validator, ...], Validator] = None, **kwargs):
+def route(
+        module=None,
+        name=None,
+        extname=None,
+        validators: Union[Tuple[Validator, ...], Validator] = None,
+        **kwargs
+) -> FunctionType:
     """
     用于控制路由的访问权限，路由均需要添加此装饰器，若未添加，则不可访问
     用法：
@@ -158,12 +165,12 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
         else:
             result = func(**actual_args)
     except Exception as e:
-        message = get_func_info(func)
-        Logger.get(config.app_id).error(message, e)
+        from restfx.util import utils
+        msg = 'Error occurred during executing the route handler: %s' % str(e)
+        Logger.get(config.app_id).error(utils.get_exception_info(e, msg), e)
         if config.debug:
             raise e
-        from restfx.util import utils
-        return handle_response(ServerError(message))
+        return handle_response(ServerError())
 
     return handle_response(wrap_response(result))
 

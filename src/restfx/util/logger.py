@@ -47,7 +47,7 @@ class Logger:
 
     def error(self, message, e=None):
         # self.log('error', utils.get_exception_info(e, message))
-        self.log('error', message)
+        self.log('error', message, e=e)
 
     @classmethod
     def remove(cls, app_id: str):
