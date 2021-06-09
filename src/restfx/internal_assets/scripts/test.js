@@ -9,6 +9,7 @@
   var responseTime = $('.response-time', testPanel)
   var responseLength = $('.response-length', testPanel)
   var responseType = $('.response-type', testPanel)
+  var linkSaveAs = $('#test-response--save-as')
 
   function renderResponseInfo(xhr, start) {
     var end = new Date().getTime()
@@ -24,7 +25,7 @@
         'class': 'response-header--row'
       }, [
         el('td', null, headerName),
-        el('td', null, xhr.rawHeaders[headerName])
+        el('td', null, decodeURI(xhr.rawHeaders[headerName]))
       ]))
     }
 
@@ -49,6 +50,7 @@
     statusText.empty()
     responseTime.empty()
     responseLength.empty()
+    linkSaveAs.hide()
 
     var fields = Object.create(null)
     $('input.arg-value, textarea.arg-value', argsTable).each(function () {
@@ -282,6 +284,7 @@
     responseTime.empty()
     responseType.empty()
     responseLength.empty()
+    linkSaveAs.hide()
 
     testPanel.css('display', 'flex')
   }
@@ -295,12 +298,9 @@
       image.classList.add('response-image')
       image.src = data
       responseContent.append(image)
-      return
-    }
-
-    if (response.isText) {
+    } else if (response.isText) {
       if (typeof data === 'string') {
-        if (response.headers['content-type'].indexOf('text/html') === -1) {
+        if (contentType.indexOf('text/html') === -1) {
           responseContent.html('<pre>' + data + '</pre>')
         } else {
           responseContent.html(data)
@@ -308,25 +308,42 @@
       } else {
         responseContent.jsonViewer(data)
       }
-      return
+      // 处理一下，交由 另存为 使用
+      data = 'data:' + contentType.split(';')[0] + ';base64,' + Base64.encode(data)
+    } else {
+      var label = document.createElement('span')
+      label.innerHTML = '此类型的数据不支持预览，'
+      responseContent.append(label)
     }
 
     // 其它的数据类型，无法预览
-
+    // 首先检查 content-disposition 头
+    // 如果找不到
     // 尝试获取可能的扩展名
     // 此处使用 mime 中的名称
     // 不用保证正确性
+    var disposition = response.headers['content-disposition']
     var match = /\/([a-z0-9]+)?/.exec(contentType)
     var ext = match ? ('.' + match[1]) : ''
+    var filename = disposition || encodeURI(url.substr(window.location.origin.length)) + ext
+    if (disposition) {
+      filename = disposition.split('filename=')[1]
+      var match = /^=\?utf-8\?B\?(.+?)\?=/.exec(filename)
+      if (match) {
+        // 处理奇怪的火狐
+        try {
+          filename = Base64.decode(match[1])
+        } catch (e) {
+          // 解不出来就算了
+        }
+      } else {
+        filename = decodeURI(filename)
+      }
+    }
 
-    var link = document.createElement('a')
-    link.href = response.data
-    link.innerHTML = '点击此处存为文件'
-    link.download = encodeURI(url.substr(window.location.origin.length)) + ext
-    var label = document.createElement('span')
-    label.innerHTML = '此类型的数据不支持预览，'
-    responseContent.append(label)
-    responseContent.append(link)
+    linkSaveAs.attr('href', data)
+    linkSaveAs.attr('download', filename)
+    linkSaveAs.show()
   }
 
   $('#btn-send-test', testPanel).on('click', function () {

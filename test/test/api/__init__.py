@@ -70,7 +70,7 @@ def get(request, content, session, a, e: OpTypes, **kwargs):
 
 
 @route('包中的模块2', '对请求的数据base64编码后返回', auth=False)
-def post_base64(data: str):
+def post_base64(request, data: str):
     """
 
     :param data: 参数的描述
@@ -82,4 +82,7 @@ def post_base64(data: str):
 
     `base64` 编码的数据
     """
-    return b64.enc_str(data)
+    from io import BytesIO
+    buffer = BytesIO(b64.enc_str(data).encode())
+    from restfx.http import FileResponse
+    return FileResponse(buffer, attachment='测试文件名.txt', request=request, content_type='text/plain')

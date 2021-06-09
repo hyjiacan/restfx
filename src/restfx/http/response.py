@@ -1,5 +1,5 @@
 import json
-from io import IOBase
+from io import BytesIO, IOBase
 from typing import Tuple, Union
 
 from werkzeug.exceptions import InternalServerError
@@ -42,6 +42,8 @@ class FileResponse(HttpResponse):
                 import mimetypes
                 (content_type, _) = mimetypes.guess_type(fp)
             self.fp = open(fp, mode='rb')
+        elif isinstance(fp, bytes):
+            self.fp = BytesIO(fp)
         else:
             self.fp = fp
 
