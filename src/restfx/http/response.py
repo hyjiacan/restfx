@@ -94,9 +94,9 @@ class FileResponse(HttpResponse):
             return False
 
         if end == 0:
-            # to the end
-            self.fp.seek(start)
-            chunk_size = file_size - start
+            # 结束为 0 表示仅返回长度，而不返回内容
+            self.fp = BytesIO()
+            chunk_size = file_size
         else:
             chunk = BytesIO()
             # The fetched data size
