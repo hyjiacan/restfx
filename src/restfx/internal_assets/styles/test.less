@@ -1,0 +1,201 @@
+
+#test-panel {
+  .panel {
+    min-width: 720px;
+    max-width: 1080px;
+    width: 80%;
+    min-height: 600px;
+    max-height: 100%;
+  }
+
+  .url-info {
+    grid-template-columns: 60px 1fr 80px;
+
+    .method {
+      line-height: 28px;
+    }
+
+    .url {
+      border: 1px solid #c4c3c3;
+      outline: none;
+      &:focus, &:active {
+        border-color: #888888;
+      }
+    }
+  }
+
+  .test-row--tool td {
+    padding: 5px;
+  }
+
+  .test-lead {
+    background-color: #bebdbd;
+    color: #fff;
+    border-radius: 2px;
+    padding: 2px 3px;
+    margin-right: 5px;
+    font-size: 12px;
+  }
+
+  input.arg-name, .arg-value {
+    &:focus, &:hover, &:active {
+      border-width: 1px;
+      box-shadow: 0 0 3px 2px #bab9b9;
+      padding: 5px;
+    }
+  }
+
+  input[type=file].arg-value {
+    &:focus, &:hover, &:active {
+      padding: 2px;
+    }
+  }
+
+  select.arg-type {
+    height: 26px;
+  }
+
+  .btn-open-test {
+    margin-left: 20px;
+    font-size: 13px;
+    opacity: 0.2;
+    will-change: opacity;
+    transition: opacity 200ms;
+  }
+
+
+  #btn-send-test {
+    font-size: 16px;
+    letter-spacing: 5px;
+  }
+
+  .response p {
+    font-size: 14px;
+  }
+
+  .response-image {
+    max-width: 100%;
+
+    &:hover {
+      box-shadow: 0 0 10px 2px #b7b7b7;
+      background-color: #ffffff;
+    }
+  }
+
+  .response-content {
+    background: #ececeb;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    font-size: 12px;
+  }
+
+  .response-content,
+  .response-content > pre {
+    word-break: break-all;
+    line-height: 1.5;
+    white-space: break-spaces;
+  }
+
+  .response-status {
+    margin-left: 20px;
+  }
+
+  .status-success {
+    color: green;
+  }
+
+  .status-failure {
+    color: orange;
+  }
+
+  .response-time,
+  .response-type,
+  .response-length {
+    margin-left: 20px;
+    font-size: 12px;
+  }
+
+  tr.test-row--tool {
+    background-color: #fff !important;
+  }
+
+  #btn-add-test-field,
+  #btn-add-test-header,
+  .btn-remove-test-field,
+  .btn-remove-test-header,
+  .btn-remove-test-header {
+    font-size: 12px;
+    color: #333;
+  }
+
+  #btn-add-test-field:hover,
+  #btn-add-test-header:hover {
+    color: rgb(17, 136, 237);
+  }
+
+  .btn-remove-test-field:hover,
+  .btn-remove-test-header:hover {
+    color: rgb(235, 90, 90);
+  }
+
+  .response-meta {
+    float: right;
+  }
+
+  .response-header td {
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  .test-header--checkbox {
+    cursor: pointer;
+  }
+}
+
+.theme-dark {
+  #test-panel {
+    input.arg-name {
+      color: #00c7ff;
+    }
+
+    .response-content {
+      background-color: #4c4c4c;
+    }
+
+    tr.test-row--tool {
+      background-color: #5f5f5f !important;
+    }
+
+    #btn-add-test-field,
+    .btn-remove-test-field {
+      color: #eee;
+    }
+
+    #btn-add-test-field:hover,
+    .btn-remove-test-field:hover {
+      color: #00c7ff;
+    }
+
+    .test-lead {
+      color: #ececec;
+      background-color: #717070;
+    }
+
+    .url {
+      border: 1px solid #717070;
+    }
+
+    input.arg-name, .arg-value {
+      &:focus, &:hover, &:active {
+        box-shadow: 0 0 3px 2px #717070;
+      }
+    }
+
+    .response-image {
+      background-color: #4a4a4a;
+    }
+  }
+}

@@ -1,3 +1,22 @@
+(function () {
+  var hooks = {
+    request: [],
+    response: []
+  }
+
+  window.restfx = {
+    _hooks: hooks,
+    on: function (hookName, handler) {
+      if (!hooks.hasOwnProperty(hookName)) {
+        console.error('Invalid hookName "%s", expected %s', hookName, Object.keys(hooks).join('/'))
+        return
+      }
+      hooks[hookName].push(handler)
+    }
+  }
+})()
+
+
 function loadPage() {
   // 请求数据
   var loading = $('#loading')

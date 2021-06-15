@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 
 from ..config import AppConfig
-from ..http import HttpResponse, JsonResponse, BadRequest
+from ..http import BadRequest, HttpResponse, JsonResponse
 from ..util.func_util import FunctionDescription
 
 
@@ -88,6 +88,7 @@ class ApiPage:
             'name': self.config.api_page_name,
             'expanded': self.config.api_page_expanded,
             'routes': self.routes_cache,
+            'custom_assets': self.config.api_page_assets
         }, encoder=FunctionDescription.JSONEncoder)
 
     def do_export(self, request):

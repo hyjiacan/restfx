@@ -25,7 +25,7 @@
         'class': 'response-header--row'
       }, [
         el('td', null, headerName),
-        el('td', null, xhr.rawHeaders[headerName])
+        el('td', null, decodeURI(xhr.rawHeaders[headerName]))
       ]))
     }
 
@@ -73,6 +73,14 @@
     var start = new Date().getTime()
     var option = {
       callback: function (response) {
+        for (var i = 0; i < restfx._hooks.response.length; i++) {
+          var handler = restfx._hooks.response[i]
+          response = handler(method, url, response)
+          if (response === false) {
+            return
+          }
+        }
+
         renderResponseInfo(response, start)
 
         if (response.status === 0) {
@@ -120,6 +128,20 @@
     })
 
     option.headers = headers
+
+    for (var i = 0; i < restfx._hooks.request.length; i++) {
+      var handler = restfx._hooks.request[i]
+      var result = handler(method, url, option)
+      if (result === false) {
+        return
+      }
+      var returnType = Object.prototype.toString.call(result)
+      if (returnType !== '[object Object]') {
+        console.error('Invalid return type "%s" of "beforeRequest" ignored, a plain Object expected: %s', returnType, result)
+        continue
+      }
+      option = result
+    }
 
     xhr(method, url, option)
   }

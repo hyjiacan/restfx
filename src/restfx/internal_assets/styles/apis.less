@@ -1,0 +1,253 @@
+#api-list {
+  min-height: 200px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+details {
+  clear: both;
+
+  summary {
+    cursor: default;
+    outline: none;
+    font-size: large;
+    color: #444;
+    display: block;
+    padding: 10px;
+    background-color: #ffffff;
+    transition: background-color 618ms;
+  }
+
+}
+
+.module-name:before,
+.route-name:before {
+  padding: 2px 5px;
+  border-radius: 2px;
+  margin: 0 5px;
+  vertical-align: 1px;
+  background: #ececec;
+  color: #636363;
+}
+
+.module-name:before {
+  content: '模块';
+  font-size: 13px;
+}
+
+.route-name:before {
+  content: '路由';
+  font-size: 12px;
+}
+
+.route-description,
+.return-info {
+  background-color: #fafafa;
+  padding: 10px;
+  border-radius: 4px;
+  line-height: 1.6;
+}
+
+.route-count {
+  margin-left: 20px;
+  font-size: 12px;
+  line-height: 1;
+  color: #0977c0;
+}
+
+
+#api-list {
+  &[data-select-type='1'] .url-info .url,
+  &[data-select-type='2'] .url-info .url-prefix-with-slash,
+  &[data-select-type='3'] .url-info .url-prefix,
+  &[data-select-type='4'] .url-info .url-path-with-slash,
+  &[data-select-type='5'] .url-info .url-path {
+    user-select: all;
+    border-bottom: 1px dotted;
+  }
+}
+
+.method {
+  text-transform: uppercase;
+  color: #e90588;
+  padding: 0 5px;
+}
+
+.args-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  caption {
+    text-align: left;
+    padding-bottom: 5px;
+  }
+
+  th {
+    font-weight: normal;
+  }
+}
+
+.arg-type.is-variable {
+  color: #d462f2;
+}
+
+.required-field {
+  color: rgb(211, 5, 5);
+}
+
+.arg-name {
+  padding: 2px 3px;
+}
+
+.api-items {
+  li.module-item {
+    list-style: simp-chinese-informal;
+
+    &::marker {
+      color: #0787fd;
+      font-weight: bold;
+    }
+  }
+}
+
+details summary:hover {
+  background-color: #eeeeee;
+}
+
+details summary:hover .anchor,
+details ol li:hover .anchor {
+  opacity: 1;
+}
+
+details ol li {
+  border-left: 1px dotted transparent;
+  list-style: decimal-leading-zero;
+  padding-left: 5px;
+  padding-top: 10px;
+  margin-bottom: 40px;
+
+  &::marker {
+    color: #0787fd;
+  }
+
+  &:hover {
+    border-left-color: #539fdd;
+
+    .btn-open-test {
+      opacity: 1;
+    }
+  }
+}
+
+details[open] {
+  margin-bottom: 20px;
+
+  summary {
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.url-info {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.addition-info {
+  margin: 15px 5px;
+}
+
+.info {
+  padding: 5px 0;
+  border-radius: 2px;
+  transition: background-color 200ms;
+  will-change: background-color;
+
+  &:hover {
+    background-color: #fdf4ff;
+  }
+}
+
+.comment {
+  font-size: 12px;
+  color: #555555;
+
+  pre {
+    line-height: 1.4;
+    margin: 5px 0;
+    padding: 0 5px;
+  }
+}
+
+.route-name {
+  font-size: 15px;
+  margin-right: 10px;
+}
+
+.return-info {
+  font-size: 1em;
+  line-height: 1.6;
+
+  code {
+    margin-right: 5px;
+  }
+}
+
+.theme-dark {
+  details summary {
+    background-color: #555555;
+    color: #eee;
+
+    &:hover {
+      background-color: #626262;
+    }
+  }
+
+  details[open] summary {
+    border-bottom-color: #4a4a4a;
+  }
+
+  details ol li::marker,
+  .api-items li.module-item::marker {
+    color: #3f86cc;
+  }
+
+  .anchor {
+    color: #3f86cc;
+  }
+
+  .module-name:before,
+  .route-name:before {
+    color: #ececec;
+    background-color: #717070;
+  }
+
+  .route-description,
+  .return-info {
+    background-color: #505050;
+  }
+
+  .method {
+    color: #f956b3;
+  }
+
+  .info:hover {
+    background-color: #444145;
+  }
+
+  .required-field {
+    color: #ff7d7d;
+  }
+
+  .arg-type.is-variable {
+    color: #ff57f4;
+  }
+
+  .route-count {
+    color: #6bbbf0;
+  }
+}

@@ -4,12 +4,10 @@ import uuid
 
 import pymysql
 
-from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import Redirect
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware
-from restfx.middleware.middlewares.timetick import TimetickMiddleware
 from restfx.routes import RouteMeta
 from restfx.session.providers import MemorySessionProvider, MySQLSessionProvider
 from test.tools.enums import OpTypes
@@ -42,12 +40,19 @@ def api_page_addition(route):
     return '<span style="color: #66c0de">[不需要身份校验]</span>'
 
 
+api_page_assets = (
+    '/assets/myscript.js',
+    '/assets/mystyle.css'
+)
+
 app = App(root,
           app_id=app_id,
           debug=DEBUG_MODE,
           api_page_name='restfx 测试项目',
           api_page_addition=api_page_addition,
-          api_page_expanded=True)
+          api_page_assets=api_page_assets,
+          api_page_expanded=True
+          )
 
 app.map_routes({
     'test': 'test.api'

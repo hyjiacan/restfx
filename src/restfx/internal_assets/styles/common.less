@@ -1,0 +1,183 @@
+.scroll-proxy {
+  min-width: 800px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.select-all {
+  user-select: all;
+}
+
+.tip {
+  color: #88888888;
+  font-size: 14px;
+}
+
+.anchor {
+  opacity: 0.2;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #086cca;
+  will-change: opacity;
+  transition: opacity 200ms;
+
+  &:hover {
+    color: #ff0000;
+  }
+}
+
+code {
+  color: #006fff;
+  font-size: 12px;
+  font-family: Consolas, Monospaced, FangSong, serif;
+}
+
+.hide {
+  display: none;
+}
+
+#loading {
+  text-align: center;
+  font-size: 3em;
+  color: #888888;
+  display: none;
+}
+
+button {
+  border: 1px solid #86b2db;
+  color: #086cca;
+  background: #e8f0f8;
+  padding: 3px 5px;
+  cursor: pointer;
+  font-size: 12px;
+  outline: none;
+  border-radius: 2px;
+  transition: border 200ms, background-color 200ms;
+  user-select: none;
+
+  &:hover {
+    box-shadow: 0 0 3px 1px #086cca;
+  }
+
+  &:active {
+    background-color: #086cca;
+    color: #fff;
+  }
+}
+
+.unnamed-item {
+  color: #aaaaaa;
+}
+
+.load-error {
+  h3 {
+    color: #ff7171;
+  }
+
+  pre,
+  p {
+    color: #ff0505;
+    border-radius: 4px;
+    padding: 20px;
+    background-color: #ebebeb;
+    line-height: 1.5em;
+    word-break: break-word;
+  }
+}
+
+table {
+  border-collapse: collapse;
+
+  th, td {
+    border: 1px solid #f0f6fc;
+    padding: 10px;
+  }
+
+  tr:nth-child(2n) {
+    background-color: #f9fbfc;
+  }
+
+  tr:hover td {
+    border-bottom-color: rgb(172, 210, 248);
+  }
+}
+
+input[type=text],
+input[type=file],
+textarea {
+  outline: none;
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  box-sizing: border-box;
+  border-width: 0 0 1px 0;
+  border-color: #888888;
+  border-style: solid;
+  color: rgb(10, 105, 189);
+  margin-bottom: 2px;
+}
+
+textarea.arg-value:focus,
+textarea.arg-value:active {
+  height: 80px;
+  width: 400px;
+}
+
+.required {
+  border-color: red;
+}
+
+.theme-dark {
+  hr {
+    border-color: #555555 #5b666d;
+    background-color: #5b666d;
+  }
+
+  code {
+    color: #b0a529;
+  }
+
+  .comment {
+    color: #bebebe;
+  }
+
+  button {
+    background-color: #4b4e50;
+    border-color: #3e4750;
+    color: #489ae7
+  }
+
+
+  input,
+  textarea,
+  select {
+    background-color: #555555;
+    color: #ddd;
+    border-color: #474747;
+    outline: none;
+  }
+
+  .load-error {
+    pre,
+    p {
+      color: #ff5555;
+      background-color: #414141;
+    }
+  }
+
+  table {
+    th,
+    td {
+      border-color: #606366;
+    }
+
+    tr:nth-child(2n) {
+      background-color: #525252;
+    }
+
+    tr:hover td {
+      border-bottom-color: rgb(123, 137, 143);
+    }
+  }
+}

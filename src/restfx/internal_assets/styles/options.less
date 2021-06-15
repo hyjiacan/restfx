@@ -1,0 +1,59 @@
+#option-panel {
+  .options {
+    font-size: 12px;
+
+    select {
+      width: 140px;
+      height: 26px;
+      margin-right: 20px;
+      border-width: 0 0 1px 0;
+    }
+  }
+
+  .option-tip {
+    padding: 10px;
+    color: #555555;
+    font-size: 12px;
+    text-align: right;
+
+    &:before {
+      content: '!';
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      background: #888;
+      color: #fff;
+      display: inline-block;
+      border-radius: 50%;
+      text-align: center;
+      overflow: hidden;
+      font-family: '黑体';
+      vertical-align: middle;
+    }
+  }
+
+  .panel {
+    width: 800px;
+    height: 480px;
+  }
+
+  .options {
+    padding: 10px 60px;
+
+    > div {
+      margin: 10px 0;
+    }
+  }
+
+  input[type='checkbox'] {
+    vertical-align: -2px;
+  }
+}
+
+.theme-dark {
+  #option-panel {
+    .option-tip {
+      color: #c4c3c3;
+    }
+  }
+}

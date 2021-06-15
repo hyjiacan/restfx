@@ -60,6 +60,29 @@ function render(list, data) {
   document.title = 'Table of APIs - ' + data.name
   $('#app-name').html(data.name)
 
+  // 附加资源
+  if (data.custom_assets && data.custom_assets.length) {
+    data.custom_assets.forEach(function (asset) {
+      var element
+      if (/\.css(\?.+)?$/.test(asset)) {
+        element = el('link', {
+          rel: 'stylesheet',
+          type: 'text/css',
+          href: asset
+        })
+      } else if (/\.js(\?.+)?$/.test(asset)) {
+        element = el('script', {
+          type: 'text/javascript',
+          src: asset
+        })
+      } else {
+        console.error('Cannot resolve asset %s', asset)
+        return
+      }
+      document.head.appendChild(element)
+    })
+  }
+
   var poweredLink = $('#fx-name')
   poweredLink.html(data.meta.name + '@' + data.meta.version)
   poweredLink.attr('href', data.meta.url + '?from=dist&version=' + data.meta.version)

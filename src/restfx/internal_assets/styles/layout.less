@@ -1,0 +1,151 @@
+html,
+body {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  font-size: 14px !important;
+  color: #333333;
+  transition: background-color 618ms;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+header {
+  padding: 0 10px;
+  box-sizing: border-box;
+
+  h1 {
+    float: left;
+  }
+}
+
+#app-name {
+  display: inline-block;
+  font-weight: normal;
+  margin-left: 20px;
+  width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+#tools {
+  float: right;
+  margin-top: 15px;
+  display: none;
+
+  .buttons {
+    margin-bottom: 5px;
+
+    i {
+      display: inline-block;
+      vertical-align: middle;
+      height: 14px;
+      border-left: 1px solid #aaa;
+      margin: 0 5px;
+    }
+  }
+
+  #api-summary {
+    font-size: 12px;
+    padding: 5px;
+    text-align: right;
+
+    .count1 {
+      margin-right: 20px;
+    }
+  }
+}
+
+hr {
+  clear: both;
+  border-width: 5px 10px;
+  border-style: solid;
+  border-color: white #9abddd;
+  height: 1px;
+  background: #9abddd;
+  border-radius: 5px;
+}
+
+footer {
+  text-align: center;
+  font-size: 14px;
+  padding-bottom: 20px;
+}
+
+a {
+  color: #086cca;
+
+  &:hover {
+    color: red;
+  }
+}
+
+#btn-back-to-top {
+  position: fixed;
+  right: 40px;
+  bottom: 20px;
+  background-color: rgb(17, 136, 237);
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  z-index: 9;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: opacity 200ms, box-shadow 200ms;
+  opacity: 0.5;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    opacity: 0.8;
+    box-shadow: 0 0 10px 1px rgba(17, 136, 237, 0.8);
+  }
+
+  &:active {
+    opacity: 1;
+  }
+
+  &:before, &:after {
+    content: '';
+    display: inline-block;
+  }
+
+  &:before {
+    width: 15px;
+    height: 8px;
+    border-style: solid;
+    border-color: transparent transparent white transparent;
+    border-width: 0 7px 7px 7px;
+    box-sizing: border-box;
+  }
+
+  &:after {
+    width: 3px;
+    height: 16px;
+    background-color: #fff;
+  }
+}
+
+.theme-dark {
+  background-color: #555555;
+  color: #ddd;
+
+  a {
+    color: #3f86cc;
+
+    &:hover {
+      color: #ff7d7d;
+    }
+  }
+}
