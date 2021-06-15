@@ -25,7 +25,7 @@
         'class': 'response-header--row'
       }, [
         el('td', null, headerName),
-        el('td', null, decodeURI(xhr.rawHeaders[headerName]))
+        el('td', null, xhr.rawHeaders[headerName])
       ]))
     }
 
