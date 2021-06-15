@@ -72,7 +72,10 @@ def renew_version():
         version_line = lines[1].strip()
         version = version_line.split('=')[1].strip(' \'')
         print('The old version is %s' % version)
-        # [major, second, build] = version.split('.')
+        [major, second, build] = version.split('.')
+        if new_version == 'auto':
+            build = int(build) + 1
+            new_version = '%s.%s.%s' % (major, second, build)
         #
         # if command == 'm':
         #     major = int(major) + 1
