@@ -29,7 +29,6 @@ class FileResponse(HttpResponse):
         """
 
         :param fp: 文件名或内容。如果指定的 fp 是文件名（字符串），那么认为返回的是文件名。
-        如果需要返回的内容是字符串，那么需要先处理成 bytes
         :param attachment: 指定一个字符串，作为返回附件的文件名
         :param content_type: 当未指定此值时，如果指定的 fp 是文件名，那么会自动根据文件的扩展名进行识别
         :param ranges: 用于指定返回数据的分块起始位置
@@ -61,18 +60,14 @@ class FileResponse(HttpResponse):
                 return
             status_code = 206
         else:
-            status_code = 200
             # fix https://gitee.com/hyjiacan/restfx/issues/I3UN41
             headers = kwargs.get('headers')
             if headers is None:
                 headers = {}
                 kwargs['headers'] = headers
             if 'content-length' not in headers:
-                pos = self.fp.tell()
-                self.fp.seek(0, 2)
-                file_size = self.fp.tell()
-                self.fp.seek(pos, 0)
-                headers['Content-Length'] = str(file_size)
+                headers['Content-Length'] = str(self._get_file_size())
+            status_code = 200
 
         if attachment:
             self._set_attachment_header(request, attachment, kwargs)
@@ -80,13 +75,18 @@ class FileResponse(HttpResponse):
         super().__init__(self.fp, status=status_code, direct_passthrough=True,
                          content_type=content_type, **kwargs)
 
-    def _get_file_chunk(self, ranges: Tuple[int, int], kwargs):
-        from io import BytesIO
-
+    def _get_file_size(self):
         pos = self.fp.tell()
         self.fp.seek(0, 2)
         file_size = self.fp.tell()
         self.fp.seek(pos, 0)
+
+        return file_size
+
+    def _get_file_chunk(self, ranges: Tuple[int, int], kwargs):
+        from io import BytesIO
+
+        file_size = self._get_file_size()
 
         start, end = ranges
 
