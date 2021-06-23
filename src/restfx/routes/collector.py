@@ -2,6 +2,7 @@
 
 import ast
 # 此模块用于收集路由
+import keyword
 import os
 import re
 from os import path
@@ -63,16 +64,18 @@ class Collector:
             route_root = path.abspath(path.join(self.app_root, pkg_prefix.replace('.', path.sep)))
 
             # 遍历目录，找出所有的 .py 文件
-            for (dir_name, dirs, files) in os.walk(route_root):
+            for (current_path, dirs, files) in os.walk(route_root):
+                dir_name = os.path.basename(current_path)
                 if dir_name == '__pycache__':
                     continue
+
                 for file in files:
                     # 不是 .py 文件，忽略
                     if not file.endswith('.py'):
                         continue
 
                     # 可能是 __init__.py
-                    fullname = path.abspath(path.join(dir_name, file))
+                    fullname = path.abspath(path.join(current_path, file))
 
                     # 解析文件
                     self.get_route_defines(route_root, fullname, http_prefix, pkg_prefix, routes)
@@ -225,6 +228,9 @@ class Collector:
         :param func_name: 解析指定的函数
         :return:
         """
+
+        self._check_entry_name(filename)
+
         with open(filename, encoding='utf-8') as python_fp:
             lines = python_fp.readlines()
             python_fp.close()
@@ -336,3 +342,17 @@ class Collector:
     @classmethod
     def get(cls, app_id: str):
         return cls._COLLECTORS.get(app_id, None)
+
+    def _check_entry_name(self, fullname: str):
+        """
+        检查名称是否是保留字，如果是则抛出异常
+        :param fullname:
+        :return:
+        """
+        rel_path = os.path.abspath(os.path.relpath(fullname, self.app_root))
+        # 移除 .py
+        path_items = rel_path[0:-3].split(os.path.sep)
+        for item in path_items:
+            if keyword.iskeyword(item):
+                raise Exception('The name %r in entry %r is reserved, pick another one instead.'
+                                ' See `keyword.kwlist` for all reserved items.' % (item, fullname))
