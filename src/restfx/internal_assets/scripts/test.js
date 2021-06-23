@@ -11,6 +11,10 @@
   var responseType = $('.response-type', testPanel)
   var linkSaveAs = $('#test-response--save-as')
 
+  panelCloseHooks.push(function () {
+    request.cancelAll()
+  })
+
   function renderResponseInfo(xhr, start) {
     var end = new Date().getTime()
     responseTime.text('耗时: ' + (end - start) + 'ms')
@@ -143,7 +147,7 @@
       option = result
     }
 
-    xhr(method, url, option)
+    request(method, url, option)
   }
 
   function addTestField(toolRow, allowForm) {

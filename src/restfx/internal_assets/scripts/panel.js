@@ -1,3 +1,5 @@
+var panelCloseHooks = []
+
 function toggleFullscreen(panel) {
   panel = $('.panel', panel)
   panel.toggleClass('fullscreen')
@@ -6,6 +8,9 @@ function toggleFullscreen(panel) {
 function initPanel(panel) {
   $('.btn-close', panel).on('click', function () {
     panel.hide()
+    panelCloseHooks.forEach(function (hook) {
+      hook.call()
+    })
     return false
   })
   $('.btn-fullscreen', panel).on('click', function () {

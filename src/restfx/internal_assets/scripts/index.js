@@ -21,7 +21,7 @@ function loadPage() {
   // 请求数据
   var loading = $('#loading')
   loading.show()
-  xhr('post', urlRoot + '/' + apiPrefix, {
+  request('post', urlRoot + '/' + apiPrefix, {
     callback: function (response) {
       var data = response.data
       if (response.status !== 200) {
@@ -38,7 +38,8 @@ function loadPage() {
         }, [
           el('h3', null, response.status ? response.statusText : 'No responding'),
           content
-        ])).show()
+        ]))
+        list.show()
         return
       }
       render(list, typeof data === 'string' ? JSON.parse(data) : data)

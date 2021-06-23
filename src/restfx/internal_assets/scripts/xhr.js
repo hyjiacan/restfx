@@ -1,4 +1,7 @@
 (function () {
+  var requestId = 0
+  var pendingRequests = {}
+
   function serializeParams(url, params) {
     var temp = []
     for (var key in params) {
@@ -19,6 +22,9 @@
     var xhr = new XMLHttpRequest()
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
+        if (pendingRequests.hasOwnProperty(xhr.requestId)) {
+          delete pendingRequests[xhr.requestId]
+        }
         getResponse(xhr, options.callback)
       }
     }
@@ -35,6 +41,38 @@
       }
     }
     xhr.send(options.data)
+    requestId++
+    xhr.requestId = requestId.toString()
+    pendingRequests[xhr.requestId] = xhr
+    return xhr
+  }
+
+  request.cancel = function (xhr) {
+    if (!xhr || !xhr.requestId) {
+      return
+    }
+    var id = xhr.requestId
+    if (pendingRequests.hasOwnProperty(id)) {
+      try {
+        pendingRequests[id].abort()
+      } catch (e) {
+      }
+      delete pendingRequests[id]
+    }
+  }
+
+  request.cancelAll = function () {
+    var ids = []
+    for (var k in pendingRequests) {
+      ids.push(k)
+    }
+    ids.forEach(function (id) {
+      try {
+        pendingRequests[id].abort()
+      } catch (e) {
+      }
+      delete pendingRequests[id]
+    })
   }
 
   function decodeResponse(data, asText, callback) {
@@ -98,5 +136,5 @@
     })
   }
 
-  window.xhr = request
+  window.request = request
 })()
