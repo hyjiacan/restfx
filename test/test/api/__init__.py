@@ -5,7 +5,7 @@ from ..tools.validators import MyValidator
 
 
 def get_old_value():
-    from restfx.globals import session, req_store
+    from restfx.globs import session, req_store
     return session.get('old'), req_store.get('a')
 
 
@@ -54,8 +54,6 @@ def get(request, content, session, a, e: OpTypes, **kwargs):
     if session:
         # 当需要指定参数时，使用 request.context(a=2)
         # 或者使用
-        # from restfx.globals import req_store
-        # req_store.setdefault('a', 2)
         with request.context(a=2):
             old = get_old_value()
         session.set('old', content)

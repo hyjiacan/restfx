@@ -3,7 +3,7 @@ from werkzeug import Request
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage
 
 from restfx.util import ContextStore
-from restfx.globals import _request_ctx_stack, _app_ctx_stack
+from restfx.globs import _request_ctx_stack, _app_ctx_stack
 
 
 def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
@@ -113,7 +113,7 @@ class HttpRequest(Request):
         """
         移除附加到 request 上的自定义数据
         :param key:
-        :return:
+        :return
         """
         return self._user_data.pop(key)
 
@@ -131,6 +131,24 @@ class HttpRequest(Request):
             return BadRequest()
 
         return match.group('unit'), int(match.group('start')), int(match.group('end') or 0)
+
+    @staticmethod
+    def current():
+        """
+        获取当前的请求对象
+        :return:
+        """
+        from restfx import globs
+        return globs.request
+
+    @staticmethod
+    def store():
+        """
+        获取当前请求的存储对象
+        :return:
+        """
+        from restfx import globs
+        return globs.req_store
 
 
 class HttpFile(FileStorage):

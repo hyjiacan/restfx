@@ -54,17 +54,23 @@ class SessionMiddleware(MiddlewareBase):
     def default_maker():
         return uuid.uuid4().hex
 
-    def newid(self):
-        sid_bytes = md5.hash_bytes(self.maker() if self.maker else self.default_maker())
+    def new_sid(self):
+        sid = self.maker() if self.maker else self.default_maker()
+        sid_bytes = md5.hash_bytes(sid)
         return b64.enc_str(sid_bytes)
 
     def decode(self, sid):
+        """
+        将客户端传过来的 sid 解码，取出其中的信息
+        :param sid:
+        :return:
+        """
         # noinspection PyBroadException
         try:
             sid_bytes = b64.dec_bytes(sid)
             # 使用 secret 解密
             result = bytearray()
-            for i in range(16):
+            for i in range(32):
                 result.append(sid_bytes[i] ^ self.secret_bytes[i])
 
             return b64.enc_str(result)
@@ -88,14 +94,14 @@ class SessionMiddleware(MiddlewareBase):
         client_session_id = request.cookies.get(self.cookie_name)
         # 客户端无 session_id
         if not client_session_id:
-            request.session = self.provider.create(self.newid())
+            request.session = self.provider.create(self.new_sid())
             return
 
         # 解码 session_id
         session_id = self.decode(client_session_id)
         if not session_id:
             # session id 非法，新创建一个
-            request.session = self.provider.create(self.newid())
+            request.session = self.provider.create(self.new_sid())
             return
 
         # 尝试根据客户端的 session_id 获取 session
@@ -103,13 +109,13 @@ class SessionMiddleware(MiddlewareBase):
 
         # session 已经过期或session被清除
         if request.session is None:
-            request.session = self.provider.create(self.newid())
+            request.session = self.provider.create(self.new_sid())
             return
 
         now = time.time()
         # session 过期
         if self.provider.is_expired(request.session):
-            request.session = self.provider.create(self.newid())
+            request.session = self.provider.create(self.new_sid())
             return
 
         # 修改已经存在 session 的最后访问时间
@@ -123,7 +129,7 @@ class SessionMiddleware(MiddlewareBase):
         # 使用 secret 加密
         sid_bytes = b64.dec_bytes(request.session.id)
         result = bytearray()
-        for i in range(16):
+        for i in range(32):
             result.append(sid_bytes[i] ^ self.secret_bytes[i])
         # 加密后的 sid
         sid = b64.enc_str(result)

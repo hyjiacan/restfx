@@ -7,7 +7,7 @@ from types import FunctionType
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
 
-from restfx.globals import _app_ctx_stack
+from restfx.globs import _app_ctx_stack
 from restfx.util import ContextStore, utils
 from .http import HttpRequest, NotFound, ServerError
 from .middleware import MiddlewareManager
@@ -378,6 +378,11 @@ class App:
         return self
 
     def inject(self, **kwargs):
+        """
+        全局注入接口
+        :param kwargs:
+        :return:
+        """
         self.config.injections.update(**kwargs)
         return self
 
@@ -390,6 +395,24 @@ class App:
         :rtype: App
         """
         return cls._APPS.get(app_id)
+
+    @staticmethod
+    def current():
+        """
+        获取当前的应用
+        :return:
+        """
+        from restfx import globs
+        return globs.current_app
+
+    @staticmethod
+    def store():
+        """
+        获取当前应用的存储对象
+        :return:
+        """
+        from restfx import globs
+        return globs.app_store
 
 
 @atexit.register

@@ -159,7 +159,7 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def create_table(self):
         self.execute("""CREATE TABLE `{table_name}` (
-        `id` VARCHAR(256) PRIMARY KEY NOT NULL,
+        `id` VARCHAR(48) PRIMARY KEY NOT NULL,
         `creation_time` BIGINT NOT NULL,
         `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
