@@ -30,7 +30,9 @@ class MiddlewareManager:
             if result is None:
                 continue
             # 返回其它类型，中止请求
-            return result
+            if isinstance(result, HttpResponse):
+                return result
+            return HttpResponse(result)
 
     def handle_leaving(self, request, response):
         for middleware in self.config.reversed_middlewares:
@@ -43,7 +45,9 @@ class MiddlewareManager:
             if result is None:
                 continue
             # 返回其它类型，中止请求
-            return result
+            if isinstance(result, HttpResponse):
+                return result
+            return HttpResponse(result)
 
     def handle_request(self, request, meta):
         for middleware in self.config.middlewares:

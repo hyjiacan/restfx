@@ -2,7 +2,7 @@
 import os
 
 # 唯一的 APP_ID，用于在多进程时共享 session 数据
-# 可以随意更改
+# 可以随意更改。通过命令 restfx genid 可以直接更新此值
 APP_ID = '{APP_ID}'
 
 # 是否处于调试模式

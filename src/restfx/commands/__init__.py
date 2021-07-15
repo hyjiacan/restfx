@@ -6,12 +6,13 @@ from .commands import (
     register,
     command_help,
     command_create,
-    command_version
+    command_version, command_genid
 )
 
 register('help', command_help, 'Show this help message')
 register('version', command_version, 'Show the version information')
 register('create', command_create, 'Create restfx project structure', 'project-name')
+register('genid', command_genid, 'Generate a new id for app')
 
 
 def execute(argv=None):

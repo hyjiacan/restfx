@@ -136,19 +136,20 @@ class App:
         try:
             request = HttpRequest(environ, self)
             request.context().push()
-            self.config.middleware_manager.handle_coming(request)
 
-            adapter = self._url_map.bind_to_environ(environ)
+            response = self.config.middleware_manager.handle_coming(request)
+            if not response:
+                adapter = self._url_map.bind_to_environ(environ)
 
-            endpoint, values = adapter.match()
-            if endpoint == '_api_page':
-                response = self._api_page.dispatch(request)
-            elif endpoint == 'entry_only':
-                response = self._router.dispatch(request, values['entry'])
-            elif endpoint in self._custom_url_map:
-                response = self._custom_url_map[endpoint](request, **values)
-            else:
-                response = NotFound()
+                endpoint, values = adapter.match()
+                if endpoint == '_api_page':
+                    response = self._api_page.dispatch(request)
+                elif endpoint == 'entry_only':
+                    response = self._router.dispatch(request, values['entry'])
+                elif endpoint in self._custom_url_map:
+                    response = self._custom_url_map[endpoint](request, **values)
+                else:
+                    response = NotFound()
         except Exception as e:
             msg = utils.get_exception_info(e)
             if request:
@@ -163,7 +164,9 @@ class App:
             else:
                 response = ServerError()
         finally:
-            self.config.middleware_manager.handle_leaving(request, response)
+            result = self.config.middleware_manager.handle_leaving(request, response)
+            if result:
+                response = response
             request.context().pop()
         return response(environ, start_response)
 
@@ -201,14 +204,16 @@ class App:
             helper.print_meta('dev-server')
 
         # 检查启动参数
+        cmd_host = None
+        cmd_port = None
         argv = sys.argv
         if len(argv) > 1:
             server_arg = argv[1].split(':')
             if len(server_arg) == 1:
                 self._logger.warning('Invalid startup argument "%s" (ignored):' % argv[1])
             else:
-                host = server_arg[0]
-                port = int(server_arg[1])
+                cmd_host = server_arg[0]
+                cmd_port = int(server_arg[1])
 
         # 检查环境变量
         env_host = os.environ.get('RESTFX_HOST')
@@ -216,16 +221,28 @@ class App:
 
         if env_host is not None:
             host = env_host
+            self._logger.info('Use environment variable RESTFX_HOST: %s' % host)
+        elif cmd_host:
+            host = cmd_host
+            self._logger.info('Use command line host: %s' % host)
         if env_port is not None:
             port = int(env_port)
+            self._logger.info('Use environment variable RESTFX_PORT: %s' % port)
+        elif cmd_host:
+            port = cmd_port
+            self._logger.info('Use command line port: %s' % port)
 
-        # 支持 空串和 * 标志
+        # 检查端口是否被占用
+        if utils.is_port_used(port):
+            self._logger.warning('The port "%s" is not available, pick another one instead.' % port)
+            exit(1)
+
+            # 支持 空串和 * 标志
         if host in [None, '', '*']:
             host = '0.0.0.0'
 
         if self.config.api_page_enabled:
             if host == '0.0.0.0':
-                from .util import utils
                 ips = utils.get_ip_list()
             else:
                 ips = [host]

@@ -87,20 +87,48 @@ def command_create(working_dir: str, project_name, *argv):
     tarfile.extractall(project_path)
     tarfile.close()
 
-    print('Generating APP ID')
+    command_genid(working_dir)
+
+    print("""Created !
+
+It is time to have fun with restfx.
+""".format(project_name=project_name))
+
+
+# noinspection PyUnusedLocal
+def command_genid(working_dir: str, *argv):
+    print('working-dir:' + working_dir)
+    project_path = os.path.abspath(working_dir)
     # 生成 uuid
     setting_file = os.path.abspath(os.path.join(project_path, 'settings.py'))
+
+    if not os.path.isfile(setting_file):
+        raise IOError('File settings.py not found at path:' + working_dir)
+
+    print('Generating APP ID')
+
     with open(setting_file, mode='r', encoding='utf8') as fp:
         lines = fp.readlines()
-        app_id = uuid.uuid4()
-        print(app_id)
-        # 在第5行
-        lines[5] = "APP_ID = '%s'%s" % (app_id, os.linesep)
+
+    found = False
+    idx = -1
+    for line in lines:
+        idx += 1
+        if not line.startswith('APP_ID = '):
+            continue
+        found = True
+        break
+
+    app_id = uuid.uuid4().hex
+    app_line = "APP_ID = '%s'\n" % app_id
+
+    if found:
+        lines[idx] = app_line
+    else:
+        lines.append(app_line)
+        lines.append('\n')
 
     with open(setting_file, mode='w', encoding='utf8') as fp:
         fp.writelines(lines)
 
-    print("""Created !
-
-Now you can enjoy restfx.
-""".format(project_name=project_name))
+    print('App ID generated: ' + app_id)

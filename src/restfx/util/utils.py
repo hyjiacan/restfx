@@ -69,3 +69,14 @@ def get_exception_info(e: Exception, message: str = None):
         messages.append(str(e))
 
     return '\n\t'.join(messages)
+
+
+def is_port_used(port):
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(('127.0.0.1', port))
+        s.shutdown(2)
+        return True
+    except:
+        return False

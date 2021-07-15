@@ -14,15 +14,15 @@ from test.tools.enums import OpTypes
 
 root = os.path.dirname(__file__)
 
-session_provider = MySQLSessionProvider(pool_options={
-    'creator': pymysql,
-    'host': '172.16.53.3',
-    'port': 3306,
-    'user': 'root',
-    'password': '123asd!@#',
-    'database': 'test',
-    'charset': 'utf8',
-})
+# session_provider = MySQLSessionProvider(pool_options={
+#     'creator': pymysql,
+#     'host': '127.0.0.1',
+#     'port': 3306,
+#     'user': 'root',
+#     'password': '',
+#     'database': 'test',
+#     'charset': 'utf8',
+# })
 
 
 def test_id(request: HttpRequest, **kwargs):
