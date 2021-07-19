@@ -7,8 +7,8 @@ from .session import HttpSession
 
 class MemorySessionProvider(ISessionProvider):
     def __init__(self, expired: int = None):
-        self.sessions = {}
         super().__init__(expired)
+        self.sessions = {}
 
     def remove(self, session_id: str):
         if self.exists(session_id):
@@ -37,11 +37,12 @@ class MemorySessionProvider(ISessionProvider):
 
 class FileSessionProvider(ISessionProvider):
     def __init__(self, sessions_root: str, expired: int = None):
+        super().__init__(expired)
+
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
             # print('mkdir:' + self.sessions_root)
-        super().__init__(expired)
 
     def _get_session_path(self, session_id: str) -> str:
         # session_id 中可能存在 / 符号
@@ -119,7 +120,8 @@ class FileSessionProvider(ISessionProvider):
 class MySQLSessionProvider(IDbSessionProvider):
     def __init__(self, pool_options: dict, table_name="restfx_sessions", expired: int = None):
         self.table_name = table_name
-
+        # 需要先指定 table_name 再调用父级的初始化，因为在父级初始化中会调用创建表的操作
+        # 如果未在这之前指定 table_name ，那么会出现错误
         super().__init__(pool_options, expired)
 
     def execute(self, sql: str, *args):
@@ -158,12 +160,13 @@ class MySQLSessionProvider(IDbSessionProvider):
         return rows > 0
 
     def create_table(self):
+        self._logger.info('Creating session table %r' % self.table_name)
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(48) PRIMARY KEY NOT NULL,
         `creation_time` BIGINT NOT NULL,
         `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
-        INDEX `last_access`(`last_access_time`(8) ASC)
+        INDEX `last_access`(`last_access_time` ASC)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name))
 
     def get_expired_session(self, time_before: float) -> List[str]:

@@ -110,8 +110,6 @@ class App:
         self.context = AppContext(self)
         self.context.push()
 
-        super(App, self).__init__()
-
     def dispose(self):
         self.config.middleware_manager.handle_shutdown()
 

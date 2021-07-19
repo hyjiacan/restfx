@@ -18,6 +18,10 @@ class ISessionProvider(ABC):
 
         :param expired: 过期时长，单位为秒，默认为 10分钟。指定为 0表示不会自动过期
         """
+        from restfx.util import Logger
+        from restfx import globs
+        self._logger = Logger.get(globs.current_app.id)
+
         self.expired = 10 * 60 if expired is None else expired
 
         # 不会过期，不用启动定时器
@@ -30,7 +34,7 @@ class ISessionProvider(ABC):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
         for session_id in expired_sessions:
-            # print('Drop expired session:' + session_id)
+            self._logger.debug('Drop expired session: ' + session_id)
             self.remove(session_id)
 
     def is_expired(self, session: HttpSession) -> bool:
@@ -100,6 +104,8 @@ class ISessionProvider(ABC):
 
 class IDbSessionProvider(ISessionProvider):
     def __init__(self, pool_options: dict, expired: int):
+        super().__init__(expired)
+
         from dbutils.pooled_db import PooledDB
         self.pool_option = pool_options
         self.pool = PooledDB(**pool_options)
@@ -107,7 +113,6 @@ class IDbSessionProvider(ISessionProvider):
         # 更好的做法是在第一次执行 execute 时作此检查
         if not self.table_exists():
             self.create_table()
-        super().__init__(expired)
 
     def connect(self, shareable=True):
         return self.pool.connection(shareable)
