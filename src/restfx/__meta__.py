@@ -1,3 +1,3 @@
 name = 'restfx'
-version = '0.16.14'
+version = '0.16.15'
 website = 'https://gitee.com/hyjiacan/restfx'
