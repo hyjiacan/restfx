@@ -219,16 +219,20 @@ class App:
 
         if env_host is not None:
             host = env_host
-            self._logger.info('Use environment variable RESTFX_HOST: %s' % host)
+            self._logger.info('Using host from environment variable RESTFX_HOST: %s' % host)
         elif cmd_host:
             host = cmd_host
-            self._logger.info('Use command line host: %s' % host)
+            self._logger.info('Using host from command line host: %s' % host)
+        else:
+            self._logger.info('Using host in code: %s' % host)
         if env_port is not None:
             port = int(env_port)
-            self._logger.info('Use environment variable RESTFX_PORT: %s' % port)
+            self._logger.info('Using port from environment variable RESTFX_PORT: %s' % port)
         elif cmd_host:
             port = cmd_port
-            self._logger.info('Use command line port: %s' % port)
+            self._logger.info('Using port from command line port: %s' % port)
+        else:
+            self._logger.info('Using port in code: %s' % port)
 
         # 检查端口是否被占用
         if utils.is_port_used(port):

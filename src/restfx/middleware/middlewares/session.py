@@ -56,8 +56,7 @@ class SessionMiddleware(MiddlewareBase):
 
     def new_sid(self):
         sid = self.maker() if self.maker else self.default_maker()
-        sid_bytes = md5.hash_bytes(sid)
-        return b64.enc_str(sid_bytes)
+        return md5.hash_str(sid)
 
     def decode(self, sid):
         """
@@ -67,7 +66,7 @@ class SessionMiddleware(MiddlewareBase):
         """
         # noinspection PyBroadException
         try:
-            sid_bytes = b64.dec_bytes(sid)
+            sid_bytes = sid.encode()
             # 使用 secret 解密
             result = bytearray()
             for i in range(32):
@@ -81,7 +80,7 @@ class SessionMiddleware(MiddlewareBase):
     def on_startup(self, app):
         if self.secret is None:
             self.secret = app.id
-        self.secret_bytes = md5.hash_bytes(self.secret)
+        self.secret_bytes = md5.hash_str(self.secret).encode()
 
     def process_request(self, request, meta):
         # 当指定了 session=False 时，表示此请求此路由时不需要创建 session
@@ -127,7 +126,7 @@ class SessionMiddleware(MiddlewareBase):
             return
         request.session.flush()
         # 使用 secret 加密
-        sid_bytes = b64.dec_bytes(request.session.id)
+        sid_bytes = request.session.id.encode()
         result = bytearray()
         for i in range(32):
             result.append(sid_bytes[i] ^ self.secret_bytes[i])
