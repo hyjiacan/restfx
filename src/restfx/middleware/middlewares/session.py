@@ -66,13 +66,15 @@ class SessionMiddleware(MiddlewareBase):
         """
         # noinspection PyBroadException
         try:
-            sid_bytes = sid.encode()
+            # 前端传来的 sid 是经过 base64 编码的
+            sid_bytes = b64.dec_bytes(sid)
             # 使用 secret 解密
             result = bytearray()
             for i in range(32):
                 result.append(sid_bytes[i] ^ self.secret_bytes[i])
 
-            return b64.enc_str(result)
+            # 解密后能得到原始的 md5
+            return result.decode()
         except Exception:
             # 解码失败，此 id 非法
             return None
