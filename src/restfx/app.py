@@ -164,7 +164,7 @@ class App:
         finally:
             result = self.config.middleware_manager.handle_leaving(request, response)
             if result:
-                response = response
+                response = result
             request.context().pop()
         return response(environ, start_response)
 

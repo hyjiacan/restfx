@@ -69,7 +69,7 @@ class RouteResolver:
             # 如果指定了名称，那么就加上
             # 如：name = 'detail'
             #   func_name = get_detail
-            func_name = '%s_%s' % (self.method, name.lower())
+            func_name = '%s_%s' % (self.method, name)
 
         # 完全限定名称
         fullname = '%s.%s' % (module_name, func_name)
