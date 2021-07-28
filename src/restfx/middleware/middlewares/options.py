@@ -29,10 +29,13 @@ class OptionsMiddleware(MiddlewareBase):
 
         if self.allow_origin is not None:
             response.access_control_allow_origin = self.allow_origin
-        if self.allow_origin is not None:
+
+        if self.allow_credentials is not None:
             response.access_control_allow_credentials = self.allow_credentials
+
         if self.allow_headers is not None:
             response.access_control_allow_headers = self.allow_headers
+
         if self.max_age is not None:
             response.access_control_max_age = self.max_age
 
