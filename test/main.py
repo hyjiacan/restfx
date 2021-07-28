@@ -2,17 +2,17 @@ import json
 import os
 import uuid
 
-import pymysql
-
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import Redirect
-from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware
+from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
+from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MemorySessionProvider, MySQLSessionProvider
+from restfx.session.providers import MemorySessionProvider
 from test.tools.enums import OpTypes
 
 root = os.path.dirname(__file__)
+
 
 # session_provider = MySQLSessionProvider(pool_options={
 #     'creator': pymysql,
@@ -83,7 +83,8 @@ def sessionid_maker(request, app_id):
 
 
 app.register_middleware(
-    # TimetickMiddleware(),
+    TimetickMiddleware(),
+    OptionsMiddleware(),
     HttpAuthMiddleware(on_auth),
     SessionMiddleware(MemorySessionProvider()),
     # SessionMiddleware(session_provider, sessid_maker=sessionid_maker),

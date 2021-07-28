@@ -1,60 +1,61 @@
 import time
 
-from restfx import __meta__
 from restfx.middleware import MiddlewareBase
 
 
 class TimetickMiddleware(MiddlewareBase):
-    route_time = __meta__.name + '-duration-0-route'
-    process_time = __meta__.name + '-duration-1-process'
-    invoke_time = __meta__.name + '-duration-2-invoke'
-    response_time = __meta__.name + '-duration-3-response'
+    """
+    用于记录在路由的不同阶段的耗时情况
+    """
+
+    KEY = '__timetick__'
+    HEADER = 'restfx-timetick'
 
     def __init__(self):
         pass
 
+    def _get_timetick(self):
+        return time.perf_counter() * 1000
+
     def on_coming(self, request):
-        request.timetick = {
-            'request': time.perf_counter()
-        }
+        request.set(self.KEY, {
+            'request': self._get_timetick()
+        })
 
     def process_request(self, request, meta):
-        if request.timetick:
-            request.timetick['dispatch'] = time.perf_counter()
+        timetick = request.get(self.KEY)
+        if timetick:
+            timetick['dispatch'] = self._get_timetick()
 
     def process_invoke(self, request, meta, args):
-        if request.timetick:
-            request.timetick['invoke'] = time.perf_counter()
+        timetick = request.get(self.KEY)
+        if timetick:
+            timetick['invoke'] = self._get_timetick()
 
     def process_return(self, request, meta, data):
-        if request.timetick:
-            request.timetick['return'] = time.perf_counter()
+        timetick = request.get(self.KEY)
+        if timetick:
+            timetick['return'] = self._get_timetick()
 
     def process_response(self, request, meta, response):
-        if not request.timetick:
-            return
+        timetick = request.get(self.KEY)
+        if timetick:
+            timetick['response'] = self._get_timetick()
 
-        request.timetick['response'] = time.perf_counter()
-
+    def on_leaving(self, request, response):
+        total = self._get_time(request, 'request', 'response')
         rd = self._get_time(request, 'request', 'dispatch')
         dt = self._get_time(request, 'dispatch', 'invoke')
         it = self._get_time(request, 'invoke', 'return')
         rpt = self._get_time(request, 'return', 'response')
 
-        print('%s=%s\n%s=%s\n%s=%s\n%s=%s\n' % (
-            self.route_time, rd,
-            self.process_time, dt,
-            self.invoke_time, it,
-            self.response_time, rpt
-        ))
+        response.headers[self.HEADER] = '%sms; 1/%sms, 2/%sms, 3/%sms, 4/%sms' % (
+            total, rd, dt, it, rpt
+        )
 
-        response.headers.set(self.route_time, rd)
-        response.headers.set(self.process_time, dt)
-        response.headers.set(self.invoke_time, it)
-        response.headers.set(self.response_time, rpt)
-
-    @staticmethod
-    def _get_time(request, from_, to):
-        if from_ not in request.timetick or to not in request.timetick:
-            return '0ms'
-        return '%sms' % ((request.timetick[to] - request.timetick[from_]) * 1000)
+    @classmethod
+    def _get_time(cls, request, from_, to):
+        timetick = request.get(cls.KEY)
+        if from_ not in timetick or to not in timetick:
+            return 0
+        return round(timetick[to] - timetick[from_], 3)

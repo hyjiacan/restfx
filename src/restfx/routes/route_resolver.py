@@ -32,7 +32,10 @@ class RouteResolver:
 
         return None
 
-    def resolve(self) -> [FunctionDescription, HttpResponse]:
+    def resolve(self, method: str = None) -> [FunctionDescription, HttpResponse]:
+        if not method:
+            method = self.method
+
         # entry 可能包含扩展名
         temp = self.entry.split('.')
         entry = temp[0]
@@ -49,7 +52,7 @@ class RouteResolver:
                 'Cannot find route "%s" in routes_map' % self.entry)
             return NotFound()
 
-        func_name = self.method
+        func_name = method
         module_path = module_name.replace('.', os.path.sep)
         # 先检查完整路径是否存在
         module_abs_path = self._get_module_abs_path(module_path)
@@ -69,7 +72,7 @@ class RouteResolver:
             # 如果指定了名称，那么就加上
             # 如：name = 'detail'
             #   func_name = get_detail
-            func_name = '%s_%s' % (self.method, name)
+            func_name = '%s_%s' % (method, name)
 
         # 完全限定名称
         fullname = '%s.%s' % (module_name, func_name)

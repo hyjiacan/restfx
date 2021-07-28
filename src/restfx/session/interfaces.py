@@ -34,7 +34,7 @@ class ISessionProvider(ABC):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
         for session_id in expired_sessions:
-            self._logger.debug('Drop expired session: ' + session_id)
+            # self._logger.debug('Drop expired session: ' + session_id)
             self.remove(session_id)
 
     def is_expired(self, session: HttpSession) -> bool:
