@@ -9,6 +9,9 @@ class OptionsMiddleware(MiddlewareBase):
     提供 options method 请求支持
     """
 
+    # 可用的 method，即支持的 method 列表
+    AVAILABLE_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+
     def __init__(self, allow_origin=None, allow_methods=None, allow_headers=None, allow_credentials=None, max_age=None):
         self.allow_origin = allow_origin
         self.allow_methods = allow_methods
@@ -45,26 +48,32 @@ class OptionsMiddleware(MiddlewareBase):
     def get_allow_methods(cls, request):
         app = current_app
 
-        entry = request.path[len('/' + app._api_prefix):].lstrip('/')
-
-        resolver = RouteResolver(
-            app.config,
-            app._router.entry_cache,
-            request.method, entry
-        )
+        path = request.path
+        entry = path[len('/' + app._api_prefix):]
 
         allow_methods = []
 
-        if cls.has_method(resolver, 'get'):
-            allow_methods.append('GET')
-        if cls.has_method(resolver, 'post'):
-            allow_methods.append('POST')
-        if cls.has_method(resolver, 'put'):
-            allow_methods.append('PUT')
-        if cls.has_method(resolver, 'delete'):
-            allow_methods.append('DELETE')
-        if cls.has_method(resolver, 'patch'):
-            allow_methods.append('PATCH')
+        if app.config.debug:
+            # 调试模式时，从源码查找可用的路由
+            entry = entry.lstrip('/')
+            resolver = RouteResolver(
+                app.config,
+                app._router.entry_cache,
+                request.method, entry
+            )
+
+            # 分别尝试不同 method 的路由是否存在
+            for method in cls.AVAILABLE_METHODS:
+                # 定义时，路由必须使用小写，所以处理成小写形式再去匹配
+                if cls.has_method(resolver, method.lower()):
+                    allow_methods.append(method)
+        else:
+            # 分别尝试不同 method 的路由是否存在
+            for method in cls.AVAILABLE_METHODS:
+                # 定义时，路由必须使用小写，所以处理成小写形式再去匹配
+                rid = '%s#%s' % (entry, method.lower())
+                if rid in app._router.production_routes:
+                    allow_methods.append(method)
 
         return allow_methods
 
