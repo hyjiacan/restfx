@@ -1,12 +1,12 @@
 import uuid
 from werkzeug import Request
-from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage
+from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage, MultiDict
 
 from restfx.util import ContextStore
 from restfx.globs import _request_ctx_stack, _app_ctx_stack
 
 
-def _get_request_data(data: ImmutableMultiDict) -> ImmutableDict:
+def _get_request_data(data: MultiDict) -> ImmutableDict:
     args = {}
     for key in data.keys():
         value = data.getlist(key)

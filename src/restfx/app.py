@@ -73,7 +73,7 @@ class App:
         :param strict_mode: 是否启用严格模式。在严格模式下，不允许在请求时携带未声明的参数
         :param api_page_enabled: 只否启用接口页面
         :param api_page_name: 接口页面名称
-        :param api_page_expanded: 是否展示接口列表
+        :param api_page_expanded: 是否在页面加载后自动展开接口列表
         :param api_page_cache: 是否缓存接口数据
         :param api_page_addition: 接口页面上要展示的接口的附加信息函数，其接收一个 dict 类型的参数 route_info
         :param api_page_header: 接口页面上，需要自定义展示在页面顶部的信息
