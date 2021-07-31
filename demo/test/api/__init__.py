@@ -33,20 +33,19 @@ def get(request, content, session, a, e: OpTypes, **kwargs):
     但是在导出的文件中，参数中的代码块不能换行。
     :return: 返回值没有什么特殊的
 
-    但是我想在此添加一个代码块
+    此处是一个响应数据格式的说明：
 
-        def func(a: int, b: bool):
-            val_a = a
-            val_b = b
-
-            return {
-                'a': a,
-                'b': b
-            }
-
-
-        def func2():
-            pass
+        {
+            data: "string",
+            content: "string",
+            old: [
+                null,
+                2
+            ],
+            enum: "Edit",
+            a: "4",
+            b[]: null
+        }
 
     遇到缩进消失，或者连续两个空行时，表示代码段结束，这与 markdown 语法是一样的
     """

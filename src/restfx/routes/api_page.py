@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 
 from ..config import AppConfig
-from ..http import BadRequest, HttpResponse, JsonResponse
+from ..http import BadRequest, HttpResponse, JsonResponse, NotFound
 from ..util.func_util import FunctionDescription
 
 
@@ -14,25 +14,35 @@ class ApiPage:
         # API列表页面缓存
         self.api_page_html_cache = ''
 
+        self.prefix = '/%s%s' % (config.api_prefix, '/' if config.append_slash else '')
+
     def dispatch(self, request):
         if not self.config.api_page_enabled:
             from ..util import Logger
             Logger.get(self.config.app_id).info(
                 'API page is disabled, '
                 'use "App(..., api_page_enabled=True, ...)" to enable it.')
-            return HttpResponse(status=404)
+            return NotFound()
 
-        if request.method == 'GET':
-            return self.do_get()
+        prefix = self.prefix
 
-        if request.method == 'POST':
-            if 'export' in request.GET and request.GET['export'] == 'md':
-                return self.do_export(request)
-            return self.do_post()
+        if request.path.lower() == prefix:
+            return self.render_page(request)
 
-        return HttpResponse(status=405)
+        if not prefix.endswith('/'):
+            prefix += '/'
 
-    def do_get(self):
+        if request.path.lower() == prefix + 'export':
+            return self.do_export(request)
+
+        if request.path.lower() == prefix + 'api.json':
+            return self.return_api_info(request)
+
+        return NotFound()
+
+    def render_page(self, request):
+        if request.method != 'GET':
+            return NotFound()
         if not self.api_page_html_cache or not self.config.api_page_cache:
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_page.html'),
@@ -42,7 +52,7 @@ class ApiPage:
                 fp.close()
         return HttpResponse(self.api_page_html_cache, content_type='text/html')
 
-    def do_post(self):
+    def return_api_info(self, request):
         if not self.routes_cache or not self.config.api_page_cache:
             from . import Collector
             routes = Collector.get(self.config.app_id).collect(self.config.routes_map)
@@ -80,6 +90,7 @@ class ApiPage:
 
         from restfx import __meta__
         return JsonResponse({
+            'api_version': __meta__.api_version,
             'meta': {
                 'name': __meta__.name,
                 'version': __meta__.version,
@@ -89,9 +100,12 @@ class ApiPage:
             'expanded': self.config.api_page_expanded,
             'routes': self.routes_cache,
             'custom_assets': self.config.api_page_assets
-        }, encoder=FunctionDescription.JSONEncoder)
+        }, encoder=FunctionDescription.JSONEncoder, ensure_ascii=request.GET.get('ascii') == 'true')
 
     def do_export(self, request):
+        if request.method != 'POST':
+            return NotFound()
+
         if 'data' not in request.POST:
             return BadRequest()
 

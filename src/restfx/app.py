@@ -61,6 +61,7 @@ class App:
                  api_page_header=None,
                  api_page_footer=None,
                  api_page_assets: tuple = None,
+                 allowed_route_meta: dict = None
                  ):
         """
 
@@ -78,6 +79,7 @@ class App:
         :param api_page_header: 接口页面上，需要自定义展示在页面顶部的信息
         :param api_page_footer: 接口页面上，需要自定义展示在页面底部的信息
         :param api_page_assets: 接口页面上，需要自定义的JS和CSS以及其它资源 (通过 static 托管，此接口仅填写地址)
+        :param allowed_route_meta: 路由装饰器上，指定允许使用的自定义元数据参数。当此值为 None 时，不限制。
         """
         from .config import AppConfig
         from .routes import ApiPage
@@ -89,10 +91,11 @@ class App:
 
         self._APPS[self.id] = self
 
-        self.config = AppConfig(self.id, app_root, debug, append_slash,
+        self.config = AppConfig(self.id, app_root, debug, api_prefix, append_slash,
                                 strict_mode, api_page_enabled, api_page_name,
                                 api_page_expanded, api_page_cache, api_page_addition,
-                                api_page_header, api_page_footer, api_page_assets)
+                                api_page_header, api_page_footer, api_page_assets,
+                                allowed_route_meta)
         self.config.middleware_manager = MiddlewareManager(self.id, self.config)
         self._api_prefix = api_prefix
         self._router = Router(self.config)
@@ -102,6 +105,8 @@ class App:
 
         self._url_map = Map([
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
+            Rule('/%s/api.json' % api_prefix, endpoint='_api_page'),
+            Rule('/%s/export' % api_prefix, endpoint='_api_page'),
             Rule('/%s/<path:entry>%s' % (api_prefix, '/' if append_slash else ''), endpoint='entry_only')
         ])
 

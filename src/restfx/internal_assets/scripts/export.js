@@ -203,7 +203,7 @@
     // console.log(md)
 
     var form = $('#export-proxy')
-    form.attr('action', urlRoot + '/' + apiPrefix + '?export=md')
+    form.attr('action', urlRoot + '/' + apiPrefix + '/export')
     $('#md-content').val(Base64.encode(md))
     form.submit()
   }

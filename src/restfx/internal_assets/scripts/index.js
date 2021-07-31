@@ -21,7 +21,7 @@ function loadPage() {
   // 请求数据
   var loading = $('#loading')
   loading.show()
-  request('post', urlRoot + '/' + apiPrefix, {
+  request('get', urlRoot + '/' + apiPrefix + '/api.json', {
     callback: function (response) {
       var data = response.data
       if (response.status !== 200) {

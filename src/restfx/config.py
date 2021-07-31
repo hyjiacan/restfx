@@ -16,6 +16,7 @@ class AppConfig:
     def __init__(self, app_id: str,
                  app_root: str,
                  debug: bool,
+                 api_prefix: str,
                  append_slash: bool,
                  strict_mode: bool,
                  api_page_enabled: bool,
@@ -26,12 +27,14 @@ class AppConfig:
                  api_page_header: str,
                  api_page_footer: str,
                  api_page_assets: tuple,
+                 allowed_route_meta: dict,
                  ):
         """
 
         """
         self._CONFIGS[app_id] = self
         self.app_id = app_id
+        self.api_prefix = api_prefix
         self.local = LocalStack()
         # 是否启用DEBUG模式
         self.debug = debug
@@ -69,6 +72,7 @@ class AppConfig:
         self.api_page_footer = api_page_footer
         self.api_page_addition = api_page_addition
         self.api_page_assets = api_page_assets
+        self.allowed_route_meta = allowed_route_meta
 
         if self.api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
