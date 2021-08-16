@@ -61,7 +61,8 @@ class App:
                  api_page_header=None,
                  api_page_footer=None,
                  api_page_assets: tuple = None,
-                 allowed_route_meta: dict = None
+                 allowed_route_meta: dict = None,
+                 favicon: str = None
                  ):
         """
 
@@ -103,7 +104,10 @@ class App:
 
         self._custom_url_map = {}
 
+        self._favicon = favicon
+
         self._url_map = Map([
+            Rule('/favicon.ico', endpoint='favicon'),
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/api.json' % api_prefix, endpoint='_api_page'),
             Rule('/%s/export' % api_prefix, endpoint='_api_page'),
@@ -151,6 +155,12 @@ class App:
                     response = self._router.dispatch(request, values['entry'])
                 elif endpoint in self._custom_url_map:
                     response = self._custom_url_map[endpoint](request, **values)
+                elif endpoint == 'favicon':
+                    if self._favicon is None:
+                        response = NotFound()
+                    else:
+                        from .http import FileResponse
+                        response = FileResponse(os.path.join(self.config.ROOT, self._favicon))
                 else:
                     response = NotFound()
         except Exception as e:
@@ -240,9 +250,9 @@ class App:
             self._logger.info('Using port in code: %s' % port)
 
         # 检查端口是否被占用
-        if utils.is_port_used(port):
-            self._logger.warning('The port "%s" is not available, pick another one instead.' % port)
-            exit(1)
+        # if utils.is_port_used(port):
+        #     self._logger.warning('The port "%s" is not available, pick another one instead.' % port)
+        #     exit(1)
 
             # 支持 空串和 * 标志
         if host in [None, '', '*']:

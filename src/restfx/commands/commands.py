@@ -87,7 +87,7 @@ def command_create(working_dir: str, project_name, *argv):
     tarfile.extractall(project_path)
     tarfile.close()
 
-    command_genid(working_dir)
+    command_genid(project_path)
 
     print("""Created !
 
