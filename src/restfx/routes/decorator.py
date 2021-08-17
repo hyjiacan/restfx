@@ -154,7 +154,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
     # 执行校验
     result = validate_args(validators, actual_args)
     if result is not None:
-        return BadRequest(result, content_type='text/plain')
+        return handle_response(BadRequest(result, content_type='text/plain'))
 
     # 调用路由函数
     arg_len = len(handler_args)

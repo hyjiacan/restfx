@@ -11,6 +11,7 @@ class MiddlewareA(MiddlewareBase):
 
     def process_return(self, request, meta, data):
         print('process_return A')
+        return data
 
     def process_response(self, request, meta, response):
         print('process_response A')

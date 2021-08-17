@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 
+from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import Redirect
@@ -88,7 +89,7 @@ app.register_middleware(
     HttpAuthMiddleware(on_auth),
     SessionMiddleware(MemorySessionProvider()),
     # SessionMiddleware(session_provider, sessid_maker=sessionid_maker),
-    # MiddlewareA(),
+    MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
 )

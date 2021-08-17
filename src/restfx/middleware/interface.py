@@ -1,10 +1,21 @@
 from abc import ABC
 
+from . import methods
+
 
 class MiddlewareBase(ABC):
     """
     路由中间件基类
     """
+
+    def force_run_method(self, method: int):
+        """
+        在执行中间件时，是否强制执行指定函数。
+        指定类型的勾子函数，在前一个中间件返回了会阻止后续中间件继续执行的值时，仍会不爱影响地执行
+        :param method: 来自 methods.on_coming, methods.process_request, ...的值
+        :return: 返回 False 表示按默认逻辑跳过执行此中间件的指定函数，返回 True 表示仍然执行函数
+        """
+        return False
 
     def on_startup(self, app):
         """
