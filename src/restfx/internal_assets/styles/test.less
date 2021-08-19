@@ -18,6 +18,7 @@
     .url {
       border: 1px solid #c4c3c3;
       outline: none;
+
       &:focus, &:active {
         border-color: #888888;
       }
@@ -152,6 +153,40 @@
 
   .test-header--checkbox {
     cursor: pointer;
+  }
+
+  #args-json {
+    height: auto;
+    min-height: 200px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+    resize: vertical;
+    margin-top: 10px;
+    font-family: Consolas, serif;
+    line-height: 1.2;
+  }
+
+  .args-json--toolbar {
+    height: 40px;
+  }
+
+  #json-tool--format {
+    float: left;
+  }
+
+  .args-json--tip {
+    margin-left: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-all;
+    white-space: nowrap;
+    font-size: 12px;
+
+    &.error {
+      color: #fb6060;
+    }
   }
 }
 

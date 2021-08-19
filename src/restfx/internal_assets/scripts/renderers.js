@@ -300,16 +300,11 @@ function getArgDefaultValue(arg, editable) {
 
   // 将元组和列表视作同种类型
   // 事实上，后台已经处理过这个类型，此处并不会接收到 tuple 类型
-  if (arg.annotation_name !== 'list' || defaultValue === null) {
+  if (['list', 'dict'].indexOf(arg.annotation_name) === -1  || defaultValue === null) {
     return getArgValueString(defaultValue, editable)
   }
 
-  var listValue = defaultValue.map(function (item) {
-    return getArgValueString(item, editable)
-  }).join(',')
-
-  // 使用 逗号 分隔开
-  return '[' + listValue + ']'
+  return JSON.stringify(defaultValue)
 }
 
 function renderArgDefaultValue(arg) {

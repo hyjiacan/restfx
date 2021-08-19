@@ -79,10 +79,11 @@
         <button id="btn-send-test">发送</button>
       </div>
       <div class="addition-info"></div>
-      <div class="tabs-layout">
+      <div class="tabs-layout request-tab">
         <ul class="tabs-header">
           <li data-index="0" class="active">参数</li>
-          <li data-index="1">请求头</li>
+          <li data-index="1">JSON</li>
+          <li data-index="2">请求头</li>
         </ul>
         <div class="tabs-content">
           <table class="tabs-item args-table active">
@@ -105,6 +106,13 @@
             </thead>
             <tbody></tbody>
           </table>
+          <div class="tabs-item args-json">
+            <textarea id="args-json"></textarea>
+            <div class="args-json--toolbar">
+              <button id="json-tool--format">格式化</button>
+              <div class="args-json--tip"></div>
+            </div>
+          </div>
           <table class="tabs-item header-table">
             <colgroup>
               <col style="width: 40px;">
@@ -209,15 +217,16 @@
   <input type="hidden" name="data" id="md-content"/>
 </form>
 <script>
-var urlRoot = window.location.protocol + '//' + window.location.host
-var apiPrefix = window.location.pathname.substring(1)
-var API_LIST = Object.create(null)
-var list = $('#api-list')
-var testPanel = $('#test-panel')
-var optionPanel = $('#option-panel')
+    var urlRoot = window.location.protocol + '//' + window.location.host
+    var apiPrefix = window.location.pathname.substring(1)
+    var API_LIST = Object.create(null)
+    var list = $('#api-list')
+    var testPanel = $('#test-panel')
+    var optionPanel = $('#option-panel')
 </script>
 <script src="/internal_assets/scripts/renderers.js"></script>
 <script src="/internal_assets/scripts/index.js"></script>
+<script src="/internal_assets/scripts/taboverride.min.js"></script>
 <script src="/internal_assets/scripts/panel.js" defer></script>
 <script src="/internal_assets/scripts/test.js" defer></script>
 <script src="/internal_assets/scripts/options.js" defer></script>

@@ -9,7 +9,7 @@ from restfx.http import HttpRequest
 @route(module='测试名称-模块', name='测试名称-GET', extname='jsp', auth=False, op_type=OpTypes.Query, validators=(
         val('param1').range(2, 2)
 ))
-def get(request, _injection, param1=(1, 2), param2=5):
+def get(request, _injection, param1=(1, 2), param2={}):
     """
 
     :param request: HttpRequest
@@ -30,8 +30,8 @@ def get(request, _injection, param1=(1, 2), param2=5):
 
     data = {
         'injection': _injection,
-        'param2': param1,
-        'param3': param2,
+        'param1': param1,
+        'param2': param2,
         'temp': temp
     }
     return data
