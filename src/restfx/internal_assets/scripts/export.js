@@ -94,8 +94,8 @@
     var argType
     if (arg.is_variable) {
       arg.has_annotation = true
-      argName = '**' + argName
-      argType = 'VAR_KEYWORD'
+      argName = '...' + argName
+      argType = 'variable'
     } else if (arg.has_annotation) {
       argType = arg.annotation_name
     } else {

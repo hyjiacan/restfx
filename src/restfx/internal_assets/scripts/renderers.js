@@ -350,7 +350,7 @@ function renderArg(arg, editable) {
   var argType
   if (arg.is_variable) {
     arg.has_annotation = true
-    argName = '**' + argName
+    argName = '...' + argName
     argType = 'variable'
   } else if (arg.has_annotation) {
     argType = arg.annotation_name
