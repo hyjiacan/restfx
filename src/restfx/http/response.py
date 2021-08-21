@@ -22,20 +22,23 @@ class JsonResponse(HttpResponse):
 
 
 class FileResponse(HttpResponse):
-    def __init__(self, fp: Union[str, bytes, IOBase], attachment: str = None,
+    def __init__(self, fp: Union[str, bytes, IOBase], attachment: [str, bool] = None,
                  content_type=None,
                  ranges: Tuple[int, int] = (),
                  request=None, **kwargs):
         """
 
-        :param fp: 文件名或内容。如果指定的 fp 是文件名（字符串），那么认为返回的是文件名。
-        :param attachment: 指定一个字符串，作为返回附件的文件名
+        :param fp: 文件名或内容。如果指定的 fp 是文件名（字符串），那么认为传入的是文件名。
+        :param attachment: 指定一个字符串，作为返回附件的文件名，当指定为 True （同时 fp 为文件名）时，将 fp 文件名作为 attachment 的值
         :param content_type: 当未指定此值时，如果指定的 fp 是文件名，那么会自动根据文件的扩展名进行识别
         :param ranges: 用于指定返回数据的分块起始位置
         :param kwargs:
         """
         # 如果是字符串，就认为是文件路径
         if isinstance(fp, str):
+            if isinstance(attachment, bool) and attachment:
+                from os import path
+                attachment = path.basename(fp)
             # 根据文件的扩展名自动识别 mime
             if content_type is None:
                 import mimetypes
