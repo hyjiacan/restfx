@@ -133,7 +133,7 @@ class FileResponse(HttpResponse):
 
         if not request:
             from ..util import Logger
-            Logger.print('warning',
+            Logger.warning(
                          'You are using FileResponse for attachment,'
                          'it is recommended to fill the "request" parameter.'
                          'Otherwise, you may got an encoding issue of the filename on Firefox.'

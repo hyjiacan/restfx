@@ -139,7 +139,7 @@ class MySQLSessionProvider(IDbSessionProvider):
             else:
                 data = None
         except Exception as e:
-            print(str(e))
+            self._logger.error('Error occurred during SQL executing: %s, args=%s' % (sql, args), e)
             return 0, None
         else:
             conn.commit()
