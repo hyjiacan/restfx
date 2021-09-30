@@ -2,28 +2,20 @@ import json
 import os
 import uuid
 
+from admin_plugin.plugin import AdminPlugin
+
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import Redirect
+from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MemorySessionProvider
+from restfx.session.providers import RedisSessionProvider
 from test.tools.enums import OpTypes
 
 root = os.path.dirname(__file__)
-
-
-# session_provider = MySQLSessionProvider(pool_options={
-#     'creator': pymysql,
-#     'host': '127.0.0.1',
-#     'port': 3306,
-#     'user': 'root',
-#     'password': '',
-#     'database': 'test',
-#     'charset': 'utf8',
-# })
 
 
 def test_id(request: HttpRequest, **kwargs):
@@ -79,16 +71,29 @@ def on_auth(request: HttpRequest, meta: RouteMeta):
         return False
 
 
-def sessionid_maker(request, app_id):
+def sessionid_maker(request):
     return uuid.uuid4().hex
 
 
 app.register_middleware(
+    AccessMiddleware(),
     TimetickMiddleware(),
     OptionsMiddleware(),
     HttpAuthMiddleware(on_auth),
-    SessionMiddleware(MemorySessionProvider()),
-    # SessionMiddleware(session_provider, sessid_maker=sessionid_maker),
+    # SessionMiddleware(MemorySessionProvider()),
+    # SessionMiddleware(MySQLSessionProvider(pool_options={
+    #     'host': '127.0.0.1',
+    #     'port': 3306,
+    #     'user': 'root',
+    #     'password': '',
+    #     'database': 'test',
+    #     'charset': 'utf8',
+    # }), maker=sessionid_maker),
+    SessionMiddleware(RedisSessionProvider(
+        host='172.16.51.17',
+        password='123asd!@#$',
+        db=15
+    ), maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
@@ -97,7 +102,7 @@ app.inject(injection='try1try')
 
 
 def load_routes_map():
-    import routes_map
+    from dist import routes_map
     app.register_routes(routes_map.routes)
 
 
@@ -110,7 +115,7 @@ def command_persist():
     if arg1 != 'persist':
         return False
 
-    app.persist('routes_map.py')
+    app.persist()
     return True
 
 
@@ -119,7 +124,7 @@ if __name__ == '__main__':
     if command_persist():
         exit(0)
     else:
-        if not DEBUG_MODE:
-            load_routes_map()
+        app.register_plugins(AdminPlugin())
+        load_routes_map()
         # 启动内置服务器
         app.startup()

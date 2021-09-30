@@ -53,13 +53,13 @@ def get(request, content, session, a, e: OpTypes, **kwargs):
     if session:
         # 当需要指定参数时，使用 request.context(a=2)
         # 或者使用
-        with request.context(a=2):
+        with request.context(a=a):
             old = get_old_value()
         session.set('old', content)
     return {
         'data': '来自包中的数据',
         'content': content,
-        'old': old,
+        'old_content': old,
         'enum': e.name,
         'a': a,
         'b[]': kwargs.get('b')

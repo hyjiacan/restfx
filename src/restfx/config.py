@@ -43,14 +43,29 @@ class AppConfig:
         self.append_slash = append_slash
         self.strict_mode = strict_mode
         self.middleware_manager = None
-        # 注册的中间件实例集合
         self.middlewares = []
         """
+        注册的中间件实例集合
         :type: List[MiddlewareBase]
         """
         self.reversed_middlewares = []
         """
         :type: List[MiddlewareBase]
+        """
+        self.plugins = []
+        """
+        注册的插件实例集合
+        :type: List[PluginBase]
+        """
+
+        self.routes = []
+        """
+        注册的路由列表
+        """
+
+        self.docs = []
+        """
+        注册的路由列表对应的文档信息
         """
 
         # 路由映射表，其键为请求的路径，其值为映射的目录

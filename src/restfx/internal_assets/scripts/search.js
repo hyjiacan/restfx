@@ -15,6 +15,7 @@
       return
     }
     e.preventDefault()
+    $('#app').scrollTop(0)
     input.focus()
     return false
   })
@@ -67,16 +68,34 @@
       if (item.text().indexOf(keyword) === -1) {
         item.addClass('search-miss').removeClass('search-hit')
       } else {
-        item.removeClass('search-miss').addClass('search-hit')
-        hl(item.get(0))
+        var hit = hl(item.get(0))
+        if (hit) {
+          item.removeClass('search-miss').addClass('search-hit')
+        } else {
+          item.addClass('search-miss').removeClass('search-hit')
+        }
       }
     })
 
     modules.each(function () {
       var module = $(this)
-      if (module.find('.search-hit').length) {
-        module.show().find('details').prop('open', 'open')
+      var moduleName = module.find('span.module-name')
+      var hitModule = moduleName.text().indexOf(keyword) !== -1
+      if (hitModule) {
+        // 如果命中模块名称，那么显示模块（收起）
+        moduleName.show().addClass('search-hit')
+        hl(moduleName.get(0))
+        module.find('.search-miss').removeClass('search-miss')
+        module.show().find('details').prop('open', false)
       } else {
+        moduleName.removeClass('search-hit')
+      }
+
+      if (module.find('.api-list .search-hit').length) {
+        // 如果命中了路由，那么展开模块
+        module.show().find('details').prop('open', 'open')
+      } else if (!hitModule) {
+        // 即没有命中模块名称，也没有命中路由，隐藏模块
         module.hide()
       }
     })
@@ -87,21 +106,25 @@
    * @param {Node} item
    */
   function hl(item) {
+    var hit = 0
+    if (item.tagName === 'BUTTON') {
+      return 0
+    }
     if (item.nodeType !== HTMLElement.TEXT_NODE) {
       var children = item.childNodes
       if (!children.length) {
-        return
+        return 0
       }
       children.forEach(function (node) {
-        hl(node)
+        hit += hl(node)
       })
-      return
+      return hit
     }
     var text = item.textContent
     var temp = text.split(keyword)
     // 没有命中
     if (temp.length === 1) {
-      return
+      return 0
     }
     var fragment = el('span')
     for (var i = 0; i < temp.length; i++) {
@@ -120,5 +143,6 @@
       b: fragment
     })
     item.parentElement.replaceChild(fragment, item)
+    return 1
   }
 })()

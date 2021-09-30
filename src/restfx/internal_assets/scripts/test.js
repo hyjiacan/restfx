@@ -65,7 +65,21 @@
             }
             fields[field.name].type = field.dataset.type
         })
-        return fields
+
+        // 处理数据格式
+        var formData = Object.create(null)
+        for (var name in fields) {
+            // 忽略空的字段
+            if (!name || /^\s*$/.test(name)) {
+                continue
+            }
+
+            // var fieldType = fields[name].type
+
+            formData[name] = fields[name].value
+        }
+
+        return formData
     }
 
     function getJsonArgs() {
@@ -94,28 +108,13 @@
         responseTime.empty()
         responseLength.empty()
         linkSaveAs.hide()
-
-        var fields = $('.request-tab .tabs-header li.active', testPanel).attr('data-index') === '0' ?
+        var fields = $('.request-tab .args-types--header li.active', testPanel).attr('data-index') === '0' ?
             getTableArgs() : getJsonArgs()
 
         if (!fields) {
             return
         }
 
-        // 处理数据格式
-        var formData = Object.create(null)
-        for (var name in fields) {
-            // 忽略空的字段
-            if (!name || /^\s*$/.test(name)) {
-                continue
-            }
-
-            // var fieldType = fields[name].type
-
-            var fieldValue = fields[name].value
-
-            formData[name] = fieldValue
-        }
         responseTime.text('加载中...')
 
         var start = new Date().getTime()
@@ -137,14 +136,13 @@
                 renderTestResponse(response, url)
             }
         }
-
         if (['get', 'delete'].indexOf(method) === -1) {
             option.data = new FormData()
-            for (var name in formData) {
-                option.data.append(name, formData[name])
+            for (var name in fields) {
+                option.data.append(name, fields[name])
             }
         } else {
-            option.param = formData
+            option.param = fields
         }
 
         var headers = {}
@@ -248,6 +246,10 @@
         var table = headerTable.find('tbody')
         // table.empty()
 
+        if ($('#btn-add-test-header').length) {
+            return
+        }
+
         var toolRow = null
 
         var button = el('a', {href: 'javascript:', id: 'btn-add-test-header'}, '添加头')
@@ -308,7 +310,7 @@
             $(this).find('li').first().click()
         })
 
-        var table = $('table.args-table', testPanel).empty()
+        // $('table.args-table', testPanel).remove()
 
         var toolRow = null
         if (api.handler_info.arguments.some(function (item) {
@@ -329,7 +331,12 @@
             })
         }
 
-        table.append(renderArgRows(api.handler_info.arguments, true, toolRow))
+        var tableParent = argsTable.parent()
+        argsTable.remove()
+        argsTable = $(renderArgRows(api.handler_info.arguments, true, toolRow))
+        argsTable.addClass('tabs-item active')
+        tableParent.prepend(argsTable)
+        // table.append()
 
         // 渲染初始化的 JSON 内容
         argsJson.val('')
@@ -444,7 +451,7 @@
     })
 
     function formatJson() {
-        var tip = $('.args-json--tip', testPanel).text('').removeClass('error')
+        var tip = $('.args-json--tip', testPanel).text('').removeClass('error').removeClass('ok')
 
         var content = argsJson.val()
         try {
@@ -456,6 +463,10 @@
             if ($.isArray(obj)) {
                 throw new Error('参数只能是对象，不能是数组')
             }
+            tip.text('格式正确').addClass('ok')
+            setTimeout(function () {
+                tip.text('')
+            }, 1000)
             return obj
         } catch (e) {
             tip.text(e.message).addClass('error')

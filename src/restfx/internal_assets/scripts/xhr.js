@@ -106,8 +106,8 @@
         if (!temp[0]) {
           return
         }
-        var hn = temp[0].trim()
-        var hv = (temp[1] || '').trim()
+        var hn = temp.shift().trim()
+        var hv = temp.join(':').trim()
         headers[hn] = hv
         rawHeaders[hn] = hv
       })

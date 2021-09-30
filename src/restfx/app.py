@@ -2,13 +2,13 @@ import atexit
 import os
 import sys
 import uuid
-from types import FunctionType
 
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
 
 from restfx.globs import _app_ctx_stack
 from restfx.util import ContextStore, utils
+from . import __meta__
 from .http import HttpRequest, NotFound, ServerError
 from .middleware import MiddlewareManager
 from .routes import Collector
@@ -124,6 +124,12 @@ class App:
 
         del self.config.middleware_manager
 
+        for plugin in self.config.plugins:
+            try:
+                plugin.destroy()
+            except Exception as e:
+                self._logger.error('Failed to destroy plugin %r' % plugin.__name__, e)
+
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
         self.context.pop()
@@ -181,6 +187,11 @@ class App:
             if result:
                 response = result
             request.context().pop()
+            import werkzeug
+            sv = sys.version_info
+            response.headers['server'] = '%s/%s werkzeug/%s Python/%s' % (
+                __meta__.name, __meta__.version, werkzeug.__version__, '%s.%s.%s' % (sv[0], sv[1], sv[2])
+            )
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
@@ -254,7 +265,7 @@ class App:
         #     self._logger.warning('The port "%s" is not available, pick another one instead.' % port)
         #     exit(1)
 
-            # 支持 空串和 * 标志
+        # 支持 空串和 * 标志
         if host in [None, '', '*']:
             host = '0.0.0.0'
 
@@ -291,14 +302,12 @@ class App:
         """
         return Collector.get(self.id).collect(self.config.routes_map)
 
-    def persist(self, filename: str = '', encoding='utf8'):
+    def persist(self):
         """
         持久化路由信息到文件
-        :param filename: 不指定此值时，此函数会返回路由文件内容
-        :param encoding:
         :return:
         """
-        return Collector.get(self.id).persist(self.config.routes_map, filename, encoding)
+        return Collector.get(self.id).persist(self.config.routes_map)
 
     def set_logger(self, logger):
         """
@@ -365,33 +374,32 @@ class App:
 
     def register_routes(self, routes: list):
         """
-        手动注册路由列表
+        注册路由列表。一般来说，应当通过以下方法调用：
+
+        from dist import routes_map
+
+        app.register_routes(routes_map.routes)
+
         :param routes: 其每一项都应该是一个 list, 元素依次为 method: str, path: str, handler: FunctionType
         :return:
         """
-        for route in routes:
-            self.register_route(*route)
-        return self
+        for handler, api_info in routes:
+            from .util.func_util import FunctionDescription
 
-    def register_route(self, method: str, path: str, handler: FunctionType):
-        """
-        手动注册路由
-        :param path:
-        :param method:
-        :param handler:
-        :return:
-        """
-        from .util.func_util import FunctionDescription
+            method = api_info['method']
+            path = api_info['path']
 
-        rid = '%s#%s' % (path, method.lower())
-        if rid in self._router.production_routes:
-            self._logger.warning('Duplicated route %s %s' % (method, path))
+            rid = '%s#%s' % (path, method.lower())
+            if rid in self._router.production_routes:
+                self._logger.warning('Duplicated route %s %s' % (method, path))
 
-        desc = FunctionDescription(handler)
-        self._router.production_routes[rid] = {
-            'func': handler,
-            'args': desc.arguments
-        }
+            desc = FunctionDescription(handler)
+            self._router.production_routes[rid] = {
+                'func': handler,
+                'args': desc.arguments
+            }
+            self.config.docs.append(api_info)
+
         return self
 
     def register_middleware(self, *middlewares):
@@ -418,6 +426,22 @@ class App:
         :return:
         """
         self.config.injections.update(**kwargs)
+        return self
+
+    def register_plugins(self, *plugins):
+        """
+        注册插件，插件没有顺序之分
+        :param plugins: 插件实例列表
+        :return:
+        """
+        from restfx.plugin import PluginBase
+
+        for plugin in plugins:
+            assert isinstance(plugin, PluginBase)
+            self.config.plugins.append(plugin)
+            # 调用插件，标记中间件的启动
+            plugin.setup(self)
+
         return self
 
     @classmethod

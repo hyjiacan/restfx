@@ -1,9 +1,12 @@
 import os
 
+from . import __meta__
 from .app import App
 from .routes.decorator import route
 from .routes.parameter_interface import IParam
 from .routes.validator import Validator
+
+__version__ = __meta__.version
 
 val = Validator
 """
@@ -26,5 +29,6 @@ __all__ = [
     'route',
     'val',
     'IParam',
-    'env'
+    'env',
+    '__version__'
 ]

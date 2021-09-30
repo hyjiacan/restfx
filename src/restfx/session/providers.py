@@ -6,13 +6,16 @@ from .session import HttpSession
 
 
 class MemorySessionProvider(ISessionProvider):
-    def __init__(self, expired: int = None):
-        super().__init__(expired)
+    def __init__(self, expired: int = None, check_interval=30):
+        super().__init__(expired, check_interval, False)
         self.sessions = {}
 
     def remove(self, session_id: str):
         if self.exists(session_id):
             del self.sessions[session_id]
+
+    def clear(self):
+        self.sessions.clear()
 
     def get_expired_session(self, time_before: float) -> List[str]:
         expired_sessions = []
@@ -30,19 +33,17 @@ class MemorySessionProvider(ISessionProvider):
     def exists(self, session_id: str):
         return session_id in self.sessions
 
-    def dispose(self):
-        self.sessions.clear()
-        super().dispose()
-
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, sessions_root: str, expired: int = None):
-        super().__init__(expired)
+    def __init__(self, sessions_root: str, expired: int = None, check_interval=30, auto_clear=True):
+        super().__init__(expired, check_interval, auto_clear)
 
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
             # print('mkdir:' + self.sessions_root)
+        elif auto_clear:
+            self.clear()
 
     def _get_session_path(self, session_id: str) -> str:
         # session_id 中可能存在 / 符号
@@ -103,7 +104,6 @@ class FileSessionProvider(ISessionProvider):
 
     def set(self, session: HttpSession):
         import pickle
-
         # print('Set session:' + session.id)
         with open(self._get_session_path(session.id), mode='wb') as fp:
             pickle.dump(session, fp, pickle.HIGHEST_PROTOCOL)
@@ -112,35 +112,46 @@ class FileSessionProvider(ISessionProvider):
     def exists(self, session_id: str):
         return os.path.isfile(self._get_session_path(session_id))
 
-    def dispose(self):
+    def clear(self):
         os.removedirs(self.sessions_root)
-        super().dispose()
 
 
 class MySQLSessionProvider(IDbSessionProvider):
-    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired: int = None):
-        self.table_name = table_name
-        # 需要先指定 table_name 再调用父级的初始化，因为在父级初始化中会调用创建表的操作
-        # 如果未在这之前指定 table_name ，那么会出现错误
-        super().__init__(pool_options, expired)
+    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired: int = None, check_interval=30,
+                 auto_clear=True):
+        """
 
-    def execute(self, sql: str, *args):
+        :param pool_options: 不需要指定 creator 选项，即使指定了，也会被 pymysql 覆盖
+        :param table_name:
+        :param expired:
+        :param check_interval:
+        :param auto_clear:
+        """
+        import pymysql
+        pool_options['creator'] = pymysql
+        self.table_name = table_name
+        super().__init__(pool_options, expired, check_interval, auto_clear)
+
+    def execute(self, sql: str, *args, throw_except=False):
         import pymysql
         conn = self.connect()
+
+        self.ensure_table()
 
         # print('[MySQLSessionProvider] ' + (sql % args))
 
         cursor = None
+        rows = 0
+        data = None
         try:
             cursor = conn.cursor(pymysql.cursors.DictCursor)
             rows = cursor.execute(sql, args)
             if sql.startswith('SELECT'):
                 data = cursor.fetchall()
-            else:
-                data = None
         except Exception as e:
-            self._logger.error('Error occurred during SQL executing: %s, args=%s' % (sql, args), e)
-            return 0, None
+            self._logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
+            if throw_except:
+                raise e
         else:
             conn.commit()
         finally:
@@ -150,16 +161,22 @@ class MySQLSessionProvider(IDbSessionProvider):
 
         return rows, data
 
-    def table_exists(self) -> bool:
+    def ensure_table(self):
+        if self.is_db_available:
+            return
+
         rows, _ = self.execute(
             """SELECT * FROM `information_schema`.`TABLES`
             WHERE `TABLE_SCHEMA`='{db_name}' AND `TABLE_NAME` ='{table_name}' LIMIT 1""".format(
                 db_name=self.pool_option['database'],
                 table_name=self.table_name
-            ))
-        return rows > 0
+            ), throw_except=True)
+        if rows > 0:
+            self.is_db_available = True
+            if self.auto_clear:
+                self.clear()
+            return
 
-    def create_table(self):
         self._logger.info('Creating session table %r' % self.table_name)
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(48) PRIMARY KEY NOT NULL,
@@ -167,7 +184,9 @@ class MySQLSessionProvider(IDbSessionProvider):
         `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
         INDEX `last_access`(`last_access_time` ASC)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name))
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True)
+
+        self.is_db_available = True
 
     def get_expired_session(self, time_before: float) -> List[str]:
         rows, data = self.execute(
@@ -186,13 +205,6 @@ class MySQLSessionProvider(IDbSessionProvider):
         return self.parse(data[0])
 
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        # 检查存储数据长度，如果大于 65535 则抛出异常
-        store_len = len(store)
-        max_value = 65535
-        if store_len > max_value:
-            raise RuntimeError('Entity is too large (%s) for session storage, the max value is %s.' % (
-                store_len, max_value))
-
         self.execute("""INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
         last_access_time=%s, store=%s""".format(table_name=self.table_name),
                      session_id,
@@ -210,6 +222,70 @@ class MySQLSessionProvider(IDbSessionProvider):
     def remove(self, session_id: str):
         self.execute("""DELETE FROM `{table_name}` WHERE `id`=%s""".format(table_name=self.table_name), session_id)
 
-    def dispose(self):
+    def clear(self):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))
-        super().dispose()
+
+
+class RedisSessionProvider(ISessionProvider):
+    """
+    提供基于 Redis 的 session 存储支持
+    """
+
+    def __init__(self, host: str, port=6379, db=0, password: str = None,
+                 expired: int = None,
+                 auto_clear=True, **kwargs):
+        """
+
+        :param expired:
+        :param auto_clear:
+        """
+        import redis
+        super().__init__(expired, 0, auto_clear)
+        self.pool = redis.ConnectionPool(
+            host=host,
+            port=port,
+            db=db,
+            password=password,
+            **kwargs
+        )
+        self.started = False
+
+    def connect(self):
+        import redis
+        conn = redis.StrictRedis(connection_pool=self.pool)
+        if not self.started and self.auto_clear:
+            conn.flushdb()
+        return conn
+
+    def get_expired_session(self, time_before: float) -> List[str]:
+        return []
+
+    def get(self, session_id: str) -> Optional[HttpSession]:
+        with self.connect() as conn:
+            session = conn.get(session_id)
+            if session is None:
+                return session
+
+            import pickle
+            session = pickle.loads(session)
+            setattr(session, '_update_watcher', self.set)
+            setattr(session, '_drop_watcher', self.remove)
+            return session
+
+    def set(self, session: HttpSession):
+        with self.connect() as conn:
+            import pickle
+            buf = pickle.dumps(session, pickle.HIGHEST_PROTOCOL)
+            return conn.set(session.id, buf, ex=self.expired)
+
+    def exists(self, session_id: str) -> bool:
+        with self.connect() as conn:
+            return conn.exists(session_id) > 0
+
+    def remove(self, session_id: str):
+        with self.connect() as conn:
+            return conn.delete(session_id)
+
+    def clear(self):
+        with self.connect() as conn:
+            return conn.flushdb()

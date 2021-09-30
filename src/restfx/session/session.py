@@ -65,7 +65,20 @@ class HttpSession:
         """
         if self._destroyed:
             return
+
         self.store[key] = value
+
+        import sys
+
+        # 限制存储值大小（不超过 65535)
+        # 检查存储数据长度，如果大于 65535 则抛出异常
+        max_value = 65535
+        store_len = sys.getsizeof(self.store)
+        if store_len > max_value:
+            del self.store[key]
+            raise RuntimeError('Entity is too large (%s) for session storage, the max value is %s: %s.' % (
+                store_len, max_value, key))
+
         self._changed = True
 
     def has(self, key) -> bool:

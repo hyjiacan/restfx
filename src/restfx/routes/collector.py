@@ -2,18 +2,25 @@
 
 import ast
 # 此模块用于收集路由
+import json
 import keyword
 import os
 import re
 from os import path
 
+from ..http import HttpRequest
+from ..session import HttpSession
 from ..util import utils
 from ..util.func_util import FunctionDescription
 
 # 生成：注册路由的代码 -- 模板
 # 注意生成的代码中的缩进，使用的是空格
 
-_REGISTER_STMT = "    # {module}-{name}\n    ['{method}', '{path}', {handler}]"
+_REGISTER_STMT = '''    # {module}-{name}
+    (
+        {handler},
+        {api_info}
+    )'''
 _CODE_TPL = """# -*- coding={encoding} -*-
 
 # Note:
@@ -26,9 +33,9 @@ _CODE_TPL = """# -*- coding={encoding} -*-
 
 
 # LIST ROUTES BEGIN
-routes = [
-{routes}
-]
+routes = (
+{routes},
+)
 # LIST ROUTES END
 """
 
@@ -186,40 +193,103 @@ class Collector:
 
             yield router_info
 
-    def persist(self, routes_map: dict, filename: str = '', encoding='utf8'):
+    def persist(self,
+                routes_map: dict,
+                routes_filename: str = 'routes_map.py',
+                dirname: str = 'dist',
+                encoding: str = 'utf8'):
         """
         将路由持久化
         :param routes_map:
-        :param filename:
+        :param routes_filename:
+        :param dirname:
         :param encoding:
-        :return: 持久化的 python 代码
-        :rtype: str or None
+        :return: 持久化的 python 代码和接口数据
         """
         imports = []
         routes = []
 
+        from restfx.config import AppConfig
+        addition_func = AppConfig.get(self.app_id).api_page_addition
+
         print('Generating routes map...')
         for route in self.collect(routes_map):
             imports.append('from %s import %s as %s' % (route['pkg'], route['handler'], route['id']))
+            hi = route['handler_info']
+            handler_args = []
+            for arg_name in hi.arguments:
+                arg = hi.arguments.get(arg_name)
+                if arg.is_injection:
+                    continue
+                if arg.annotation == HttpRequest:
+                    continue
+                if arg.annotation == HttpSession:
+                    continue
+                handler_args.append(arg)
+
+            api_info = {
+                'id': route['id'],
+                'path': route['path'],
+                'method': route['method'],
+                'module': route['module'],
+                'name': route['name'],
+                'extname': route['extname'],
+                'handler_info': {
+                    'arguments': handler_args,
+                    'description': hi.description,
+                    'return_description': hi.return_description,
+                    'return_type': hi.return_type,
+                },
+                # 附加信息
+                'addition_info': addition_func(route) if addition_func else None
+            }
+
+            api_lines = json.dumps(
+                api_info,
+                ensure_ascii=False,
+                indent=4,
+                cls=FunctionDescription.JSONEncoder,
+            ).replace(': null', ': None').replace(': true', ': True').replace(': false', ': False').split('\n')
+
+            indented_api_lines = []
+            i = 0
+            for line in api_lines:
+                if i == 0:
+                    indented_api_lines.append(line)
+                else:
+                    indented_api_lines.append(' ' * 8 + line)
+                i += 1
+
             routes.append(_REGISTER_STMT.format(
+                handler=route['id'],
                 module=route['module'],
                 name=route['name'],
-                method=route['method'].upper(),
-                path=route['path'],
-                handler=route['id']
+                api_info='\n'.join(indented_api_lines)
             ))
 
-        content = _CODE_TPL.format(encoding=encoding, imports='\n'.join(imports), routes=',\n'.join(routes))
+        content = _CODE_TPL.format(
+            encoding=encoding,
+            imports='\n'.join(imports),
+            routes=',\n'.join(routes)
+        )
 
         print('Routes map data generated')
-        if not filename:
-            return content
 
-        print('Persisting into file %s file with encoding %s' % (filename, encoding))
-        with open(filename, mode='wt', encoding=encoding) as fp:
+        dirname = os.path.abspath(dirname if os.path.isabs(dirname) else os.path.join(self.app_root, dirname))
+
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+
+        routes_filename = os.path.abspath(os.path.join(dirname, routes_filename))
+
+        print('Persisting into file %s file with encoding %s' % (dirname, encoding))
+
+        with open(routes_filename, mode='wt', encoding=encoding) as fp:
             fp.write(content)
-            fp.close()
+
         print('Routes persisted')
+
+        return content
 
     def resolve_routes(self, filename: str, func_name: str = None):
         """

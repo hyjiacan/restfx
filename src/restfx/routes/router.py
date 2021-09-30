@@ -24,28 +24,25 @@ class Router:
         :param entry: 入口地址
         :return:
         """
-        if not self.config.debug:
-            return self.route_for_production(request, '/' + entry)
+        method = request.method.lower()
+        rid = '/%s#%s' % (entry, method)
+
+        if rid in self.production_routes:
+            route = self.production_routes[rid]
+            return self.invoke_handler(request, route['func'], route['args'])
+        
+        if self.config.debug:
+            return NotFound()
 
         resolver = RouteResolver(self.config,
                                  self.entry_cache,
-                                 request.method, entry)
+                                 method.lower(), entry)
 
         route = resolver.resolve()
         if isinstance(route, HttpResponse):
             return route
 
         return self.invoke_handler(request, route.func, route.arguments)
-
-    def route_for_production(self, request, entry):
-        method = request.method.lower()
-        # noinspection PyBroadException
-        try:
-            route = self.production_routes['%s#%s' % (entry, method)]
-        except Exception:
-            return NotFound()
-
-        return self.invoke_handler(request, route['func'], route['args'])
 
     def invoke_handler(self, request, func: FunctionType, args):
         try:

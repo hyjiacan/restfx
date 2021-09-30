@@ -2,10 +2,9 @@ from restfx import route
 
 
 @route('module-name', 'route-name-GET')
-def get(_root, request, **kwargs):
+def get(request, **kwargs):
     return {
-        'args': kwargs,
-        'project_root': _root
+        'args': kwargs
     }
 
 

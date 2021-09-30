@@ -21,3 +21,7 @@ python main.py
 ```
 
 然后访问 http://127.0.0.1:9127/api 就能查看接口页面
+
+## 生成项目
+
+执行 `python main.py persist` 以生成 `dist/routes_map.py`，此文件应该在发布前生成

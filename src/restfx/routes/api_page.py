@@ -1,5 +1,4 @@
 import os
-from collections import OrderedDict
 
 from ..config import AppConfig
 from ..http import BadRequest, HttpResponse, JsonResponse, NotFound
@@ -54,39 +53,7 @@ class ApiPage:
 
     def return_api_info(self, request):
         if not self.routes_cache or not self.config.api_page_cache:
-            from . import Collector
-            routes = Collector.get(self.config.app_id).collect(self.config.routes_map)
-            addition_func = self.config.api_page_addition
-
-            for route in routes:
-                # 附加信息
-                if addition_func is not None:
-                    route['addition_info'] = addition_func(route)
-
-                # 移除参数上的其它信息 HttpRequest _xxx HttpSession
-                raw_args = route['handler_info'].arguments
-                new_args = OrderedDict()
-
-                from ..http import HttpRequest
-                from ..session import HttpSession
-
-                for arg_name in raw_args:
-                    arg = raw_args.get(arg_name)
-                    if arg.is_injection:
-                        continue
-                    if arg.annotation == HttpRequest:
-                        continue
-                    if arg.annotation == HttpSession:
-                        continue
-                    new_args.setdefault(arg_name, arg)
-
-                route['handler_info'].arguments = new_args
-
-                # 移除 kwargs，以避免额外数据带来的数据传输消耗
-                if 'kwargs' in route:
-                    del route['kwargs']
-
-            self.routes_cache = routes
+            self.routes_cache = self.config.docs
 
         from restfx import __meta__
         return JsonResponse({

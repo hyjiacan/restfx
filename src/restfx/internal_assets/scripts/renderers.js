@@ -367,7 +367,9 @@ function renderArg(arg, editable) {
     argType = '-'
   }
 
-  return el('tr', null, [
+  return el('tr', {
+    'class': 'arg-row'
+  }, [
     el('td', null, el('span', {
       'class': 'arg-name select-all'
     }, argName)),

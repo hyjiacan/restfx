@@ -1,4 +1,3 @@
-import pickle
 import time
 from abc import ABC, abstractmethod
 from threading import Timer
@@ -13,24 +12,27 @@ class ISessionProvider(ABC):
     此类不可被实例化
     """
 
-    def __init__(self, expired: int):
+    def __init__(self, expired: int, check_interval: int, auto_clear: bool):
         """
 
         :param expired: 过期时长，单位为秒，默认为 10分钟。指定为 0表示不会自动过期
+        :param check_interval: 检查 session 是否过期的周期，单位为秒，指定为 0 时不检查
+        :param auto_clear: 是否在停止/启动时，自动清空 session 存储
         """
         from restfx.util import Logger
         from restfx import globs
         self._logger = Logger.get(globs.current_app.id)
+        self.auto_clear = auto_clear
 
         self.expired = 10 * 60 if expired is None else expired
 
         # 不会过期，不用启动定时器
-        if self.expired > 0:
+        if self.expired > 0 and check_interval > 0:
             # 每 5 秒执行一次检查
-            self.timer = Timer(5, self._drop_expire_session)
+            self.timer = Timer(check_interval, self.drop_expired_session)
             self.timer.start()
 
-    def _drop_expire_session(self):
+    def drop_expired_session(self):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
         for session_id in expired_sessions:
@@ -93,6 +95,13 @@ class ISessionProvider(ABC):
         """
 
     @abstractmethod
+    def clear(self):
+        """
+        清空所有 session
+        :return:
+        """
+        pass
+
     def dispose(self):
         """
         回收 session provider
@@ -100,38 +109,25 @@ class ISessionProvider(ABC):
         """
         self.timer.cancel()
         self.timer.join()
+        if self.auto_clear:
+            self.clear()
 
 
 class IDbSessionProvider(ISessionProvider):
-    def __init__(self, pool_options: dict, expired: int):
-        super().__init__(expired)
+    def __init__(self, pool_options: dict, expired: int, check_interval: int, auto_clear=False):
+        super().__init__(expired, check_interval, auto_clear)
 
         from dbutils.pooled_db import PooledDB
         self.pool_option = pool_options
         self.pool = PooledDB(**pool_options)
-        # fixme 如果启动时数据库无法连接，也应该允许程序启动，而不是抛出异常
-        # 更好的做法是在第一次执行 execute 时作此检查
-        if not self.table_exists():
-            self.create_table()
+        self.is_db_available = False
 
     def connect(self, shareable=True):
         return self.pool.connection(shareable)
 
-    @abstractmethod
-    def table_exists(self) -> bool:
-        """
-        判断 session 表是否存在
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def create_table(self):
-        """
-        创建 session 表
-        :return:
-        """
-        pass
+    def drop_expired_session(self):
+        if self.is_db_available:
+            super(IDbSessionProvider, self).drop_expired_session()
 
     def parse(self, data: dict) -> HttpSession:
         """
@@ -139,6 +135,7 @@ class IDbSessionProvider(ISessionProvider):
         :param data:
         :return:
         """
+        import pickle
         session = HttpSession(data['id'], self.set, self.remove)
         session.creation_time = int(data['creation_time'])
         session.last_access_time = int(data['last_access_time'])
@@ -147,6 +144,7 @@ class IDbSessionProvider(ISessionProvider):
         return session
 
     def set(self, session: HttpSession):
+        import pickle
         self.upsert(session.id,
                     session.creation_time,
                     session.last_access_time,
@@ -156,7 +154,6 @@ class IDbSessionProvider(ISessionProvider):
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
         pass
 
-    @abstractmethod
     def dispose(self):
         self.pool.close()
         super(IDbSessionProvider, self).dispose()

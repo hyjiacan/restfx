@@ -37,7 +37,7 @@ app.inject(root=settings.ROOT)
 
 
 def load_routes_map():
-    import routes_map
+    from dist import routes_map
     app.register_routes(routes_map.routes)
 
 
@@ -51,7 +51,7 @@ def command_persist():
     if arg1 != 'persist':
         return False
 
-    app.persist('routes_map.py')
+    app.persist()
     return True
 
 

@@ -9,14 +9,21 @@ class MyMiddleware(MiddlewareBase):
     中间件的详细开发文档见：
     https://gitee.com/hyjiacan/restfx/wikis/07.%20%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%B1%BB%E7%BB%93%E6%9E%84?sort_id=3533596
     """
+
+    def on_startup(self, app):
+        print('%s -> %s' % ('MyMiddleware', 'on_startup'))
+
+    def on_shutdown(self):
+        print('%s -> %s' % ('MyMiddleware', 'on_shutdown'))
+
     def process_request(self, request, meta):
-        pass
+        print('%s -> %s' % ('MyMiddleware', 'process_request'))
 
     def process_invoke(self, request, meta, args: dict):
-        pass
+        print('%s -> %s' % ('MyMiddleware', 'process_invoke'))
 
     def process_return(self, request, meta, data):
-        pass
+        print('%s -> %s' % ('MyMiddleware', 'process_return'))
 
     def process_response(self, request, meta, response):
-        pass
+        print('%s -> %s' % ('MyMiddleware', 'process_response'))

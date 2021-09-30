@@ -54,8 +54,8 @@ class SessionMiddleware(MiddlewareBase):
     def default_maker():
         return uuid.uuid4().hex
 
-    def new_sid(self):
-        sid = self.maker() if self.maker else self.default_maker()
+    def new_sid(self, request):
+        sid = self.maker(request) if self.maker else self.default_maker()
         return md5.hash_str(sid)
 
     def decode(self, sid):
@@ -95,14 +95,14 @@ class SessionMiddleware(MiddlewareBase):
         client_session_id = request.cookies.get(self.cookie_name)
         # 客户端无 session_id
         if not client_session_id:
-            request.session = self.provider.create(self.new_sid())
+            request.session = self.provider.create(self.new_sid(request))
             return
 
         # 解码 session_id
         session_id = self.decode(client_session_id)
         if not session_id:
             # session id 非法，新创建一个
-            request.session = self.provider.create(self.new_sid())
+            request.session = self.provider.create(self.new_sid(request))
             return
 
         # 尝试根据客户端的 session_id 获取 session
@@ -110,13 +110,13 @@ class SessionMiddleware(MiddlewareBase):
 
         # session 已经过期或session被清除
         if request.session is None:
-            request.session = self.provider.create(self.new_sid())
+            request.session = self.provider.create(self.new_sid(request))
             return
 
         now = time.time()
         # session 过期
         if self.provider.is_expired(request.session):
-            request.session = self.provider.create(self.new_sid())
+            request.session = self.provider.create(self.new_sid(request))
             return
 
         # 修改已经存在 session 的最后访问时间

@@ -22,9 +22,10 @@ def _get_request_data(data: MultiDict) -> ImmutableDict:
 
 
 def _get_files(files):
-    if not files:
-        return None
     result = {}
+    if not files:
+        return result
+
     for name in files:
         file = files.get(name)
         result[name] = HttpFile.inherit(file)
@@ -69,7 +70,7 @@ class RequestContext:
 class HttpRequest(Request):
     def __init__(self, environ, app):
         super().__init__(environ)
-        self.id = str(uuid.uuid4())
+        self.id = uuid.uuid4().hex
         self.app = app
         self.app_id = app.id
         self.GET = _get_request_data(self.args)
