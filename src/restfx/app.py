@@ -82,6 +82,10 @@ class App:
         :param api_page_assets: 接口页面上，需要自定义的JS和CSS以及其它资源 (通过 static 托管，此接口仅填写地址)
         :param allowed_route_meta: 路由装饰器上，指定允许使用的自定义元数据参数。当此值为 None 时，不限制。
         """
+        # 更新系统路径
+        if app_root not in sys.path:
+            sys.path.insert(0, app_root)
+
         from .config import AppConfig
         from .routes import ApiPage
         from .routes import Router

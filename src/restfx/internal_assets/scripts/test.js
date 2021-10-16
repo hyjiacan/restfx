@@ -379,14 +379,29 @@
             image.src = data
             responseContent.append(image)
         } else if (response.isText) {
+            var previewable = false
             if (typeof data === 'string') {
-                if (contentType.indexOf('text/html') === -1) {
-                    responseContent.html('<pre>' + data + '</pre>')
-                } else {
-                    responseContent.html(data)
+                // 如果数据长度超过了 32k，那么不预览，仅提供下载
+                if (data.length < 1024 * 32) {
+                    previewable = true
+                    if (contentType.indexOf('text/html') === -1) {
+                        responseContent.html('<pre>' + data + '</pre>')
+                    } else {
+                        responseContent.html(data)
+                    }
                 }
             } else {
-                responseContent.jsonViewer(data)
+                // 如果数据长度超过了 32k，那么不预览，仅提供下载
+                data = JSON.stringify(data)
+                if (data.length < 1024 * 32) {
+                    previewable = true
+                    responseContent.jsonViewer(data)
+                }
+            }
+            if (!previewable) {
+                var label = document.createElement('span')
+                label.innerHTML = '数据大小超过 32K，不支持预览'
+                responseContent.append(label)
             }
             // 处理一下，交由 另存为 使用
             data = 'data:' + contentType.split(';')[0] + ';base64,' + Base64.encode(data)

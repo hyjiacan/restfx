@@ -1,11 +1,17 @@
 import os
 from typing import List, Optional
 
+import redis.lock
+
 from .interfaces import IDbSessionProvider, ISessionProvider
 from .session import HttpSession
 
 
 class MemorySessionProvider(ISessionProvider):
+    """
+    基于内存的 session 管理
+    注：此类型仅适用于单线程开发环境, 多线程时会出现无法预料的问题；请勿用于生产环境！
+    """
     def __init__(self, expired: int = None, check_interval=30):
         super().__init__(expired, check_interval, False)
         self.sessions = {}
@@ -104,10 +110,15 @@ class FileSessionProvider(ISessionProvider):
 
     def set(self, session: HttpSession):
         import pickle
+        import fcntl
         # print('Set session:' + session.id)
-        with open(self._get_session_path(session.id), mode='wb') as fp:
+        fp = open(self._get_session_path(session.id), mode='wb')
+        fcntl.flock(fp, fcntl.LOCK_EX)
+        try:
             pickle.dump(session, fp, pickle.HIGHEST_PROTOCOL)
             fp.close()
+        finally:
+            fcntl.flock(fp, fcntl.LOCK_UN)
 
     def exists(self, session_id: str):
         return os.path.isfile(self._get_session_path(session_id))
@@ -276,7 +287,12 @@ class RedisSessionProvider(ISessionProvider):
         with self.connect() as conn:
             import pickle
             buf = pickle.dumps(session, pickle.HIGHEST_PROTOCOL)
-            return conn.set(session.id, buf, ex=self.expired)
+
+            lock = redis.lock.Lock(conn, 'set_session')
+            lock.acquire()
+            result = conn.set(session.id, buf, ex=self.expired)
+            lock.release()
+            return result
 
     def exists(self, session_id: str) -> bool:
         with self.connect() as conn:

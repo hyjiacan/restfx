@@ -84,10 +84,7 @@ class SessionMiddleware(MiddlewareBase):
             self.secret = app.id
         self.secret_bytes = md5.hash_str(self.secret).encode()
 
-    def process_request(self, request, meta):
-        # 当指定了 session=False 时，表示此请求此路由时不需要创建 session
-        if not meta.get('session', True):
-            return
+    def on_coming(self, request):
         config = AppConfig.get(request.app_id)
         if config is None or self.provider is None:
             return
