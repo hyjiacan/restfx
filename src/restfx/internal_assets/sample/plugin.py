@@ -12,9 +12,15 @@ class MyPlugin(PluginBase):
     """
 
     def __init__(self):
+        # 指定插件的版本，名称，描述信息
         super(MyPlugin, self).__init__('MyPlugin', '0.1.0', '插件用法演示')
 
     def setup(self, app):
+        """
+        初始化插件
+        :param app:
+        :return:
+        """
         # 注意下方的 .dist
         from .dist import routes_map
         app.register_routes(routes_map.routes)
@@ -30,4 +36,8 @@ class MyPlugin(PluginBase):
         })
 
     def destroy(self):
+        """
+        销毁插件
+        :return:
+        """
         pass

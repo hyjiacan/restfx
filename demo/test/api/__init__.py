@@ -79,8 +79,7 @@ def post_base64(request, data: str):
 
     `base64` 编码的数据
     """
-    # from io import BytesIO
-    # buffer = BytesIO(b64.enc_str(data).encode())
-    # from restfx.http import FileResponse
-    # return FileResponse(buffer, attachment='测试文件名.txt', request=request, content_type='text/plain')
-    return 'abc ' * 1024 * 16
+    from io import BytesIO
+    buffer = BytesIO(b64.enc_str(data).encode())
+    from restfx.http import FileResponse
+    return FileResponse(buffer, attachment='测试文件名.txt', request=request, content_type='text/plain')
