@@ -1,8 +1,6 @@
 import os
 from typing import List, Optional
 
-import redis.lock
-
 from .interfaces import IDbSessionProvider, ISessionProvider
 from .session import HttpSession
 
@@ -12,6 +10,7 @@ class MemorySessionProvider(ISessionProvider):
     基于内存的 session 管理
     注：此类型仅适用于单线程开发环境, 多线程时会出现无法预料的问题；请勿用于生产环境！
     """
+
     def __init__(self, expired: int = None, check_interval=30):
         super().__init__(expired, check_interval, False)
         self.sessions = {}
@@ -143,11 +142,12 @@ class MySQLSessionProvider(IDbSessionProvider):
         self.table_name = table_name
         super().__init__(pool_options, expired, check_interval, auto_clear)
 
-    def execute(self, sql: str, *args, throw_except=False):
+    def execute(self, sql: str, *args, throw_except=False, ensure_table=True):
         import pymysql
         conn = self.connect()
 
-        self.ensure_table()
+        if ensure_table:
+            self.ensure_table()
 
         # print('[MySQLSessionProvider] ' + (sql % args))
 
@@ -181,7 +181,7 @@ class MySQLSessionProvider(IDbSessionProvider):
             WHERE `TABLE_SCHEMA`='{db_name}' AND `TABLE_NAME` ='{table_name}' LIMIT 1""".format(
                 db_name=self.pool_option['database'],
                 table_name=self.table_name
-            ), throw_except=True)
+            ), throw_except=True, ensure_table=False)
         if rows > 0:
             self.is_db_available = True
             if self.auto_clear:
@@ -195,7 +195,7 @@ class MySQLSessionProvider(IDbSessionProvider):
         `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
         INDEX `last_access`(`last_access_time` ASC)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True, ensure_table=False)
 
         self.is_db_available = True
 
@@ -286,6 +286,7 @@ class RedisSessionProvider(ISessionProvider):
     def set(self, session: HttpSession):
         with self.connect() as conn:
             import pickle
+            import redis.lock
             buf = pickle.dumps(session, pickle.HIGHEST_PROTOCOL)
 
             lock = redis.lock.Lock(conn, 'set_session')
