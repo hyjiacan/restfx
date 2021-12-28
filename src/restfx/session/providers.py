@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .interfaces import IDbSessionProvider, ISessionProvider
 from .session import HttpSession
@@ -12,7 +12,7 @@ class MemorySessionProvider(ISessionProvider):
     """
 
     def __init__(self, expired: int = None, check_interval=30):
-        super().__init__(expired, check_interval, False)
+        super().__init__(expired, check_interval, True)
         self.sessions = {}
 
     def remove(self, session_id: str):
@@ -127,24 +127,25 @@ class FileSessionProvider(ISessionProvider):
 
 
 class MySQLSessionProvider(IDbSessionProvider):
-    def __init__(self, pool_options: dict, table_name="restfx_sessions", expired: int = None, check_interval=30,
+    def __init__(self, db_options: dict, table_name="restfx_sessions", expired: int = None, check_interval=30,
                  auto_clear=True):
         """
 
-        :param pool_options: 不需要指定 creator 选项，即使指定了，也会被 pymysql 覆盖
+        :param db_options: 按 `pymysql.connect` 的参数传入: host, user, password, database, port 等
         :param table_name:
         :param expired:
         :param check_interval:
         :param auto_clear:
         """
-        import pymysql
-        pool_options['creator'] = pymysql
         self.table_name = table_name
-        super().__init__(pool_options, expired, check_interval, auto_clear)
+        super().__init__({
+            'connect_timeout': 5,
+            **db_options
+        }, expired, check_interval, auto_clear)
 
-    def execute(self, sql: str, *args, throw_except=False, ensure_table=True):
+    def execute(self, sql: str, *args, throw_except=False, ensure_table=True) -> Tuple[int, Tuple[dict]]:
         import pymysql
-        conn = self.connect()
+        conn = pymysql.connect(**self.db_options)
 
         if ensure_table:
             self.ensure_table()
@@ -155,6 +156,7 @@ class MySQLSessionProvider(IDbSessionProvider):
         rows = 0
         data = None
         try:
+            import pymysql.cursors
             cursor = conn.cursor(pymysql.cursors.DictCursor)
             rows = cursor.execute(sql, args)
             if sql.startswith('SELECT'):
@@ -170,6 +172,7 @@ class MySQLSessionProvider(IDbSessionProvider):
                 cursor.close()
             conn.close()
 
+        # noinspection PyTypeChecker
         return rows, data
 
     def ensure_table(self):
@@ -179,7 +182,7 @@ class MySQLSessionProvider(IDbSessionProvider):
         rows, _ = self.execute(
             """SELECT * FROM `information_schema`.`TABLES`
             WHERE `TABLE_SCHEMA`='{db_name}' AND `TABLE_NAME` ='{table_name}' LIMIT 1""".format(
-                db_name=self.pool_option['database'],
+                db_name=self.db_options['database'],
                 table_name=self.table_name
             ), throw_except=True, ensure_table=False)
         if rows > 0:
@@ -195,7 +198,8 @@ class MySQLSessionProvider(IDbSessionProvider):
         `last_access_time` BIGINT NOT NULL,
         `store` BLOB,
         INDEX `last_access`(`last_access_time` ASC)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True, ensure_table=False)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True,
+                     ensure_table=False)
 
         self.is_db_available = True
 
@@ -237,33 +241,26 @@ class MySQLSessionProvider(IDbSessionProvider):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))
 
 
-class RedisSessionProvider(ISessionProvider):
+class RedisSessionProvider(IDbSessionProvider):
     """
     提供基于 Redis 的 session 存储支持
     """
 
-    def __init__(self, host: str, port=6379, db=0, password: str = None,
-                 expired: int = None,
-                 auto_clear=True, **kwargs):
+    def __init__(self, db_options: dict, expired: int = None, auto_clear=True, **kwargs):
         """
-
+        :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, database, port=6379, db=0 等
         :param expired:
         :param auto_clear:
         """
-        import redis
-        super().__init__(expired, 0, auto_clear)
-        self.pool = redis.ConnectionPool(
-            host=host,
-            port=port,
-            db=db,
-            password=password,
-            **kwargs
-        )
+        super().__init__({
+            'socket_timeout': 5,
+            **db_options
+        }, expired, auto_clear, **kwargs)
         self.started = False
 
     def connect(self):
         import redis
-        conn = redis.StrictRedis(connection_pool=self.pool)
+        conn = redis.connection.Connection(**self.db_options).connect()
         if not self.started and self.auto_clear:
             conn.flushdb()
         return conn
@@ -282,6 +279,9 @@ class RedisSessionProvider(ISessionProvider):
             setattr(session, '_update_watcher', self.set)
             setattr(session, '_drop_watcher', self.remove)
             return session
+
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
+        raise NotImplemented()
 
     def set(self, session: HttpSession):
         with self.connect() as conn:

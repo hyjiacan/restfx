@@ -57,7 +57,7 @@ class ISessionProvider(ABC):
         :param time_before: 在此时间之前的 session 即为过期
         :return:
         """
-        pass
+        raise NotImplemented()
 
     @abstractmethod
     def get(self, session_id: str) -> Optional[HttpSession]:
@@ -66,7 +66,7 @@ class ISessionProvider(ABC):
         :param session_id:
         :return:
         """
-        pass
+        raise NotImplemented()
 
     @abstractmethod
     def set(self, session: HttpSession):
@@ -75,7 +75,7 @@ class ISessionProvider(ABC):
         :param session:
         :return:
         """
-        pass
+        raise NotImplemented()
 
     @abstractmethod
     def exists(self, session_id: str) -> bool:
@@ -84,7 +84,7 @@ class ISessionProvider(ABC):
         :param session_id:
         :return:
         """
-        pass
+        raise NotImplemented()
 
     @abstractmethod
     def remove(self, session_id: str):
@@ -93,6 +93,7 @@ class ISessionProvider(ABC):
         :param session_id:
         :return:
         """
+        raise NotImplemented()
 
     @abstractmethod
     def clear(self):
@@ -100,7 +101,7 @@ class ISessionProvider(ABC):
         清空所有 session
         :return:
         """
-        pass
+        raise NotImplemented()
 
     def dispose(self):
         """
@@ -114,16 +115,11 @@ class ISessionProvider(ABC):
 
 
 class IDbSessionProvider(ISessionProvider):
-    def __init__(self, pool_options: dict, expired: int, check_interval: int, auto_clear=False):
+    def __init__(self, db_options: dict, expired: int, check_interval: int, auto_clear=False):
         super().__init__(expired, check_interval, auto_clear)
 
-        from dbutils.pooled_db import PooledDB
-        self.pool_option = pool_options
-        self.pool = PooledDB(**pool_options)
+        self.db_options = db_options
         self.is_db_available = False
-
-    def connect(self, shareable=True):
-        return self.pool.connection(shareable)
 
     def drop_expired_session(self):
         if self.is_db_available:
@@ -152,8 +148,7 @@ class IDbSessionProvider(ISessionProvider):
 
     @abstractmethod
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        pass
+        raise NotImplemented()
 
     def dispose(self):
-        self.pool.close()
         super(IDbSessionProvider, self).dispose()

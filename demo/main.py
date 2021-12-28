@@ -2,7 +2,7 @@ import json
 import os
 import uuid
 
-from admin_plugin.plugin import AdminPlugin
+# from admin_plugin.plugin import AdminPlugin
 
 from midlewares import MiddlewareA
 from restfx import App
@@ -81,7 +81,7 @@ app.register_middleware(
     OptionsMiddleware(),
     HttpAuthMiddleware(on_auth),
     # SessionMiddleware(MemorySessionProvider()),
-    # SessionMiddleware(MySQLSessionProvider(pool_options={
+    # SessionMiddleware(MySQLSessionProvider(db_options={
     #     'host': '127.0.0.1',
     #     'port': 3306,
     #     'user': 'root',
@@ -89,11 +89,11 @@ app.register_middleware(
     #     'database': 'test',
     #     'charset': 'utf8',
     # }), maker=sessionid_maker),
-    SessionMiddleware(RedisSessionProvider(
-        host='172.16.51.17',
-        password='123asd!@#$',
-        db=15
-    ), maker=sessionid_maker),
+    SessionMiddleware(RedisSessionProvider({
+        'host': '172.16.51.17',
+        'password': '123asd!@#$',
+        'db': 15
+    }), maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
@@ -102,6 +102,7 @@ app.inject(injection='try1try')
 
 
 def load_routes_map():
+    app.persist()
     from dist import routes_map
     app.register_routes(routes_map.routes)
 
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     if command_persist():
         exit(0)
     else:
-        app.register_plugins(AdminPlugin())
+        # app.register_plugins(AdminPlugin())
         load_routes_map()
         # 启动内置服务器
         app.startup()

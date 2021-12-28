@@ -24,7 +24,7 @@ class PluginBase(ABC):
         :param app:
         :return:
         """
-        pass
+        raise NotImplemented()
 
     @abstractmethod
     def destroy(self):
@@ -32,4 +32,4 @@ class PluginBase(ABC):
         销毁插件
         :return:
         """
-        pass
+        raise NotImplemented()
