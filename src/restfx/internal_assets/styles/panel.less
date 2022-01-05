@@ -9,14 +9,15 @@
   justify-content: center;
   display: none;
   transition: background-color 618ms;
+  z-index: 2;
 }
 
 .panel {
   background-color: #ffffff;
   border-radius: 4px;
   transition: width 200ms, height 200ms;
-  display: grid;
-  grid-template-rows: 45px 1fr;
+  display: flex;
+  flex-direction: column;
 
   &.fullscreen {
     max-width: unset !important;
@@ -26,15 +27,18 @@
 }
 
 .panel-heading {
+  height: 45px;
   padding: 10px;
+  box-sizing: border-box;
   border-bottom: 1px solid #dddddd;
   user-select: none;
   font-size: 1.1em;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
 }
 
 .panel-heading--buttons {
-  float: right;
-
   button {
     border: none;
   }
@@ -43,6 +47,7 @@
 .panel-body {
   padding: 5px 10px;
   overflow: auto;
+  flex: 1 1 auto;
 }
 
 .theme-dark {

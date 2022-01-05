@@ -119,6 +119,7 @@
     var isText = contentType.indexOf('text/') !== -1 || contentType.indexOf('/json') !== -1
 
     decodeResponse(data, isText, function (data) {
+      var dataLength = parseInt(headers['content-length'])
       if (isText) {
         try {
           data = JSON.parse(data)
@@ -127,6 +128,7 @@
       }
       callback({
         data: data,
+        length: dataLength,
         isText: isText,
         headers: headers,
         rawHeaders: rawHeaders,

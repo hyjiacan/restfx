@@ -381,8 +381,8 @@
         } else if (response.isText) {
             var previewable = false
             if (typeof data === 'string') {
-                // 如果数据长度超过了 32k，那么不预览，仅提供下载
-                if (data.length < 1024 * 32) {
+                // 如果数据长度超过了 1M，那么不预览，仅提供下载
+                if (data.length < 1024 * 1024) {
                     previewable = true
                     if (contentType.indexOf('text/html') === -1) {
                         responseContent.html('<pre>' + data + '</pre>')
@@ -391,16 +391,18 @@
                     }
                 }
             } else {
-                // 如果数据长度超过了 32k，那么不预览，仅提供下载
-                data = JSON.stringify(data)
-                if (data.length < 1024 * 32) {
+                // 如果数据长度超过了 1M，那么不预览，仅提供下载
+                if (response.length < 1024 * 1024) {
                     previewable = true
                     responseContent.jsonViewer(data)
+                } else {
+                    // 处理成字符串，以便后面生成 base64
+                    data = JSON.stringify(data)
                 }
             }
             if (!previewable) {
                 var label = document.createElement('span')
-                label.innerHTML = '数据大小超过 32K，不支持预览'
+                label.innerHTML = '数据大小超过 1M，不支持预览'
                 responseContent.append(label)
             }
             // 处理一下，交由 另存为 使用

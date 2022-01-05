@@ -12,7 +12,7 @@ from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import RedisSessionProvider
+from restfx.session.providers import RedisSessionProvider, MemorySessionProvider
 from test.tools.enums import OpTypes
 
 root = os.path.dirname(__file__)
@@ -80,7 +80,7 @@ app.register_middleware(
     TimetickMiddleware(),
     OptionsMiddleware(),
     HttpAuthMiddleware(on_auth),
-    # SessionMiddleware(MemorySessionProvider()),
+    SessionMiddleware(MemorySessionProvider()),
     # SessionMiddleware(MySQLSessionProvider(db_options={
     #     'host': '127.0.0.1',
     #     'port': 3306,
@@ -89,11 +89,11 @@ app.register_middleware(
     #     'database': 'test',
     #     'charset': 'utf8',
     # }), maker=sessionid_maker),
-    SessionMiddleware(RedisSessionProvider({
-        'host': '172.16.51.17',
-        'password': '123asd!@#$',
-        'db': 15
-    }), maker=sessionid_maker),
+    # SessionMiddleware(RedisSessionProvider({
+    #     'host': '172.16.51.17',
+    #     'password': '123asd!@#$',
+    #     'db': 15
+    # }), maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()

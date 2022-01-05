@@ -279,7 +279,10 @@ class FunctionDescription:
             return ''
 
         for i in data_range:
-            line = buffer[-i].lstrip()
+            # 从尾部开始读取索引时，使用负数
+            # 负数的索引应该从 -1 开始
+            # i 的值从0 开始，所以 -i 需要 -1 才是尾部的索引
+            line = buffer[-i - 1].lstrip()
             if line:
                 break
             end -= 1

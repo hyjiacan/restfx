@@ -20,10 +20,9 @@ body {
 header {
   padding: 0 10px;
   box-sizing: border-box;
-
-  h1 {
-    float: left;
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 #app-name {
@@ -35,13 +34,10 @@ header {
   text-overflow: ellipsis;
   word-break: keep-all;
   white-space: nowrap;
+  vertical-align: bottom;
 }
 
 #tools {
-  float: right;
-  margin-top: 15px;
-  display: none;
-
   .buttons {
     margin-bottom: 5px;
 

@@ -9,18 +9,24 @@
   }
 
   .url-info {
-    grid-template-columns: 60px 1fr 80px;
+    .info {
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
-    .method {
-      line-height: 28px;
-    }
+      .method {
+        flex: 0 0 auto;
+      }
 
-    .url {
-      border: 1px solid #c4c3c3;
-      outline: none;
+      .url {
+        border: 1px solid #c4c3c3;
+        outline: none;
+        flex: 1 1 auto;
+        height: 24px;
 
-      &:focus, &:active {
-        border-color: #888888;
+        &:focus, &:active {
+          border-color: #888888;
+        }
       }
     }
   }
@@ -64,10 +70,10 @@
     transition: opacity 200ms;
   }
 
-
   #btn-send-test {
     font-size: 16px;
     letter-spacing: 5px;
+    height: 30px;
   }
 
   .response p {
@@ -100,8 +106,12 @@
     white-space: break-spaces;
   }
 
+  #test-response--save-as {
+    margin-right: 20px;
+  }
+
   .response-status {
-    margin-left: 20px;
+    margin-right: 20px;
   }
 
   .status-success {
@@ -115,7 +125,7 @@
   .response-time,
   .response-type,
   .response-length {
-    margin-left: 20px;
+    margin-right: 20px;
     font-size: 12px;
   }
 
@@ -144,6 +154,7 @@
 
   .response-meta {
     float: right;
+    text-align: right;
   }
 
   .response-header td {

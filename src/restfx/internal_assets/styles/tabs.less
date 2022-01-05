@@ -6,7 +6,6 @@
 
 .tabs-item {
   width: 100%;
-  display: none;
 
   &.tabs-layout {
     > .tabs-header {
@@ -42,13 +41,15 @@ table.tabs-item.active {
   border-bottom: 1px solid #cccccc;
   overflow: auto;
   margin: 10px 0 5px;
+  display: flex;
+  flex-direction: row;
 
   > li[data-index] {
-    float: left;
     padding: 3px 10px;
     margin-left: 5px;
     cursor: pointer;
     color: #666;
+    flex: 0 0 auto;
 
     &:hover,
     &.active {
@@ -56,6 +57,11 @@ table.tabs-item.active {
       border-bottom: none;
       color: #333;
     }
+  }
+
+  > li:not([data-index]) {
+    flex: 1 1 auto;
+    padding-left: 20px;
   }
 }
 
