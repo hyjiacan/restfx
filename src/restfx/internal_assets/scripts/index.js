@@ -67,7 +67,7 @@ function loadPage() {
     })
 }
 
-var all
+var all, allAnchors
 
 function getAll() {
     if (all) {
@@ -75,6 +75,14 @@ function getAll() {
     }
     all = $('.api-item')
     return all
+}
+
+function getAllAnchors() {
+    if (allAnchors) {
+        return allAnchors
+    }
+    allAnchors = $('a.anchor')
+    return allAnchors
 }
 
 function collapseAll() {
@@ -88,6 +96,52 @@ function expandAll() {
     getAll().addClass('expanded')
     getAll().removeClass('collapsed')
 }
+
+(function () {
+    var oldHash = ''
+
+    var app = $('#app')
+    app.on('click', '#current-anchor', function () {
+        $('#current-anchor').removeAttr('id')
+    })
+
+    function onHashChanged() {
+        if (oldHash) {
+            // 移除现有样式
+            $('#current-anchor').removeAttr('id')
+        }
+        oldHash = window.location.hash
+        var hashvalue = oldHash.substr(1)
+        if (!hashvalue) {
+            return
+        }
+        var anchors = getAllAnchors()
+        for (var i = 0; i < anchors.length; i++) {
+            var anchor = anchors.eq(i)
+            var name = anchor.attr('name')
+            if (name === hashvalue) {
+                anchor.parent().attr('id', 'current-anchor')
+                return
+            }
+        }
+    }
+
+    setTimeout(() => {
+        if (("onhashchange" in window) && ((typeof document.documentMode === "undefined") || document.documentMode === 8)) {
+            // 浏览器支持onhashchange事件
+            window.onhashchange = onHashChanged
+            onHashChanged()
+        } else {
+            // 不支持则用定时器检测的办法
+            setInterval(function () {
+                var currentHash = window.location.hash
+                if (currentHash !== oldHash) {
+                    onHashChanged()
+                }
+            }, 500);
+        }
+    }, 1000)
+})();
 
 (function () {
     // 检测万恶的 IE

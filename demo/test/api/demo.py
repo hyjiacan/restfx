@@ -9,13 +9,16 @@ from restfx.http import HttpRequest
 @route(module='测试名称-模块', name='测试名称-GET', auth=False, op_type=OpTypes.Query, validators=(
         val('param1').range(2, 2)
 ))
-def get(request, _injection, param1=(1, 2), param2={}):
+def get(request, _injection, param1=(1, 2), param2={}, a_complex_param_name_=None):
     """
-
+    - 这像一个列表吗？
+    - 这是列表的第二项
+    - 第三项
     :param request: HttpRequest
     :param _injection:
     :param param1:第1个参数
     :param param2:第2个参数
+    :param a_complex_param_name_:复杂的参数名称示例（参数名称可以变形）
     :return: 返回值为参数字典
     """
     # request 会是 HttpRequest

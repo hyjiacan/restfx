@@ -239,7 +239,7 @@ details {
   flex: 0 0 auto;
   position: relative;
   cursor: pointer;
-  transition: transform 618ms;
+  transition: transform 312ms;
 
   &:before, &:after {
     content: '';
@@ -265,7 +265,7 @@ details {
   }
 }
 
-.expanded {
+.collapsed {
   .api-item-arrow {
     transform: rotate(-90deg);
   }
@@ -362,6 +362,11 @@ details[open] {
   code {
     margin-right: 5px;
   }
+}
+
+#current-anchor {
+  font-weight: bold;
+  box-shadow: 0 0 10px 2px rgba(180, 180, 180, 0.58);
 }
 
 .theme-dark {

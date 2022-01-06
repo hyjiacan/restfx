@@ -1,7 +1,9 @@
 import uuid
+
 from werkzeug import Request
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage, MultiDict
 
+from restfx.session import HttpSession
 from restfx.util import ContextStore
 from restfx.globs import _request_ctx_stack, _app_ctx_stack
 
@@ -40,7 +42,7 @@ class RequestContext:
         self.ref_count = 0
 
     @property
-    def session(self):
+    def session(self) -> HttpSession:
         return self.request.session
 
     def push(self):
@@ -79,6 +81,9 @@ class HttpRequest(Request):
         self.FILES = _get_files(self.files)
         self.COOKIES = self.cookies
         self.session = None
+        """
+        :type: HttpSession
+        """
         self._injections = {}
         # 用于存放一些用户的数据
         self._user_data = {}

@@ -138,19 +138,30 @@ function render(list, data) {
     $('#api-summary .count1').text(moduleNames.length)
     $('#api-summary .count2').text(routes.length)
 
-    // 滚动到指定项
-    goToAnchor()
-
     // 绑定事件
     bindToggleRouteItemEvent(list)
+
+    // 滚动到指定项
+    // 延时 1s 滚动
+    setTimeout(function () {
+        goToAnchor()
+    }, 1000)
 }
 
 function bindToggleRouteItemEvent(list) {
-    list.on('click', '.api-item-title', function () {
+    list.on('dblclick', '.api-item-title', function () {
         var item = $(this).parent()
-        item.toggleClass('collapsed')
-        item.toggleClass('expanded')
+        toggleApiItem(item)
     })
+    list.on('click', '.api-item-arrow', function () {
+        var item = $(this).parent().parent()
+        toggleApiItem(item)
+    })
+}
+
+function toggleApiItem(item) {
+    item.toggleClass('collapsed')
+    item.toggleClass('expanded')
 }
 
 function goToAnchor() {
@@ -392,14 +403,16 @@ function renderArgEditor(arg) {
 }
 
 function renderArg(arg, editable) {
-    var argName = arg.name
+    var argNameTpl = document.createDocumentFragment()
+    argNameTpl.append(el('span', {'class': 'arg-name--raw select-all'}, arg.name))
     if (arg.alias) {
-        argName += '/' + arg.alias
+        argNameTpl.append(el('span', null, '/'))
+        argNameTpl.append(el('span', {'class': 'arg-name--alias select-all'}, arg.alias))
     }
     var argType
     if (arg.is_variable) {
         arg.has_annotation = true
-        argName = '...' + argName
+        argNameTpl.prepend(el('span', {'class': 'arg-name--variable-flag'}, '...'))
         argType = 'variable'
     } else if (arg.has_annotation) {
         argType = arg.annotation_name
@@ -420,8 +433,8 @@ function renderArg(arg, editable) {
         'class': 'arg-row'
     }, [
         el('td', null, el('span', {
-            'class': 'arg-name select-all'
-        }, argName)),
+            'class': 'arg-name'
+        }, argNameTpl)),
         el(
             'td',
             null,
