@@ -91,9 +91,7 @@
         for (var name in json) {
             var val = json[name]
             if ($.isArray(val) || Object.prototype.toString.call(val) === '[object Object]') {
-                json[name] = {
-                    value: JSON.stringify(val)
-                }
+                json[name] = JSON.stringify(val)
             }
         }
 

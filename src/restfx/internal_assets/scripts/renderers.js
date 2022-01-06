@@ -405,9 +405,11 @@ function renderArgEditor(arg) {
 function renderArg(arg, editable) {
     var argNameTpl = document.createDocumentFragment()
     argNameTpl.append(el('span', {'class': 'arg-name--raw select-all'}, arg.name))
-    if (arg.alias) {
-        argNameTpl.append(el('span', null, '/'))
-        argNameTpl.append(el('span', {'class': 'arg-name--alias select-all'}, arg.alias))
+    if (arg.alias && arg.alias.length) {
+        arg.alias.forEach(function (an) {
+            argNameTpl.append(el('span', null, '/'))
+            argNameTpl.append(el('span', {'class': 'arg-name--alias select-all'}, an))
+        })
     }
     var argType
     if (arg.is_variable) {

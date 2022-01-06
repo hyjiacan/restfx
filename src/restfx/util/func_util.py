@@ -42,7 +42,8 @@ class ArgumentSpecification:
         # 注释
         self.comment = None
         # 别名，当路由函数中声明的是 abc_def_xyz 时，自动处理为 abcDefXyz
-        self.alias = None
+        # 可能有多个
+        self.alias = []
         # TODO 校验器
         self.validator = None
 
@@ -53,7 +54,12 @@ class ArgumentSpecification:
             return
 
         # 同时会移除所有的 _ 符号
-        self.alias = re.sub('_+(?P<ch>.?)', ArgumentSpecification._get_parameter_alias, name)
+        alias = name.strip('_')
+        if alias != name:
+            self.alias.append(alias)
+        alias = re.sub('_+(?P<ch>.?)', ArgumentSpecification._get_parameter_alias, name)
+        if alias:
+            self.alias.append(alias)
 
     @property
     def annotation_name(self):
@@ -62,7 +68,7 @@ class ArgumentSpecification:
     def __str__(self):
         name = self.name
 
-        name = name if self.alias is None else '%s/%s' % (name, self.alias)
+        name = '%s/%s' % (name, '/'.join(self.alias)) if self.alias else name
 
         arg_type = self.annotation.__name__ if self.has_annotation else None
 
@@ -291,6 +297,9 @@ class FunctionDescription:
         # 提供代码段解析支持
         # 按缩进量处理
         found_code = False
+        # 提供列表解析支持
+        # 仅支持一级列表（无缩进）
+        found_list = False
         buffer2 = []
         is_first_line = True
         last_line_is_blank = False
@@ -298,6 +307,7 @@ class FunctionDescription:
         for line in buffer[start:end]:
             stripped_line = line.strip()
             indent = len(line) - len(line.lstrip())
+
             # 当前行有缩进 (>=2)，就表示其为代码段
             if indent >= 2 or (found_code and not stripped_line):
                 if not stripped_line:
@@ -342,7 +352,7 @@ class FunctionDescription:
                     buffer2.append('\n')
                     last_line_is_blank = False
                 buffer2.append(line)
-            elif not found_code:
+            elif found_code:
                 # 忽略代码块后的第一个空行
                 last_line_is_blank = True
 

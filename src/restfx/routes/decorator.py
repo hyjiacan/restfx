@@ -211,18 +211,21 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
     alias = arg_spec.alias
     # 提供对 a[]=1&a[]=2 的支持
     name_arr = name + '[]'
-    alias_arr = alias + '[]' if alias else None
     is_arr = False
     if name in data:
         result = False, data.getlist(name)
-    elif alias and alias in data:
-        result = False, data.getlist(alias)
+    elif alias:
+        result = None, None
+        for an in alias:
+            an_arr = an + '[]'
+            if an in data:
+                result = False, data.getlist(an)
+            if an_arr in data:
+                is_arr = True
+                result = False, data.getlist(an_arr)
     elif name_arr in data:
         is_arr = True
         result = False, data.getlist(name_arr)
-    elif alias_arr and alias_arr in data:
-        is_arr = True
-        result = False, data.getlist(alias_arr)
     elif arg_spec.has_default:
         # 使用默认值
         result = True, arg_spec.default
