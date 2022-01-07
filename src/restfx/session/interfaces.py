@@ -1,6 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 from threading import Timer
+from types import FunctionType
 from typing import List, Optional
 
 from .session import HttpSession
@@ -12,12 +13,13 @@ class ISessionProvider(ABC):
     此类不可被实例化
     """
 
-    def __init__(self, expired: int, check_interval: int, auto_clear: bool):
+    def __init__(self, expired: int, check_interval: int, auto_clear: bool, on_expired: FunctionType = None):
         """
 
         :param expired: 过期时长，单位为秒，默认为 10分钟。指定为 0表示不会自动过期
         :param check_interval: 检查 session 是否过期的周期，单位为秒，指定为 0 时不检查
         :param auto_clear: 是否在停止/启动时，自动清空 session 存储
+        :param on_expired: 在 session 过期时，触发
         """
         from restfx.util import Logger
         from restfx import globs
@@ -25,6 +27,7 @@ class ISessionProvider(ABC):
         self.auto_clear = auto_clear
 
         self.expired = 10 * 60 if expired is None else expired
+        self.on_expired = on_expired
 
         # 不会过期，不用启动定时器
         if self.expired > 0 and check_interval > 0:
@@ -36,6 +39,8 @@ class ISessionProvider(ABC):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
         for session_id in expired_sessions:
+            if self.on_expired:
+                self.on_expired(self.get(session_id))
             # self._logger.debug('Drop expired session: ' + session_id)
             self.remove(session_id)
 

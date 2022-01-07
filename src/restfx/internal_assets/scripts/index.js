@@ -126,7 +126,7 @@ function expandAll() {
         }
     }
 
-    setTimeout(() => {
+    setTimeout(function () {
         if (("onhashchange" in window) && ((typeof document.documentMode === "undefined") || document.documentMode === 8)) {
             // 浏览器支持onhashchange事件
             window.onhashchange = onHashChanged
@@ -140,7 +140,7 @@ function expandAll() {
                 }
             }, 500);
         }
-    }, 1000)
+    }, 500)
 })();
 
 (function () {

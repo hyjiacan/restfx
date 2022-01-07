@@ -172,7 +172,7 @@ function render(list, data) {
     // 延时 1s 滚动
     setTimeout(function () {
         goToAnchor()
-    }, 1000)
+    }, 500)
 }
 
 function bindToggleRouteItemEvent(list) {
