@@ -261,8 +261,8 @@ class FunctionDescription:
             buffer.clear()
         return docs
 
-    @staticmethod
-    def filter_doc_buffer(buffer):
+    @classmethod
+    def filter_doc_buffer(cls, buffer):
         """
         移除注释中前置和后置的空行
         :param buffer:
@@ -309,10 +309,11 @@ class FunctionDescription:
             indent = len(line) - len(line.lstrip())
 
             # 当前行有缩进 (>=2)，就表示其为代码段
-            if indent >= 2 or (found_code and not stripped_line):
+            if indent >= 2 or ((found_code or found_list) and not stripped_line):
                 if not stripped_line:
                     if last_line_is_blank:
                         found_code = False
+                        found_list = False
                         continue
                     last_line_is_blank = True
                 else:
@@ -320,25 +321,51 @@ class FunctionDescription:
                 is_first_line = False
                 if not first_indent:
                     first_indent = indent
-                if not found_code:
+
+                if cls._is_list_item(stripped_line):
+                    found_list = True
+                elif not found_code:
                     # 重置临时数据
                     buffer2 = ['\n']
                     temp.append({
                         'type': 'code',
                         'lines': buffer2
                     })
+
                 buffer2.append(line[first_indent:] + '\n')
-                found_code = True
+                if not found_list:
+                    found_code = True
                 continue
+
+            current_line_is_list_item = cls._is_list_item(stripped_line)
+            if found_list and current_line_is_list_item == found_list:
+                buffer2.append(stripped_line)
+                continue
+            else:
+                found_list = current_line_is_list_item
 
             first_indent = 0
             if is_first_line:
                 temp.append({
-                    'type': 'text',
+                    'type': found_list or 'text',
                     'lines': buffer2
                 })
                 is_first_line = False
             elif found_code:
+                # 重置临时数据
+                buffer2 = []
+                temp.append({
+                    'type': 'text',
+                    'lines': buffer2
+                })
+            elif current_line_is_list_item:
+                # 重置临时数据
+                buffer2 = []
+                temp.append({
+                    'type': found_list,
+                    'lines': buffer2
+                })
+            else:
                 # 重置临时数据
                 buffer2 = []
                 temp.append({
@@ -352,13 +379,38 @@ class FunctionDescription:
                     buffer2.append('\n')
                     last_line_is_blank = False
                 buffer2.append(line)
-            elif found_code:
+            elif found_code or found_list:
                 # 忽略代码块后的第一个空行
                 last_line_is_blank = True
+            else:
+                found_list = False
 
             found_code = False
         # return ''.join(temp)
+        ol_re = re.compile(r'^\d+\.\s(.+?)$')
+        for item in temp:
+            type = item['type']
+            lines = item['lines']
+            # 处理 list 项的前缀
+            if type == 'ul':
+                item['lines'] = [i[2:] for i in lines]
+            elif type == 'ol':
+                item['lines'] = [ol_re.match(i).group(1) for i in lines]
+
         return temp
+
+    @classmethod
+    def _is_list_item(cls, line: str):
+        # 无序
+        if line.startswith('- '):
+            return 'ul'
+        if line.startswith('* '):
+            return 'ul'
+        # 有序
+        if re.match(r'^\d+\.\s', line):
+            return 'ol'
+
+        return None
 
     class JSONEncoder(json.JSONEncoder):
         def default(self, o):

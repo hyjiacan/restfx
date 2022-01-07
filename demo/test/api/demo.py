@@ -11,9 +11,15 @@ from restfx.http import HttpRequest
 ))
 def get(request, _injection, param1=(1, 2), param2={}, a_complex_param_name_=None):
     """
+    下面是一个无序列表
     - 这像一个列表吗？
     - 这是列表的第二项
-    - 第三项
+    - 第三项 `code`
+    再下面是一个有序列表
+    1. 这像一个列表吗？
+    22. 这是列表的第二项 `code`
+    33. 第三项
+    - 混乱的写法
     :param request: HttpRequest
     :param _injection:
     :param param1:第1个参数

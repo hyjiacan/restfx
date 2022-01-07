@@ -41,19 +41,46 @@ function formatComment(comment) {
         return comment
     }
     return comment.map(function (item) {
+        var lines = item.lines
+        if (!lines.length) {
+            return '<br/>'
+        }
         if (item.type === 'code') {
-            return '<pre><code>' + item.lines.join('') + '</code></pre>'
+            // 移除前后的空行
+            var len = lines.length
+            var i
+            for (i = 0; i < len; i++) {
+                if ($.trim(lines[i]) !== '') {
+                    break
+                }
+            }
+            lines = lines.slice(i)
+            lines.reverse()
+            len = lines.length
+            for (i = 0; i < len; i++) {
+                if ($.trim(lines[i]) !== '') {
+                    break
+                }
+            }
+            lines = lines.slice(i)
+            lines.reverse()
+            return '<pre><code>' + lines.join('') + '</code></pre>'
         }
-        if (!$.trim(item.lines[0])) {
-            item.lines.shift()
+        if (item.type === 'ol') {
+            return '<ol><li>' + lines.map(filterCodesInLine).join('</li><li>') + '</li></ol>'
         }
-        return item.lines.map(function (line) {
-            return line.replace(/\t/g, '    ')
-                .replace(/`(.+?)`/g, function (match, code) {
-                    return '<code>' + code + '</code>'
-                })
-        }).join('').replace(/\n/g, '<br/>')
+        if (item.type === 'ul') {
+            return '<ul><li>' + lines.map(filterCodesInLine).join('</li><li>') + '</li></ul>'
+        }
+        return lines.map(filterCodesInLine).join('').replace(/\n/g, '<br/>')
     }).join('')
+}
+
+function filterCodesInLine(line) {
+    return line.replace(/\t/g, '    ')
+        .replace(/`(.+?)`/g, function (match, code) {
+            return '<code>' + code + '</code>'
+        })
 }
 
 function render(list, data) {
