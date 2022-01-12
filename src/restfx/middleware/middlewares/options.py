@@ -12,12 +12,28 @@ class OptionsMiddleware(MiddlewareBase):
     # 可用的 method，即支持的 method 列表
     AVAILABLE_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 
-    def __init__(self, allow_origin=None, allow_methods=None, allow_headers=None, allow_credentials=None, max_age=None):
+    def __init__(self,
+                 allow_origin=None,
+                 allow_methods=None,
+                 allow_headers=None,
+                 allow_credentials=None,
+                 max_age=None,
+                 content_security_policy=None,
+                 content_security_policy_report_only=None,
+                 access_control_expose_headers=None,
+                 cross_origin_opener_policy=None,
+                 cross_origin_embedder_policy=None,
+                 ):
         self.allow_origin = allow_origin
         self.allow_methods = allow_methods
         self.allow_headers = allow_headers
         self.allow_credentials = allow_credentials
         self.max_age = max_age
+        self.content_security_policy = content_security_policy
+        self.content_security_policy_report_only = content_security_policy_report_only
+        self.access_control_expose_headers = access_control_expose_headers
+        self.cross_origin_opener_policy = cross_origin_opener_policy
+        self.cross_origin_embedder_policy = cross_origin_embedder_policy
 
     def on_coming(self, request):
         if request.method != 'OPTIONS':
@@ -41,6 +57,21 @@ class OptionsMiddleware(MiddlewareBase):
 
         if self.max_age is not None:
             response.access_control_max_age = self.max_age
+
+        if self.content_security_policy is not None:
+            response.content_security_policy = self.content_security_policy
+
+        if self.content_security_policy_report_only is not None:
+            response.content_security_policy_report_only = self.content_security_policy_report_only
+
+        if self.access_control_expose_headers is not None:
+            response.access_control_expose_headers = self.access_control_expose_headers
+
+        if self.cross_origin_opener_policy is not None:
+            response.cross_origin_opener_policy = self.cross_origin_opener_policy
+
+        if self.cross_origin_embedder_policy is not None:
+            response.cross_origin_embedder_policy = self.cross_origin_embedder_policy
 
         return response
 

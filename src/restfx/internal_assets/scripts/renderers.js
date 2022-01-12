@@ -274,7 +274,7 @@ function sortRoutes(routes) {
 }
 
 function renderRoutes(routes, expanded) {
-    const routeMap = {}
+    var routeMap = {}
     routes.forEach(function (route) {
         if (!routeMap[route.path]) {
             routeMap[route.path] = []

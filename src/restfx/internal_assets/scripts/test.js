@@ -355,7 +355,7 @@
     }
 
     function renderJsonArgs(args) {
-        const json = {}
+        var json = {}
 
         args.forEach(function (arg) {
             if (arg.is_variable) {

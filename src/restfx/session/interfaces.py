@@ -120,8 +120,9 @@ class ISessionProvider(ABC):
 
 
 class IDbSessionProvider(ISessionProvider):
-    def __init__(self, db_options: dict, expired: int, check_interval: int, auto_clear=False):
-        super().__init__(expired, check_interval, auto_clear)
+    def __init__(self, db_options: dict, expired: int, check_interval: int, auto_clear=False,
+                 on_expired: FunctionType = None):
+        super().__init__(expired, check_interval, auto_clear, on_expired)
 
         self.db_options = db_options
         self.is_db_available = False

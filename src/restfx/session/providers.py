@@ -1,4 +1,5 @@
 import os
+from types import FunctionType
 from typing import List, Optional, Tuple
 
 from .interfaces import IDbSessionProvider, ISessionProvider
@@ -11,8 +12,8 @@ class MemorySessionProvider(ISessionProvider):
     注：此类型仅适用于单线程开发环境, 多线程时会出现无法预料的问题；请勿用于生产环境！
     """
 
-    def __init__(self, expired: int = None, check_interval=30):
-        super().__init__(expired, check_interval, True)
+    def __init__(self, expired: int = None, check_interval=30, on_expired: FunctionType = None):
+        super().__init__(expired, check_interval, True, on_expired)
         self.sessions = {}
 
     def remove(self, session_id: str):
@@ -40,8 +41,9 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, sessions_root: str, expired: int = None, check_interval=30, auto_clear=True):
-        super().__init__(expired, check_interval, auto_clear)
+    def __init__(self, sessions_root: str, expired: int = None, check_interval=30, auto_clear=True,
+                 on_expired: FunctionType = None):
+        super().__init__(expired, check_interval, auto_clear, on_expired)
 
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
         if not os.path.exists(self.sessions_root):
@@ -128,7 +130,7 @@ class FileSessionProvider(ISessionProvider):
 
 class MySQLSessionProvider(IDbSessionProvider):
     def __init__(self, db_options: dict, table_name="restfx_sessions", expired: int = None, check_interval=30,
-                 auto_clear=True):
+                 auto_clear=True, on_expired: FunctionType = None):
         """
 
         :param db_options: 按 `pymysql.connect` 的参数传入: host, user, password, database, port 等
@@ -141,7 +143,7 @@ class MySQLSessionProvider(IDbSessionProvider):
         super().__init__({
             'connect_timeout': 5,
             **db_options
-        }, expired, check_interval, auto_clear)
+        }, expired, check_interval, auto_clear, on_expired)
 
     def execute(self, sql: str, *args, throw_except=False, ensure_table=True) -> Tuple[int, Tuple[dict]]:
         import pymysql
@@ -246,16 +248,18 @@ class RedisSessionProvider(IDbSessionProvider):
     提供基于 Redis 的 session 存储支持
     """
 
-    def __init__(self, db_options: dict, expired: int = None, auto_clear=True, **kwargs):
+    def __init__(self, db_options: dict, expired: int = None, check_interval=30, auto_clear=True,
+                 on_expired: FunctionType = None):
         """
         :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, database, port=6379, db=0 等
         :param expired:
+        :param check_interval:
         :param auto_clear:
         """
         super().__init__({
             'socket_timeout': 5,
             **db_options
-        }, expired, auto_clear, **kwargs)
+        }, expired, check_interval, auto_clear, on_expired)
         self.started = False
 
     def connect(self):
