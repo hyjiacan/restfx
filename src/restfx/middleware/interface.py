@@ -1,7 +1,5 @@
 from abc import ABC
 
-from . import methods
-
 
 class MiddlewareBase(ABC):
     """

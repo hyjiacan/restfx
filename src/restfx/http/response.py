@@ -133,11 +133,11 @@ class FileResponse(HttpResponse):
 
         if not request:
             from ..util import Logger
-            Logger.warning(
-                         'You are using FileResponse for attachment,'
-                         'it is recommended to fill the "request" parameter.'
-                         'Otherwise, you may got an encoding issue of the filename on Firefox.'
-                         )
+            Logger.current().warning(
+                'You are using FileResponse for attachment,'
+                'it is recommended to fill the "request" parameter.'
+                'Otherwise, you may got an encoding issue of the filename on Firefox.'
+            )
 
         user_agent = request and request.headers.environ['HTTP_USER_AGENT']
         is_firefox = user_agent and ('Firefox/' in user_agent)

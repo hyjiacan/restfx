@@ -3,9 +3,9 @@ import uuid
 from werkzeug import Request
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage, MultiDict
 
+from restfx.globs import _request_ctx_stack, _app_ctx_stack
 from restfx.session import HttpSession
 from restfx.util import ContextStore
-from restfx.globs import _request_ctx_stack, _app_ctx_stack
 
 
 def _get_request_data(data: MultiDict) -> ImmutableDict:
@@ -133,7 +133,7 @@ class HttpRequest(Request):
         if not match:
             from restfx.util import Logger
             from restfx.http import BadRequest
-            Logger.get(self.app_id).warning('Invalid value of request header "range": %r' % request_range)
+            Logger.current().warning('Invalid value of request header "range": %r' % request_range)
             return BadRequest()
 
         return match.group('unit'), int(match.group('start')), int(match.group('end') or 0)

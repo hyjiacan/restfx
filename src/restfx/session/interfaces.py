@@ -22,8 +22,7 @@ class ISessionProvider(ABC):
         :param on_expired: 在 session 过期时，触发
         """
         from restfx.util import Logger
-        from restfx import globs
-        self._logger = Logger.get(globs.current_app.id)
+        self._logger = Logger.current()
         self.auto_clear = auto_clear
 
         self.expired = 10 * 60 if expired is None else expired

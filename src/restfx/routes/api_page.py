@@ -18,7 +18,7 @@ class ApiPage:
     def dispatch(self, request):
         if not self.config.api_page_enabled:
             from ..util import Logger
-            Logger.get(self.config.app_id).info(
+            Logger.current().info(
                 'API page is disabled, '
                 'use "App(..., api_page_enabled=True, ...)" to enable it.')
             return NotFound()

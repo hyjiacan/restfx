@@ -8,9 +8,9 @@ class MiddlewareManager:
     路由中间件管理器
     """
 
-    def __init__(self, app_id: str, config):
+    def __init__(self, config):
         self.config = config
-        self.logger = Logger.get(app_id)
+        self.logger = Logger.current()
 
     def handle_shutdown(self):
         for middleware in self.config.reversed_middlewares:

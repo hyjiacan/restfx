@@ -85,7 +85,7 @@ class SessionMiddleware(MiddlewareBase):
         self.secret_bytes = md5.hash_str(self.secret).encode()
 
     def on_coming(self, request):
-        config = AppConfig.get(request.app_id)
+        config = AppConfig.current()
         if config is None or self.provider is None:
             return
 

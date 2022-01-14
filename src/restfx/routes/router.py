@@ -30,7 +30,7 @@ class Router:
         if rid in self.production_routes:
             route = self.production_routes[rid]
             return self.invoke_handler(request, route['func'], route['args'])
-        
+
         if self.config.debug:
             return NotFound()
 
@@ -49,5 +49,5 @@ class Router:
             return func(request, args)
         except Exception as e:
             from ..util import Logger, func_util
-            Logger.get(self.config.app_id).error(func_util.get_func_info(func), e)
+            Logger.current().error(func_util.get_func_info(func), e)
             raise e

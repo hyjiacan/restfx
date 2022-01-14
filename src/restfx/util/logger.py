@@ -62,3 +62,9 @@ class Logger:
         if _logger is None:
             _logger = Logger(app_id)
         return _logger
+
+    @classmethod
+    def current(cls):
+        from restfx import globs
+        app_id = globs.current_app.id
+        return cls.get(app_id)

@@ -165,7 +165,7 @@ class Collector:
                     fullname, router_info['lineno'], func_name,
                     'Cannot load module "%s"' % pkg
                 )
-                Logger.get(self.app_id).error(msg, e)
+                Logger.current().error(msg, e)
                 raise e
             handler_obj = getattr(module, func_name)
             handler_info = FunctionDescription(handler_obj)
@@ -210,7 +210,7 @@ class Collector:
         routes = []
 
         from restfx.config import AppConfig
-        addition_func = AppConfig.get(self.app_id).api_page_addition
+        addition_func = AppConfig.current().api_page_addition
 
         print('Generating routes map...')
         for route in self.collect(routes_map):
@@ -329,7 +329,7 @@ class Collector:
 
     def get_route_decorator(self, filename: str, func_def: ast.FunctionDef):
         from ..util import Logger
-        logger = Logger.get(self.app_id)
+        logger = Logger.current()
         for decorator in func_def.decorator_list:
             route_module = None
             route_name = None
@@ -412,6 +412,12 @@ class Collector:
     @classmethod
     def get(cls, app_id: str):
         return cls._COLLECTORS.get(app_id, None)
+
+    @classmethod
+    def current(cls):
+        from restfx import globs
+        app_id = globs.current_app.id
+        return cls.get(app_id)
 
     def _check_entry_name(self, fullname: str):
         """

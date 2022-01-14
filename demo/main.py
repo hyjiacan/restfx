@@ -102,9 +102,9 @@ app.inject(injection='try1try')
 
 
 def load_routes_map():
-    app.persist()
-    from dist import routes_map
-    app.register_routes(routes_map.routes)
+    app.persist('dest/routes.py')
+    from dest import routes
+    app.register_routes(routes.routes)
 
 
 def command_persist():

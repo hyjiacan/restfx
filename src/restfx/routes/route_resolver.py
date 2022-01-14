@@ -17,7 +17,7 @@ class RouteResolver:
         self.entry = entry
         self.method = method.lower()
         from ..util import Logger
-        self.logger = Logger.get(config.app_id)
+        self.logger = Logger.current()
 
     def _get_module_abs_path(self, module_name):
         abs_path = os.path.join(self.config.ROOT, module_name)
@@ -133,7 +133,7 @@ class RouteResolver:
         import inspect
         from . import Collector
         filename = inspect.getmodule(func).__file__
-        decorator = Collector.get(self.config.app_id).resolve_routes(filename, func_name)
+        decorator = Collector.current().resolve_routes(filename, func_name)
 
         if decorator is None:
             msg = '%s\n\tDecorator "@route" not found on function "%s", did you forgot it ?' % (

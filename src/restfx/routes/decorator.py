@@ -61,7 +61,7 @@ def route(
             if not isinstance(request, HttpRequest) or not isinstance(handler_args, OrderedDict):
                 return handler(*args_def)
 
-            config = AppConfig.get(request.app_id)
+            config = AppConfig.current()
 
             meta = RouteMeta(
                 handler,
@@ -167,7 +167,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
     except Exception as e:
         from restfx.util import utils
         msg = 'Error occurred during executing the route handler: %s' % str(e)
-        Logger.get(config.app_id).error(utils.get_exception_info(e, msg), e)
+        Logger.current().error(utils.get_exception_info(e, msg), e)
         if config.debug:
             raise e
         return handle_response(ServerError())
@@ -193,7 +193,7 @@ def _process_json_args(request: HttpRequest, config: AppConfig):
     try:
         request.BODY = json.loads(body.decode())
     except Exception as e:
-        Logger.get(config.app_id).warning('Failed to deserialize request body: %s' % str(e))
+        Logger.current().warning('Failed to deserialize request body: %s' % str(e))
 
 
 def _get_parameter_str(args_def: OrderedDict):
@@ -291,7 +291,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
 
         msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
             (arg_value, arg_spec.annotation_name, arg_name))
-        Logger.get(config.app_id).warning(msg)
+        Logger.current().warning(msg)
         return BadRequest(msg)
 
     # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
@@ -301,7 +301,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
                 arg_value, arg_spec.annotation_name, arg_name
             )
-            Logger.get(config.app_id).warning(msg)
+            Logger.current().warning(msg)
             return BadRequest(msg)
 
         return result
@@ -324,7 +324,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
                 msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
                     arg_value, arg_spec.annotation_name, arg_name
                 )
-                Logger.get(config.app_id).warning(msg)
+                Logger.current().warning(msg)
                 return BadRequest(msg)
 
         # 类型一致，直接使用
@@ -337,7 +337,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
         msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
             arg_value, arg_spec.annotation_name, arg_name
         )
-        Logger.get(config.app_id).warning(msg)
+        Logger.current().warning(msg)
         return BadRequest(msg)
 
 
@@ -362,7 +362,7 @@ def _fill_session(request, func, arg_spec, arg_name, args_def, config):
                       arg_name,
                       _get_parameter_str(args_def)
                   )
-            Logger.get(config.app_id).warning(msg)
+            Logger.current().warning(msg)
         # 在 session 未启用时，其值为 None
         return request.session
     return None
@@ -387,7 +387,7 @@ def _fill_injections(request, func, injection_args, actual_args, config):
         msg = 'Injection name "%s" not found.' % injection_name
         if config.debug:
             msg = '%s\n\t%s' % (get_func_info(func), msg)
-        Logger.get(config.app_id).error(msg)
+        Logger.current().error(msg)
         return ServerError(msg) if config.debug else ServerError()
     return None
 
@@ -465,7 +465,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
         # 未找到参数
         if use_default is None:
             msg = 'Missing required argument "%s".' % arg_name
-            Logger.get(config.app_id).warning(msg)
+            Logger.current().warning(msg)
             return BadRequest(msg)
 
         # 使用默认值
@@ -506,7 +506,7 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
     variable_arg_keys = variable_args.keys()
     msg = 'Unknown argument(s) found: "%s", Parameters: (%s).' \
           % (','.join(variable_arg_keys), _get_parameter_str(args_def))
-    Logger.get(config.app_id).warning(msg)
+    Logger.current().warning(msg)
     if not config.debug:
         msg = 'Unknown argument(s) found: %s.' % ','.join(variable_arg_keys)
     return BadRequest(msg)

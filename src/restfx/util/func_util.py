@@ -5,7 +5,6 @@ from collections import OrderedDict
 from types import FunctionType
 
 from restfx.session import HttpSession
-
 from .utils import get_func_info
 from ..http import HttpRequest
 

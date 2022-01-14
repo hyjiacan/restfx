@@ -2,6 +2,7 @@ import atexit
 import os
 import sys
 import uuid
+from types import FunctionType
 
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
@@ -91,6 +92,10 @@ class App:
         from .routes import Router
         from .util import Logger
 
+        # 上下文需要先创建，以便后续的模块能直接使用
+        self.context = AppContext(self)
+        self.context.push()
+
         self.id = app_id or str(uuid.uuid4())
         self._logger = Logger(app_id)
 
@@ -101,7 +106,7 @@ class App:
                                 api_page_expanded, api_page_cache, api_page_addition,
                                 api_page_header, api_page_footer, api_page_assets,
                                 allowed_route_meta)
-        self.config.middleware_manager = MiddlewareManager(self.id, self.config)
+        self.config.middleware_manager = MiddlewareManager(self.config)
         self._api_prefix = api_prefix
         self._router = Router(self.config)
         self._api_page = ApiPage(self.config)
@@ -119,9 +124,6 @@ class App:
         ])
 
         Collector.create(app_id, app_root, append_slash)
-
-        self.context = AppContext(self)
-        self.context.push()
 
     def dispose(self):
         self.config.middleware_manager.handle_shutdown()
@@ -306,12 +308,16 @@ class App:
         """
         return Collector.get(self.id).collect(self.config.routes_map)
 
-    def persist(self):
+    def persist(self, filename: str = 'dist/routes_map.py', encoding='utf8'):
         """
         持久化路由信息到文件
+        :param encoding: 文件编码
+        :param filename: 输出的路由文件名称
         :return:
         """
-        return Collector.get(self.id).persist(self.config.routes_map)
+        routes_file = os.path.basename(filename)
+        routes_dir = os.path.dirname(filename)
+        return Collector.get(self.id).persist(self.config.routes_map, routes_file, routes_dir, encoding)
 
     def set_logger(self, logger):
         """
@@ -447,6 +453,15 @@ class App:
             plugin.setup(self)
 
         return self
+
+    @classmethod
+    def register_command(cls, command: str, handler: FunctionType, description: str):
+        from restfx import commands
+        commands.register(command, handler, description)
+
+    def test_command(self):
+        from restfx import commands
+        return commands.execute(self.config.ROOT, sys.argv)
 
     @classmethod
     def get(cls, app_id: str):

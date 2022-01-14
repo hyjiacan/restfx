@@ -15,14 +15,13 @@ register('create', command_create, 'Create restfx project structure', 'project-n
 register('genid', command_genid, 'Generate a new id for app')
 
 
-def execute(argv=None):
+def execute(working_dir: str, argv=None):
     args = (argv or sys.argv)[1:]
 
-    working_dir = os.path.abspath(os.path.curdir)
+    working_dir = working_dir or os.path.abspath(os.path.curdir)
 
     if len(args) == 0:
-        run_command(working_dir, 'help')
-        return
+        return run_command(working_dir, 'help')
 
     command_name = args.pop(0)
-    run_command(working_dir, command_name, *args)
+    return run_command(working_dir, command_name, *args)

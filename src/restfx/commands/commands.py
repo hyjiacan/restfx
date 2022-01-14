@@ -9,6 +9,14 @@ _COMMANDS = {}
 
 
 def register(command_name: str, handler, description: str = None, args: str = None):
+    """
+
+    :param command_name: 命令名称
+    :param handler: 命令的处理函数
+    :param description: 命令的描述
+    :param args: 命令参数描述，如： -i interface -m mask
+    :return:
+    """
     _COMMANDS[command_name] = {
         'name': command_name,
         'handler': handler,
@@ -22,9 +30,10 @@ def run_command(working_dir: str, command_name: str, *args):
 
     command = get_command(command_name)
     if command is None:
-        return
+        return False
     try:
         command['handler'](working_dir, *args)
+        return True
     except Exception as e:
         raise e
 
