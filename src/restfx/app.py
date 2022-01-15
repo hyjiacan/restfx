@@ -125,6 +125,9 @@ class App:
 
         Collector.create(app_id, app_root, append_slash)
 
+        from restfx import commands
+        commands.register('persist', self.persist, 'Persist routes info into file', '[filename] [encoding]')
+
     def dispose(self):
         self.config.middleware_manager.handle_shutdown()
 
@@ -412,18 +415,28 @@ class App:
 
         return self
 
-    def register_middleware(self, *middlewares):
+    def register_middleware(self, *middlewares, index: int = -1):
         """
         注册中间件，注册的中间件将按顺序执行
         :param middlewares: 中间件实例列表
+        :param index: 要将包插入的位置，指定为 -1 表示放到最后
         :return:
         """
         from restfx.middleware import MiddlewareBase
 
         for middleware in middlewares:
             assert isinstance(middleware, MiddlewareBase)
-            self.config.middlewares.append(middleware)
-            self.config.reversed_middlewares.insert(0, middleware)
+            if index == -1:
+                self.config.middlewares.append(middleware)
+                self.config.reversed_middlewares.insert(0, middleware)
+            else:
+                self.config.middlewares.insert(index, middleware)
+                if index == 0:
+                    self.config.reversed_middlewares.append(middleware)
+                else:
+                    self.config.reversed_middlewares.insert(-index, middleware)
+                # 每添加一个，将 index 后移动一个位置
+                index += 1
             # 调用中间件，标记中间件的启动
             middleware.on_startup(self)
 
@@ -461,7 +474,7 @@ class App:
 
     def test_command(self):
         from restfx import commands
-        return commands.execute(self.config.ROOT, sys.argv)
+        return commands.execute(*sys.argv, working_dir=self.config.ROOT)
 
     @classmethod
     def get(cls, app_id: str):

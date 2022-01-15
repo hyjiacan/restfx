@@ -1,5 +1,5 @@
 name = 'restfx'
-version = '0.30.8'
+version = '0.30.9'
 website = 'https://gitee.com/hyjiacan/restfx'
 
 api_version = 1

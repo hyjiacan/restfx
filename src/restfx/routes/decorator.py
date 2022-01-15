@@ -220,9 +220,18 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
             an_arr = an + '[]'
             if an in data:
                 result = False, data.getlist(an)
+                break
             if an_arr in data:
                 is_arr = True
                 result = False, data.getlist(an_arr)
+                break
+        if result[0] is None:
+            if arg_spec.has_default:
+                # 使用默认值
+                result = True, arg_spec.default
+            else:
+                # 缺少无默认值的参数
+                result = None, None
     elif name_arr in data:
         is_arr = True
         result = False, data.getlist(name_arr)

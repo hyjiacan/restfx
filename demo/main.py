@@ -2,8 +2,6 @@ import json
 import os
 import uuid
 
-# from admin_plugin.plugin import AdminPlugin
-
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
@@ -12,8 +10,10 @@ from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import RedisSessionProvider, MemorySessionProvider
+from restfx.session.providers import MemorySessionProvider
 from test.tools.enums import OpTypes
+
+# from admin_plugin.plugin import AdminPlugin
 
 root = os.path.dirname(__file__)
 
@@ -122,7 +122,7 @@ def command_persist():
 
 if __name__ == '__main__':
     # 提供对 python main.py persist 命令的支持
-    if command_persist():
+    if app.test_command():
         exit(0)
     else:
         # app.register_plugins(AdminPlugin())

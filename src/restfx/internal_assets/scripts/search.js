@@ -10,13 +10,18 @@
     var hlItems = []
 
     window.addEventListener('keydown', function (e) {
+        // F2
         // Ctrl K 查找
-        if (!e.ctrlKey || e.keyCode !== 75) {
+        if (e.keyCode !== 113 && (!e.ctrlKey || e.keyCode !== 75)) {
             return
         }
         e.preventDefault()
         $('#app').scrollTop(0)
-        input.focus()
+        if (input.parent().hasClass('focused')) {
+            input.blur()
+        } else {
+            input.focus()
+        }
         return false
     })
 
@@ -48,10 +53,14 @@
     })
 
     input.on('focus', function () {
-        $(this).parent().addClass('focused')
+        input.parent().addClass('focused')
+
+        setTimeout(function () {
+            input.get(0).select()
+        }, 100)
     })
     input.on('blur', function () {
-        $(this).parent().removeClass('focused')
+        input.parent().removeClass('focused')
     })
 
     function doSearch() {

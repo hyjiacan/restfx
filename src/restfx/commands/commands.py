@@ -8,7 +8,7 @@ from restfx.util import helper
 _COMMANDS = {}
 
 
-def register(command_name: str, handler, description: str = None, args: str = None):
+def register(command_name: str, handler, description: str = '', args: str = ''):
     """
 
     :param command_name: 命令名称
@@ -47,9 +47,9 @@ def get_command(command_name: str):
 
 def get_commands():
     return [
-        '%s%s\t%s' % (
+        '%s %s\t%s' % (
             command['name'],
-            (' <%s>' % command['arguments']) if command['arguments'] else '',
+            command['arguments'],
             command['description']
         )
         for command in _COMMANDS.values()
