@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 from types import FunctionType
 from typing import List, Optional, Tuple
 
@@ -164,7 +165,7 @@ class MySQLSessionProvider(IDbSessionProvider):
             if sql.startswith('SELECT'):
                 data = cursor.fetchall()
         except Exception as e:
-            self._logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
+            self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
             if throw_except:
                 raise e
         else:
@@ -193,7 +194,7 @@ class MySQLSessionProvider(IDbSessionProvider):
                 self.clear()
             return
 
-        self._logger.info('Creating session table %r' % self.table_name)
+        self.logger.info('Creating session table %r' % self.table_name)
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(48) PRIMARY KEY NOT NULL,
         `creation_time` BIGINT NOT NULL,
@@ -251,7 +252,7 @@ class RedisSessionProvider(IDbSessionProvider):
     def __init__(self, db_options: dict, expired: int = None, check_interval=30, auto_clear=True,
                  on_expired: FunctionType = None):
         """
-        :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, database, port=6379, db=0 等
+        :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, port=6379, db=0 等
         :param expired:
         :param check_interval:
         :param auto_clear:
@@ -262,12 +263,18 @@ class RedisSessionProvider(IDbSessionProvider):
         }, expired, check_interval, auto_clear, on_expired)
         self.started = False
 
+    @contextmanager
     def connect(self):
         import redis
-        conn = redis.connection.Connection(**self.db_options).connect()
+
+        conn = redis.Redis(**self.db_options)
         if not self.started and self.auto_clear:
+            self.started = True
             conn.flushdb()
-        return conn
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def get_expired_session(self, time_before: float) -> List[str]:
         return []
@@ -290,13 +297,9 @@ class RedisSessionProvider(IDbSessionProvider):
     def set(self, session: HttpSession):
         with self.connect() as conn:
             import pickle
-            import redis.lock
             buf = pickle.dumps(session, pickle.HIGHEST_PROTOCOL)
-
-            lock = redis.lock.Lock(conn, 'set_session')
-            lock.acquire()
-            result = conn.set(session.id, buf, ex=self.expired)
-            lock.release()
+            with conn.lock('set_session'):
+                result = conn.set(session.id, buf, ex=self.expired)
             return result
 
     def exists(self, session_id: str) -> bool:
