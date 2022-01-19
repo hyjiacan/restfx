@@ -24,7 +24,8 @@ def execute(*args, **kwargs):
         working_dir = os.path.abspath(os.path.curdir)
 
     if len(args) == 0:
-        return run_command(working_dir, 'help')
+        return False
+        # return run_command(working_dir, 'help')
 
     command_name = args.pop(0)
     return run_command(working_dir, command_name, *args)

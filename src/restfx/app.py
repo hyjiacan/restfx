@@ -179,18 +179,22 @@ class App:
                 else:
                     response = NotFound()
         except Exception as e:
-            msg = utils.get_exception_info(e)
-            if request:
-                msg = 'Error occurred during handling request %r:\n\t%s' % (request.path, msg)
-
-            self._logger.error(msg)
-
-            if isinstance(e, SuperNotFound):
+            # 忽略静态资源请求的 .js.map/.css.map 文件
+            if request and (request.path.lower().endswith('.js.map') or request.path.lower().endswith('.css.map')):
                 response = NotFound()
-            elif self.config.debug:
-                response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
             else:
-                response = ServerError()
+                msg = utils.get_exception_info(e)
+                if request:
+                    msg = 'Error occurred during handling request %r:\n\t%s' % (request.path, msg)
+
+                self._logger.error(msg)
+
+                if isinstance(e, SuperNotFound):
+                    response = NotFound()
+                elif self.config.debug:
+                    response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
+                else:
+                    response = ServerError()
         finally:
             result = self.config.middleware_manager.handle_leaving(request, response)
             if result:

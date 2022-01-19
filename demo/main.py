@@ -10,7 +10,7 @@ from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MemorySessionProvider
+from restfx.session.providers import MemorySessionProvider, RedisSessionProvider, MySQLSessionProvider
 from test.tools.enums import OpTypes
 
 # from admin_plugin.plugin import AdminPlugin
@@ -80,20 +80,20 @@ app.register_middleware(
     TimetickMiddleware(),
     OptionsMiddleware(),
     HttpAuthMiddleware(on_auth),
-    SessionMiddleware(MemorySessionProvider()),
+    # SessionMiddleware(MemorySessionProvider()),
     # SessionMiddleware(MySQLSessionProvider(db_options={
-    #     'host': '127.0.0.1',
+    #     'host': '172.16.51.178',
     #     'port': 3306,
     #     'user': 'root',
-    #     'password': '',
+    #     'password': '123asd!@#',
     #     'database': 'test',
     #     'charset': 'utf8',
     # }), maker=sessionid_maker),
-    # SessionMiddleware(RedisSessionProvider({
-    #     'host': '172.16.51.17',
-    #     'password': '123asd!@#$',
-    #     'db': 15
-    # }), maker=sessionid_maker),
+    SessionMiddleware(RedisSessionProvider({
+        'host': '172.16.3.2',
+        'password': '123asd!@#$',
+        'db': 15
+    }), maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()

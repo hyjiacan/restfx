@@ -147,12 +147,11 @@ class MySQLSessionProvider(IDbSessionProvider):
         }, expired, check_interval, auto_clear, on_expired)
 
     def execute(self, sql: str, *args, throw_except=False, ensure_table=True) -> Tuple[int, Tuple[dict]]:
-        import pymysql
-        conn = pymysql.connect(**self.db_options)
-
         if ensure_table:
             self.ensure_table()
 
+        import pymysql
+        conn = pymysql.connect(**self.db_options)
         # print('[MySQLSessionProvider] ' + (sql % args))
 
         cursor = None
