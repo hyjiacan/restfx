@@ -42,7 +42,7 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
-    def __init__(self, sessions_root: str, expired: int = None, check_interval=30, auto_clear=True,
+    def __init__(self, sessions_root: str, expired: int = None, check_interval=30, auto_clear=False,
                  on_expired: FunctionType = None):
         super().__init__(expired, check_interval, auto_clear, on_expired)
 
@@ -131,7 +131,7 @@ class FileSessionProvider(ISessionProvider):
 
 class MySQLSessionProvider(IDbSessionProvider):
     def __init__(self, db_options: dict, table_name="restfx_sessions", expired: int = None, check_interval=30,
-                 auto_clear=True, on_expired: FunctionType = None):
+                 auto_clear=False, on_expired: FunctionType = None):
         """
 
         :param db_options: 按 `pymysql.connect` 的参数传入: host, user, password, database, port 等
@@ -248,7 +248,7 @@ class RedisSessionProvider(IDbSessionProvider):
     提供基于 Redis 的 session 存储支持
     """
 
-    def __init__(self, db_options: dict, expired: int = None, check_interval=30, auto_clear=True,
+    def __init__(self, db_options: dict, expired: int = None, check_interval=30, auto_clear=False,
                  on_expired: FunctionType = None):
         """
         :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, port=6379, db=0 等
