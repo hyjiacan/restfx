@@ -247,10 +247,11 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
     # 特别地，针对枚举类型，传入空时使用默认值
     if arg_spec.is_type(Enum):
         if isinstance(value, list):
-            value = value[-1]
-        if value is None or value == '':
-            result = True, arg_spec.default
-            use_default, value = result
+            temp = value[-1]
+        else:
+            temp = value
+        if temp is None or temp == '':
+            return True, arg_spec.default
 
     if use_default is not False:
         return result

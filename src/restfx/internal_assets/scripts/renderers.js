@@ -90,6 +90,11 @@ function render(list, data) {
     // 附加资源
     if (data.custom_assets && data.custom_assets.length) {
         data.custom_assets.forEach(function (asset) {
+            if (asset.indexOf('?') === -1) {
+                asset += '?v=' + data.meta.version
+            } else {
+                asset += '&v=' + data.meta.version
+            }
             var element
             if (/\.css(\?.+)?$/.test(asset)) {
                 element = el('link', {

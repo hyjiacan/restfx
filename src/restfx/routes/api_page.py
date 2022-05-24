@@ -44,10 +44,14 @@ class ApiPage:
         if request.method != 'GET':
             return NotFound()
         if not self.api_page_html_cache or not self.config.api_page_cache:
+            from restfx import __meta__
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_page.html'),
                       encoding='utf-8') as fp:
-                lines = fp.readlines()
+                lines = [
+                    line.replace('{{version}}', __meta__.version)
+                    for line in fp.readlines()
+                ]
                 self.api_page_html_cache = ''.join(lines)
                 fp.close()
         return HttpResponse(self.api_page_html_cache, content_type='text/html')

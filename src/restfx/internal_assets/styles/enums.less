@@ -6,29 +6,41 @@
 
 #enum-list {
   padding-bottom: 100px;
-}
 
-.enum-table {
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.enum-name {
-  font-weight: bold;
-  margin: 10px 0;
-  transition-property: font-size, color;
-  transition-duration: 500ms;
-  transition-timing-function: ease-in-out;
-  transition-delay: 200ms;
-  font-family: Consolas, Monospaced, FangSong, serif;
-  font-size: 20px;
-
-  &.highlight {
-    font-size: 80px;
-    color: #00a6ff;
+  .is-empty {
+    font-size: 20px;
+    text-align: center;
+    color: #AAAAAA;
   }
-}
 
-.enum-comment.route-description {
-  height: auto;
+  .enum-table {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .enum-index {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 18px;
+  }
+
+  .enum-name {
+    font-weight: bold;
+    margin: 10px 0;
+    transition-property: font-size, color;
+    transition-duration: 500ms;
+    transition-timing-function: ease-in-out;
+    transition-delay: 200ms;
+    font-family: Consolas, Monospaced, FangSong, serif;
+    font-size: 20px;
+
+    &.highlight {
+      font-size: 80px;
+      color: #00a6ff;
+    }
+  }
+
+  .enum-comment.route-description {
+    height: auto;
+  }
 }

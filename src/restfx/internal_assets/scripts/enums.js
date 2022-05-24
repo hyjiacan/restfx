@@ -7,17 +7,29 @@
 
     function renderEnums() {
         enumList.empty()
+        var count = 0
+        var total = window.apiData.enums.length
         window.apiData.enums.forEach(function (enumType) {
-            var el = renderEnum(enumType)
+            var index = (count + 1).toString() + '/' + total.toString()
+            var el = renderEnum(enumType, index)
             enumList.append(el)
+            count++
         })
+        return count
     }
 
-    function renderEnum(enumType) {
+    function renderEnum(enumType, index) {
         var header = el('div', {
-            'class': 'enum-name',
+            'class': 'enum-title',
             id: 'enum-' + enumType.name.toLowerCase()
-        }, enumType.name)
+        }, [
+            el('span', {
+                'class': 'enum-index',
+            }, index),
+            el('span', {
+                'class': 'enum-name',
+            }, enumType.name)
+        ])
         var comment = el('p', {
             'class': 'comment enum-comment route-description'
         }, enumType.comment)
@@ -47,7 +59,9 @@
 
     $('#btn-show-enums-panel').click(function () {
         if (!rendered) {
-            renderEnums()
+            if (!renderEnums()) {
+                enumList.html('<p class="is-empty">未注册枚举</p>')
+            }
             rendered = true
         }
         enumPanel.css('display', 'flex')
