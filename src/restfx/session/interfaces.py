@@ -27,12 +27,17 @@ class ISessionProvider(ABC):
 
         self.expired = 10 * 60 if expired is None else expired
         self.on_expired = on_expired
+        self.check_interval = check_interval
+        self.timer = self.run_timer()
 
+    def run_timer(self):
         # 不会过期，不用启动定时器
-        if self.expired > 0 and check_interval > 0:
-            # 每 5 秒执行一次检查
-            self.timer = Timer(check_interval, self.drop_expired_session)
-            self.timer.start()
+        if self.expired <= 0 or self.check_interval <= 0:
+            return None
+
+        timer = Timer(self.check_interval, self.drop_expired_session)
+        timer.start()
+        return timer
 
     def drop_expired_session(self):
         time_before = time.time() - self.expired
@@ -42,6 +47,8 @@ class ISessionProvider(ABC):
                 self.on_expired(self.get(session_id))
             # self.logger.debug('Drop expired session: ' + session_id)
             self.remove(session_id)
+
+        self.timer = self.run_timer()
 
     def is_expired(self, session: HttpSession) -> bool:
         if self.expired > 0:
@@ -112,8 +119,9 @@ class ISessionProvider(ABC):
         回收 session provider
         :return:
         """
-        self.timer.cancel()
-        self.timer.join()
+        if self.timer and self.timer.is_alive():
+            self.timer.cancel()
+            self.timer.join()
         if self.auto_clear:
             self.clear()
 

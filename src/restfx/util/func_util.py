@@ -2,6 +2,7 @@ import inspect
 import json
 import re
 from collections import OrderedDict
+from enum import Enum
 from types import FunctionType
 
 from restfx.session import HttpSession
@@ -60,6 +61,16 @@ class ArgumentSpecification:
         if alias:
             self.alias.append(alias)
 
+    def is_type(self, type_annotation: type):
+        """
+        判断此值是否属于指定的 ``type_annotation`` 类型
+        :param type_annotation:
+        :return:
+        """
+        if self.annotation is None:
+            return False
+        return issubclass(self.annotation, type_annotation)
+
     @property
     def annotation_name(self):
         return self.annotation.__name__ if self.has_annotation else None
@@ -86,6 +97,7 @@ class ArgumentSpecification:
                 'index': o.index,
                 'is_injection': o.is_injection,
                 'is_variable': o.is_variable,
+                'is_enum': o.is_type(Enum),
                 'has_annotation': o.has_annotation,
                 'has_default': o.has_default,
                 'default': o.default,

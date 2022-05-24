@@ -68,6 +68,11 @@ class AppConfig:
         注册的路由列表对应的文档信息
         """
 
+        self.enum_types = []
+        """
+        系统使用到的枚举类型集合
+        """
+
         # 路由映射表，其键为请求的路径，其值为映射的目录
         self.routes_map = {}
 

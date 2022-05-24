@@ -157,13 +157,15 @@ function render(list, data) {
         name: data.name,
         meta: data.meta,
         moduleNames: moduleNames,
-        modules: modules
+        modules: modules,
+        enums: data.enums
     }
 
     list.empty().append(apiList)
 
     $('#api-summary .count1').text(moduleNames.length)
     $('#api-summary .count2').text(routes.length)
+    $('#api-summary .count3').text(data.enums.length)
 
     // 绑定事件
     bindToggleRouteItemEvent(list)
@@ -470,7 +472,12 @@ function renderArg(arg, editable) {
             el(
                 arg.has_annotation ? 'code' : 'span',
                 {
-                    'class': 'arg-type' + (arg.is_variable ? ' is-variable' : '')
+                    'class': [
+                        'arg-type',
+                        arg.is_variable ? ' is-variable' : '',
+                        arg.is_enum ? ' is-enum' : ''
+                    ].join(' '),
+                    'data-type': argType
                 },
                 argType
             )

@@ -15,6 +15,7 @@
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/tabs.css"/>
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/jsonviewer.css"/>
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/search.css"/>
+    <link type="text/css" rel="stylesheet" href="/internal_assets/styles/enums.css"/>
     <script src="/internal_assets/scripts/xhr.js"></script>
     <script src="/internal_assets/scripts/zepto.min.js"></script>
 </head>
@@ -46,6 +47,9 @@
                     <span class="count1">0</span>
                     <span>路由:</span>
                     <span class="count2">0</span>
+                    <span>枚举:</span>
+                    <span class="count3">0</span>
+                    <a href="javascript:" id="btn-show-enums-panel">查看枚举</a>
                 </div>
             </div>
         </header>
@@ -228,6 +232,21 @@
         </div>
     </div>
 </div>
+<div id="enum-panel" class="panel-container">
+    <div class="panel">
+        <div class="panel-heading">
+            <span>枚举</span>
+            <div class="panel-heading--buttons">
+                <input placeholder="过滤" id="enum-keyword"/>
+                <button class="btn-fullscreen">全屏</button>
+                <button class="btn-close">关闭</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div id="enum-list"></div>
+        </div>
+    </div>
+</div>
 <div id="btn-back-to-top" title="回到顶部"></div>
 <form action="" id="export-proxy" style="display: none" target="_blank" method="post">
     <input type="hidden" name="data" id="md-content"/>
@@ -239,6 +258,7 @@
     var list = $('#api-list')
     var testPanel = $('#test-panel')
     var optionPanel = $('#option-panel')
+    var enumPanel = $('#enum-panel')
 </script>
 <script src="/internal_assets/scripts/renderers.js"></script>
 <script src="/internal_assets/scripts/index.js"></script>
@@ -250,6 +270,7 @@
 <script src="/internal_assets/scripts/base64.js" defer></script>
 <script src="/internal_assets/scripts/jsonviewer.js" defer></script>
 <script src="/internal_assets/scripts/search.js" defer></script>
+<script src="/internal_assets/scripts/enums.js" defer></script>
 </body>
 
 </html>

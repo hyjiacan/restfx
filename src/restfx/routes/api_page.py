@@ -2,6 +2,7 @@ import os
 
 from ..config import AppConfig
 from ..http import BadRequest, HttpResponse, JsonResponse, NotFound
+from ..util import utils
 from ..util.func_util import FunctionDescription
 
 
@@ -66,6 +67,10 @@ class ApiPage:
             'name': self.config.api_page_name,
             'expanded': self.config.api_page_expanded,
             'routes': self.routes_cache,
+            'enums': [
+                utils.get_enum_items(item)
+                for item in self.config.enum_types
+            ],
             'custom_assets': self.config.api_page_assets
         }, encoder=FunctionDescription.JSONEncoder, ensure_ascii=request.GET.get('ascii') == 'true')
 

@@ -3,6 +3,7 @@ import os
 import sys
 import uuid
 from types import FunctionType
+from typing import Union
 
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
@@ -41,6 +42,10 @@ class AppContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.pop()
+
+
+def print_meta():
+    print(__meta__.text_img)
 
 
 class App:
@@ -83,6 +88,8 @@ class App:
         :param api_page_assets: 接口页面上，需要自定义的JS和CSS以及其它资源 (通过 static 托管，此接口仅填写地址)
         :param allowed_route_meta: 路由装饰器上，指定允许使用的自定义元数据参数。当此值为 None 时，不限制。
         """
+        print_meta()
+
         # 更新系统路径
         if app_root not in sys.path:
             sys.path.insert(0, app_root)
@@ -468,6 +475,24 @@ class App:
             self.config.plugins.append(plugin)
             # 调用插件，标记中间件的启动
             plugin.setup(self)
+
+        return self
+
+    def register_enums(self, enum_types: Union[list, tuple], ignore_non_enum=True):
+        """
+        注册枚举类型
+        :param enum_types: 要注册的枚举类型
+        :param ignore_non_enum: 是否忽略慧枚举类型
+        :return:
+        """
+        from enum import Enum
+
+        for enum_type in enum_types:
+            if not ignore_non_enum:
+                assert issubclass(enum_type, Enum)
+            if enum_type in self.config.enum_types:
+                continue
+            self.config.enum_types.append(enum_type)
 
         return self
 

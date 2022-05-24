@@ -1,5 +1,6 @@
 import inspect
 import re
+from typing import Type
 
 
 def load_module(module_name: str, level=0):
@@ -80,3 +81,28 @@ def is_port_used(port):
         return True
     except:
         return False
+
+
+def get_enum_items(enum: Type):
+    # 类型注释
+    type_name = enum.__name__
+    type_comment = inspect.getdoc(enum)
+    source = inspect.getsource(enum)
+
+    expr = r'([\S]+?)\s*=\s*(.+?)\s*\n\s*("""\n\s*(\S[\s\S]+?)\n\s*""")?'
+    reg = re.compile(expr)
+    matches = reg.findall(source)
+
+    items = []
+    for item in matches:
+        items.append({
+            'name': item[0],
+            'value': item[1],
+            'comment': item[3]
+        })
+
+    return {
+        'name': type_name,
+        'comment': type_comment,
+        'items': items
+    }

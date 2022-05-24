@@ -10,8 +10,8 @@ from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MemorySessionProvider, RedisSessionProvider, MySQLSessionProvider
-from test.tools.enums import OpTypes
+from restfx.session.providers import RedisSessionProvider
+from test.tools.enums import *
 
 # from admin_plugin.plugin import AdminPlugin
 
@@ -90,15 +90,23 @@ app.register_middleware(
     #     'charset': 'utf8',
     # }), maker=sessionid_maker),
     SessionMiddleware(RedisSessionProvider({
-        'host': '172.16.3.2',
-        'password': '123asd!@#$',
-        'db': 15
+        'host': '172.16.51.178',
+        # 'password': '123asd!@#$',
+        'db': 2
     }), maker=sessionid_maker),
     MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
 )
 app.inject(injection='try1try')
+
+app.register_enums((
+    TestType,
+    TestType1,
+    TestType2,
+    TestType3,
+    OpTypes,
+))
 
 
 def load_routes_map():
@@ -120,7 +128,7 @@ def command_persist():
     return True
 
 
-if __name__ == '__main__':
+def run():
     # 提供对 python main.py persist 命令的支持
     if app.test_command():
         exit(0)
@@ -129,3 +137,7 @@ if __name__ == '__main__':
         load_routes_map()
         # 启动内置服务器
         app.startup()
+
+
+if __name__ == '__main__':
+    run()

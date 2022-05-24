@@ -244,6 +244,14 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
 
     use_default, value = result
 
+    # 特别地，针对枚举类型，传入空时使用默认值
+    if arg_spec.is_type(Enum):
+        if isinstance(value, list):
+            value = value[-1]
+        if value is None or value == '':
+            result = True, arg_spec.default
+            use_default, value = result
+
     if use_default is not False:
         return result
 
@@ -304,7 +312,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
         return BadRequest(msg)
 
     # 当声明的参数类型是枚举类型时，遍历枚举项，同时将枚举名称与值进行处理
-    if issubclass(arg_spec.annotation, Enum):
+    if arg_spec.is_type(Enum):
         result = _get_enum_value(arg_spec, arg_value)
         if result is None:
             msg = 'Cannot parse value "%s" as type "%s" for parameter "%s".' % (
@@ -316,7 +324,7 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
         return result
 
     # 声明的类型为 IParam，调用  parse 进行转换
-    if issubclass(arg_spec.annotation, IParam):
+    if arg_spec.is_type(IParam):
         result = arg_spec.annotation.parse(arg_value)
         return result
 
