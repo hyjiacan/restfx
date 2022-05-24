@@ -67,17 +67,15 @@
         enumPanel.css('display', 'flex')
     })
 
-    list.on('click', '.arg-type.is-enum', function () {
+    $(document).on('click', 'code.arg-type.is-enum', function () {
         $('#btn-show-enums-panel').click()
         var target = '#enum-' + $(this).attr('data-type').toLowerCase()
         var item = $(target)
-        if (!item) {
+        if (!item.length) {
             return
         }
         setTimeout(function () {
-            item.get(0).scrollIntoView({
-                behavior: 'smooth'
-            })
+            item.get(0).scrollIntoView()
             item.addClass('highlight')
             setTimeout(function () {
                 item.removeClass('highlight')

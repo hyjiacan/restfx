@@ -97,7 +97,7 @@ def get_enum_items(enum: Type):
     for item in matches:
         items.append({
             'name': item[0],
-            'value': item[1],
+            'value': item[1].strip("'").strip('"'),
             'comment': item[3]
         })
 
