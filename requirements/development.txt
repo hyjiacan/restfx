@@ -6,3 +6,4 @@ watchdog==0.10.3
 twine==1.15.0
 wheel==0.35.1
 redis==3.5.3
+lesscpy==0.15.0
