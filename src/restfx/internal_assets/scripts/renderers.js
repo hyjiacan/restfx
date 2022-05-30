@@ -156,6 +156,7 @@ function render(list, data) {
         apiList.appendChild(el('li', {
             'class': 'module-item'
         }, renderModule(modules[moduleName], moduleName, data.expanded)))
+        renderNavModule(moduleName, modules[moduleName])
     })
 
     window.apiData = {
@@ -229,7 +230,7 @@ function goToAnchor() {
 }
 
 function renderModule(routes, moduleName, expanded) {
-    var encodedModuleName = encodeURI(moduleName)
+    var encodedModuleName = encodeURI(moduleName || '__un_named_module__')
     return el('details', {
         // open: expanded ? 'open' : undefined
         open: 'open'
@@ -298,7 +299,7 @@ function renderRoutes(routes, expanded) {
     return routes.map(function (route) {
             var id = route.method + '#' + route.path
             API_LIST[id] = route
-            var encodedRoutePath = encodeURI(route.method + ':' + route.path)
+            var encodedRoutePath = encodeURI(route.method.toLowerCase() + ':' + route.path)
             return el('li', {'class': 'api-item ' + (expanded ? 'expanded' : 'collapsed')}, [
                 el('div', {'class': 'api-item-title'}, [
                     el(

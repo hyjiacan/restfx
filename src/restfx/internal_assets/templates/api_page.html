@@ -16,12 +16,20 @@
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/jsonviewer.css?v={{version}}"/>
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/search.css?v={{version}}"/>
     <link type="text/css" rel="stylesheet" href="/internal_assets/styles/enums.css?v={{version}}"/>
+    <link type="text/css" rel="stylesheet" href="/internal_assets/styles/navigation.css?v={{version}}"/>
     <script src="/internal_assets/scripts/xhr.js?v={{version}}"></script>
     <script src="/internal_assets/scripts/zepto.min.js"></script>
 </head>
 
 <body>
 <div id="app">
+    <div id="api-nav">
+        <div class="header">
+            <span>快捷导航</span>
+            <small>&lt;&lt;</small>
+        </div>
+        <ul id="api-nav-list"></ul>
+    </div>
     <div class="scroll-proxy">
         <header>
             <h1>
@@ -260,6 +268,7 @@
     var enumPanel = $('#enum-panel')
 </script>
 <script src="/internal_assets/scripts/renderers.js?v={{version}}"></script>
+<script src="/internal_assets/scripts/navigation.js?v={{version}}"></script>
 <script src="/internal_assets/scripts/index.js?v={{version}}"></script>
 <script src="/internal_assets/scripts/taboverride.min.js?v={{version}}"></script>
 <script src="/internal_assets/scripts/panel.js?v={{version}}" defer></script>
