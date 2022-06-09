@@ -4,6 +4,7 @@
     var searchTimer
     var modules
     var routes
+    var navs
     // 存储起来高亮的元素 Node
     // 以及高亮前的元素 Node
     // 以便于在取消高亮后，恢复原来的样子
@@ -11,18 +12,18 @@
 
     window.addEventListener('keydown', function (e) {
         // F2
-        // Ctrl K 查找
-        if (e.keyCode !== 113 && (!e.ctrlKey || e.keyCode !== 75)) {
+        // Ctrl F/K 查找
+        if (e.keyCode !== 113 && (!e.ctrlKey || (e.keyCode !== 75 && e.keyCode !== 70))) {
             return
         }
         e.preventDefault()
-        $('#app').scrollTop(0)
+        e.stopPropagation()
+
         if (input.parent().hasClass('focused')) {
             input.blur()
         } else {
             input.focus()
         }
-        return false
     })
 
     input.keyup(function (e) {
@@ -71,6 +72,10 @@
             routes = $('li.api-item')
         }
 
+        if (!navs) {
+            navs = $('#api-nav-list li')
+        }
+
         // 清除高亮词
         for (var i = 0; i < hlItems.length; i++) {
             var t = hlItems[i]
@@ -106,6 +111,36 @@
                 }
             } else {
                 item.addClass('search-miss').removeClass('search-hit')
+            }
+        })
+
+        navs.each(function () {
+            var item = $(this)
+            var itemContent = item.text()
+            var searchExpr = resolveExpr(searchKeys)
+            var hit = searchExpr.test(itemContent)
+            if (hit) {
+                hit = hl(item.get(0), searchKeys)
+                if (hit) {
+                    item.removeClass('search-miss').addClass('search-hit')
+                } else {
+                    item.addClass('search-miss').removeClass('search-hit')
+                }
+            } else {
+                item.addClass('search-miss').removeClass('search-hit')
+            }
+        })
+
+        navs.forEach(function () {
+            var item = $(this)
+            if (!item.hasClass('module-name')) {
+                return
+            }
+            if (!item.hasClass('search-miss')) {
+                return
+            }
+            if (item.find('.search-hit').length) {
+                item.removeClass('search-miss')
             }
         })
 

@@ -33,8 +33,9 @@
         var comment = el('p', {
             'class': 'comment enum-comment route-description'
         }, enumType.comment)
-        var rows = enumType.items.map(function (item) {
+        var rows = enumType.items.map(function (item, index) {
             return el('tr', null, [
+                el('td', {'class': 'enum--item-index'}, index + 1),
                 el('td', {'class': 'enum--item-name'}, el('code', null, item.name)),
                 el('td', {'class': 'enum--item-value'}, item.value),
                 el('td', {'class': 'comment enum--item-comment'}, item.comment)
@@ -42,9 +43,10 @@
         })
         rows.unshift(
             el('tr', null, [
-                el('th', null, '名称'),
-                el('th', null, '值'),
-                el('th', null, '备注'),
+                el('th', {'class': 'enum--header-index'}, '序号'),
+                el('th', {'class': 'enum--header-name'}, '名称'),
+                el('th', {'class': 'enum--header-value'}, '值'),
+                el('th', {'class': 'enum--header-comment'}, '备注'),
             ]),
         )
         var table = el('table', {

@@ -54,7 +54,7 @@ class FileResponse(HttpResponse):
 
         # 需要分块返回文件
         if ranges:
-            # fix https://gitee.com/hyjiacan/restfx/issues/I3SBXR
+            # fix https://gitee.com/wangankeji/restfx/issues/I3SBXR
             # IOBase for BufferedReader(with open(xxx)) and BytesIO, etc.
             if not isinstance(self.fp, IOBase):
                 raise TypeError('FileResponse with "ranges" works with type "IOBase" only')
@@ -63,7 +63,7 @@ class FileResponse(HttpResponse):
                 return
             status_code = 206
         else:
-            # fix https://gitee.com/hyjiacan/restfx/issues/I3UN41
+            # fix https://gitee.com/wangankeji/restfx/issues/I3UN41
             headers = kwargs.get('headers')
             if headers is None:
                 headers = {}

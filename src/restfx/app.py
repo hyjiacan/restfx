@@ -133,7 +133,7 @@ class App:
         Collector.create(app_id, app_root, append_slash)
 
         from restfx import commands
-        commands.register('persist', self.persist, 'Persist routes info into file', '[filename] [encoding]')
+        commands.register('persist', self.persist, 'Persist routes data into a specified file', '[filename] [encoding]')
 
     def dispose(self):
         self.config.middleware_manager.handle_shutdown()
@@ -485,16 +485,33 @@ class App:
         :param ignore_non_enum: 是否忽略慧枚举类型
         :return:
         """
-        from enum import Enum
+        from enum import Enum, IntEnum, Flag, IntFlag
 
         for enum_type in enum_types:
             if not ignore_non_enum:
                 assert issubclass(enum_type, Enum)
+            if enum_type in (Enum, IntEnum, Flag, IntFlag):
+                # 忽略系统的枚举类型
+                self._logger.warning('Non-user defined of enum type found: ' + enum_type.__name__)
+                continue
+            if sys.version_info >= (3, 11):
+                from enum import StrEnum, FlagBoundary
+                if enum_type in (StrEnum, FlagBoundary):
+                    continue
             if enum_type in self.config.enum_types:
                 continue
             self.config.enum_types.append(enum_type)
 
         return self
+
+    def scan_routes(self, scan_pattern: str, ignore_pattern: str = None):
+        """
+        自动扫描路由目录
+        :param scan_pattern:
+        :param ignore_pattern:
+        :return:
+        """
+        pass
 
     @classmethod
     def register_command(cls, command: str, handler: FunctionType, description: str):

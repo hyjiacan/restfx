@@ -39,7 +39,7 @@
 
 [能够猜测或确定的问题原因]
 
-如果你能够解决此问题，欢迎通过 https://gitee.com/hyjiacan/restfx/pulls 提交。
+如果你能够解决此问题，欢迎通过 https://gitee.com/wangankeji/restfx/pulls 提交。
 
 ### 其它信息
 
