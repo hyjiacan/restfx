@@ -87,7 +87,7 @@ class AccessMiddleware(MiddlewareBase):
             method=request.method,
             path=request.path,
             status=status,
-            length=response.content_length
+            length=response.content_length or '-'
         )
 
         if status >= 500:

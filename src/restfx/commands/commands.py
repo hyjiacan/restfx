@@ -65,8 +65,8 @@ Commands:
 \t{commands}
 
 Documentation links:
-    https://gitee.com/hyjiacan/restfx
-    https://github.com/hyjiacan/restfx
+    https://gitee.com/wangankeji/restfx
+    https://github.com/wangankeji/restfx
 """.format(name=__meta__.name,
            commands='\n\t'.join(commands)))
 

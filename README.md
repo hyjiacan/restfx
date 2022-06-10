@@ -119,8 +119,8 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
 ![test](assets/2.png)
 
 
-[1]: https://gitee.com/hyjiacan/restfx/wikis
-[2]: https://gitee.com/hyjiacan/restfx/wikis/0B.%20%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%85%A5?sort_id=3519061
-[3]: https://gitee.com/hyjiacan/restfx#%E6%88%AA%E5%9B%BE
-[11]: https://gitee.com/hyjiacan/restfx/blob/master/test/test/api/__init__.py
-[12]: https://gitee.com/hyjiacan/restfx/blob/master/test/test/api/demo.py
+[1]: https://gitee.com/wangankeji/restfx/wikis
+[2]: https://gitee.com/wangankeji/restfx/wikis/0B.%20%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%85%A5?sort_id=3519061
+[3]: https://gitee.com/wangankeji/restfx#%E6%88%AA%E5%9B%BE
+[11]: https://gitee.com/wangankeji/restfx/blob/master/test/test/api/__init__.py
+[12]: https://gitee.com/wangankeji/restfx/blob/master/test/test/api/demo.py

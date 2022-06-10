@@ -2,11 +2,11 @@
 
 欢迎使用自动路由框架 restfx。
 
-源码仓库: https://gitee.com/hyjiacan/restfx
+源码仓库: https://gitee.com/wangankeji/restfx
 
-在线文档: https://gitee.com/hyjiacan/restfx/wikis
+在线文档: https://gitee.com/wangankeji/restfx/wikis
 
-如果遇到任何问题，或者有意见或建议，请通过 https://gitee.com/hyjiacan/restfx/issues 提交
+如果遇到任何问题，或者有意见或建议，请通过 https://gitee.com/wangankeji/restfx/issues 提交
 
 ## 安装依赖
 

@@ -1,9 +1,10 @@
 import atexit
 import os
 import sys
+import time
 import uuid
 from types import FunctionType
-from typing import Union
+from typing import Union, Tuple, List
 
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
@@ -133,7 +134,7 @@ class App:
         Collector.create(app_id, app_root, append_slash)
 
         from restfx import commands
-        commands.register('persist', self.persist, 'Persist routes info into file', '[filename] [encoding]')
+        commands.register('persist', self.persist, 'Persist routes data into a specified file', '[filename] [encoding]')
 
     def dispose(self):
         self.config.middleware_manager.handle_shutdown()
@@ -485,16 +486,88 @@ class App:
         :param ignore_non_enum: 是否忽略慧枚举类型
         :return:
         """
-        from enum import Enum
+        from enum import Enum, IntEnum, Flag, IntFlag
 
         for enum_type in enum_types:
             if not ignore_non_enum:
                 assert issubclass(enum_type, Enum)
+            if enum_type in (Enum, IntEnum, Flag, IntFlag):
+                # 忽略系统的枚举类型
+                self._logger.warning('Non-user defined of enum type found: ' + enum_type.__name__)
+                continue
+            if sys.version_info >= (3, 11):
+                from enum import StrEnum, FlagBoundary
+                if enum_type in (StrEnum, FlagBoundary):
+                    continue
             if enum_type in self.config.enum_types:
                 continue
             self.config.enum_types.append(enum_type)
 
         return self
+
+    def scan_routes(self, prefix: str = 'app_', sub_dir='entry', ignores: Union[str, Tuple[str], List[str]] = None):
+        """
+        自动扫描路由目录
+        :param prefix: 要匹配的目录前缀，除去前缀后剩下的部分，会被作为 url 上的路径名称，如： app_demo，对应的 url 为 /api/demo
+        :param sub_dir: 匹配的目录下的子目录名称，通常，API文件会放到独立目录下；不指定时扫描整个目录
+        :param ignores: 要忽略的目录前缀(或者完整)名称列表
+        :return:
+        """
+        prefix = prefix.lower()
+
+        if isinstance(ignores, str):
+            ignores = (ignores,)
+
+        def is_ignore(matching_dir_name):
+            """
+            检查项是否需要忽略
+            :param matching_dir_name:
+            :return:
+            """
+            if not ignores:
+                return False
+
+            for ignore_prefix in ignores:
+                if matching_dir_name.startswith(ignore_prefix.lower()):
+                    return True
+
+            return False
+
+        # 扫描目录，自动加载应用的模块 (app_开头)
+        routes_map = {}
+        for dir_name in os.listdir(self.config.ROOT):
+            lower_dir_name = dir_name.lower()
+
+            if is_ignore(lower_dir_name):
+                self._logger.info('Ignore directory: ' + dir_name)
+                continue
+            if not dir_name.startswith(prefix):
+                self._logger.info('Mismatch directory: ' + dir_name)
+                continue
+
+            self._logger.info('Match directory: ' + dir_name)
+
+            item_path = os.path.join(self.config.ROOT, dir_name)
+
+            if not os.path.isfile(os.path.join(item_path, '__init__.py')):
+                self._logger.warning('Invalid directory: "%s" is not a package' % dir_name)
+                continue
+
+            if sub_dir:
+                entry_path = os.path.join(item_path, sub_dir)
+                if not os.path.isfile(os.path.join(entry_path, '__init__.py')):
+                    self._logger.warning('Invalid directory: "%s%s%s" is not a package' % (
+                        dir_name, os.path.sep, sub_dir
+                    ))
+                    continue
+
+            url_path_name = lower_dir_name[len(prefix):]
+            routes_map[url_path_name] = '%s.%s' % (dir_name, sub_dir) if sub_dir else dir_name
+
+        if not routes_map:
+            raise Exception('Cannot find any directory which\'s name startswith "%s"' % prefix)
+
+        self.map_routes(routes_map)
 
     @classmethod
     def register_command(cls, command: str, handler: FunctionType, description: str):

@@ -1,6 +1,7 @@
 #enum-panel {
   .panel {
     width: 80%;
+    max-width: 1080px;
   }
 }
 
@@ -14,14 +15,34 @@
   }
 
   .enum-table {
-    width: 100%;
     margin-bottom: 20px;
+
+    .enum--header-index,
+    .enum--header-value,
+    .enum--item-index,
+    .enum--item-value {
+      text-align: center;
+    }
+
+    .enum--item-index {
+      font-size: 12px;
+    }
+
+    th:not(.enum--header-index) {
+      min-width: 60px;
+    }
+
+    td, th {
+      :not(:first-child) {
+        padding: 5px 10px;
+      }
+    }
   }
 
   .enum-index {
     display: inline-block;
     margin-right: 10px;
-    font-size: 18px;
+    font-size: 12px;
   }
 
   .enum-name {
@@ -42,6 +63,10 @@
         color: #00a6ff;
       }
     }
+  }
+
+  .enum--item-value {
+    text-align: center;
   }
 
   .enum-comment.route-description {

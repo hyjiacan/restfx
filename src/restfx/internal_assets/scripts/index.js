@@ -164,7 +164,7 @@ function expandAll() {
                 '遵从前端标准，管他领导客户。',
                 '愿君脱离苦海，独自潇洒如故。',
                 '',
-                '　　　　　　-- 开发者 hyjiacan'
+                '　　　　　　-- 开发者 wangankeji'
             ].join('\n'))
         })
         if (ieVersion < 10) {
