@@ -1,4 +1,4 @@
-from test.tools.enums import OpTypes
+from app_test.tools.enums import OpTypes
 
 from restfx import val
 from restfx import route

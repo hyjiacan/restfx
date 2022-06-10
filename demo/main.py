@@ -11,7 +11,7 @@ from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware,
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
 from restfx.session.providers import RedisSessionProvider
-from test.tools.enums import *
+from app_test.tools.enums import *
 
 # from admin_plugin.plugin import AdminPlugin
 
@@ -47,9 +47,13 @@ app = App(root,
           api_page_expanded=True
           )
 
-app.map_routes({
-    'test': 'test.api'
-}).map_static({
+app.scan_routes()
+
+# app.map_routes({
+#     'test': 'app_test.api'
+# })
+
+app.map_static({
     '/': 'static'
 }).map_urls({
     '/': lambda request: Redirect('/index.html'),
