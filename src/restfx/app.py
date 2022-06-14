@@ -62,7 +62,7 @@ class App:
                  strict_mode=False,
                  api_page_enabled=None,
                  api_page_name: str = None,
-                 api_page_expanded=False,
+                 api_page_expanded=True,
                  api_page_cache=None,
                  api_page_addition=None,
                  api_page_header=None,

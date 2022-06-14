@@ -111,7 +111,7 @@ function expandAll() {
             $('#current-anchor').removeAttr('id')
         }
         oldHash = window.location.hash
-        var hashvalue = oldHash.substr(1)
+        var hashvalue = oldHash.substring(1)
         if (!hashvalue) {
             return
         }

@@ -418,9 +418,9 @@
         // 此处使用 mime 中的名称
         // 不用保证正确性
         var disposition = response.headers['content-disposition']
-        var match = /\/([a-z0-9]+)?/.exec(contentType)
+        var match = /\/([a-z\d]+)?/.exec(contentType)
         var ext = match ? ('.' + match[1]) : ''
-        var filename = disposition || encodeURI(url.substr(window.location.origin.length)) + ext
+        var filename = disposition || encodeURI(url.substring(window.location.origin.length)) + ext
         if (disposition) {
             filename = disposition.split('filename=')[1]
             match = /^=\?utf-8\?B\?(.+?)\?=/.exec(filename)

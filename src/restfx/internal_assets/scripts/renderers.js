@@ -138,6 +138,7 @@ function render(list, data) {
     var moduleNames = []
     for (var i = 0; i < routes.length; i++) {
         var route = routes[i]
+        route.__id__ = i
         // if (!route.module) {
         //   route.module = '<未命名模块>'
         // }
@@ -200,8 +201,8 @@ function toggleApiItem(item) {
 }
 
 function goToAnchor() {
-    // substr(1) 用于移除前导的 # 符号
-    var hash = window.location.hash.substr(1)
+    // substring(1) 用于移除前导的 # 符号
+    var hash = window.location.hash.substring(1)
     if (!hash) {
         return
     }
@@ -300,7 +301,9 @@ function renderRoutes(routes, expanded) {
             var id = route.method + '#' + route.path
             API_LIST[id] = route
             var encodedRoutePath = encodeURI(route.method.toLowerCase() + ':' + route.path)
-            return el('li', {'class': 'api-item ' + (expanded ? 'expanded' : 'collapsed')}, [
+            return el('li', {
+                'class': 'api-item ' + (expanded ? 'expanded' : 'collapsed') + ' api-id-' + route.__id__.toString()
+            }, [
                 el('div', {'class': 'api-item-title'}, [
                     el(
                         'a',

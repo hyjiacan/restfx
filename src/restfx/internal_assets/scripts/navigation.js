@@ -6,7 +6,8 @@ function renderNavModule(moduleName, routes) {
 
     routes.forEach(function (route) {
         routeElements.appendChild(el('li', {
-            'class': 'route-name'
+            'class': 'route-name',
+            'data-id': route.__id__
         }, el('a', {
             href: '#' + encodeURI(route.method.toLowerCase() + ':' + route.path),
             title: route.description

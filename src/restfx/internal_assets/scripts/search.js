@@ -73,7 +73,7 @@
         }
 
         if (!navs) {
-            navs = $('#api-nav-list li')
+            navs = $('#api-nav-list>li')
         }
 
         // 清除高亮词
@@ -114,36 +114,6 @@
             }
         })
 
-        navs.each(function () {
-            var item = $(this)
-            var itemContent = item.text()
-            var searchExpr = resolveExpr(searchKeys)
-            var hit = searchExpr.test(itemContent)
-            if (hit) {
-                hit = hl(item.get(0), searchKeys)
-                if (hit) {
-                    item.removeClass('search-miss').addClass('search-hit')
-                } else {
-                    item.addClass('search-miss').removeClass('search-hit')
-                }
-            } else {
-                item.addClass('search-miss').removeClass('search-hit')
-            }
-        })
-
-        navs.forEach(function () {
-            var item = $(this)
-            if (!item.hasClass('module-name')) {
-                return
-            }
-            if (!item.hasClass('search-miss')) {
-                return
-            }
-            if (item.find('.search-hit').length) {
-                item.removeClass('search-miss')
-            }
-        })
-
         modules.each(function () {
             var module = $(this)
             var moduleName = module.find('span.module-name')
@@ -169,6 +139,28 @@
                 module.hide()
             }
         })
+
+        setTimeout(function () {
+            // 更新 navs
+            navs.each(function () {
+                var nav = $(this)
+                nav.find('li.route-name').each(function () {
+                    var route = $(this)
+                    var routeId = $(this).attr('data-id')
+                    var apiItem = list.find('li.api-item.api-id-' + routeId)
+                    if (apiItem.hasClass('search-hit')) {
+                        route.addClass('search-hit').removeClass('search-miss')
+                    } else {
+                        route.removeClass('search-hit').addClass('search-miss')
+                    }
+                })
+                if (nav.find('li.route-name.search-hit').length) {
+                    nav.addClass('search-hit').removeClass('search-miss')
+                } else {
+                    nav.removeClass('search-hit').addClass('search-miss')
+                }
+            })
+        }, 200)
     }
 
     /**
@@ -261,21 +253,20 @@
             if (idx === -1) {
                 return content
             }
-            console.log(content)
             if (idx > 0) {
                 // 未命中部分
-                var missContent = content.substr(0, idx)
+                var missContent = content.substring(0, idx)
                 var t = document.createTextNode(missContent)
                 fragment.appendChild(t)
-                content = content.substr(idx)
+                content = content.substring(idx)
             }
             // 命中部分
-            var hitContent = content.substr(0, key.length)
+            var hitContent = content.substring(0, key.length)
             var s = el('span', {
                 'class': 'search-hl'
             }, hitContent)
             fragment.appendChild(s)
-            content = content.substr(key.length)
+            content = content.substring(key.length)
         }
     }
 
