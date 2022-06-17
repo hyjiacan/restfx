@@ -5,7 +5,7 @@ from collections import OrderedDict
 from enum import Enum
 from types import FunctionType
 
-from restfx.session import HttpSession
+from ..session import HttpSession
 from .utils import get_func_info
 from ..http import HttpRequest
 
@@ -61,15 +61,33 @@ class ArgumentSpecification:
         if alias:
             self.alias.append(alias)
 
-    def is_type(self, type_annotation: type):
+    def is_type(self, type_annotation: type, *extra_type_annotations: type):
         """
-        判断此值是否属于指定的 ``type_annotation`` 类型
+        判断此值是否属于指定的 ``type_annotation`` 或者 extra_type_annotations 指定的类型之一
         :param type_annotation:
+        :param extra_type_annotations: 需要判断的其他类型
         :return:
         """
-        if self.annotation is None:
-            return False
-        return issubclass(self.annotation, type_annotation)
+        if not extra_type_annotations:
+            extra_type_annotations = (type_annotation,)
+        else:
+            extra_type_annotations = extra_type_annotations + (type_annotation,)
+
+        for ta in extra_type_annotations:
+            if not self.has_annotation:
+                # 都为空
+                if ta is None:
+                    return True
+                continue
+
+            # 同一类型
+            if self.annotation == ta:
+                return True
+            # 是子类
+            if issubclass(self.annotation, ta):
+                return True
+
+        return False
 
     @property
     def annotation_name(self):

@@ -1,5 +1,5 @@
 from restfx import route
-from ..tools import b64
+from restfx.util import b64
 from ..tools.enums import OpTypes
 from ..tools.validators import MyValidator
 

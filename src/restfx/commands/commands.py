@@ -2,8 +2,8 @@ import os
 import sys
 import uuid
 
-from restfx import __meta__
-from restfx.util import helper
+from .. import __meta__
+from ..util import helper
 
 _COMMANDS = {}
 

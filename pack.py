@@ -94,26 +94,15 @@ def renew_version():
         version_line = lines[1].strip()
         version = version_line.split('=')[1].strip(' \'')
         print('The old version is %s' % version)
-        [major, second, build] = version.split('.')
+        [major, minor, build] = version.split('.')
         if new_version == 'auto':
             build = int(build) + 1
-            new_version = '%s.%s.%s' % (major, second, build)
-        #
-        # if command == 'm':
-        #     major = int(major) + 1
-        #     second = 0
-        #     build = 0
-        # elif command == 's':
-        #     second = int(second) + 1
-        #     build = 0
-        # else:
-        #     build = int(build) + 1
-        #
-        # new_version = '%s.%s.%s' % (major, second, build)
+            new_version = '%s.%s.%s' % (major, minor, build)
 
         print('The new version is %r' % new_version)
 
         lines[1] = 'version = \'%s\'\n' % new_version
+        lines[2] = 'version_info = (%s, %s, %s)\n' % (major, minor, build)
 
         with open(meta_file, mode='w', encoding='utf8') as fp:
             fp.writelines(lines)

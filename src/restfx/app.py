@@ -1,7 +1,6 @@
 import atexit
 import os
 import sys
-import time
 import uuid
 from types import FunctionType
 from typing import Union, Tuple, List
@@ -9,8 +8,8 @@ from typing import Union, Tuple, List
 from werkzeug.exceptions import NotFound as SuperNotFound
 from werkzeug.routing import Map, Rule
 
-from restfx.globs import _app_ctx_stack
-from restfx.util import ContextStore, utils
+from .globs import _app_ctx_stack
+from .util import ContextStore, utils
 from . import __meta__
 from .http import HttpRequest, NotFound, ServerError
 from .middleware import MiddlewareManager
@@ -51,7 +50,7 @@ def print_meta():
 
 class App:
     # APP 实例集合
-    _APPS = {}
+    INSTANCES = {}
 
     def __init__(self,
                  app_root: str,
@@ -107,7 +106,7 @@ class App:
         self.id = app_id or str(uuid.uuid4())
         self._logger = Logger(app_id)
 
-        self._APPS[self.id] = self
+        self.INSTANCES[self.id] = self
 
         self.config = AppConfig(self.id, app_root, debug, api_prefix, append_slash,
                                 strict_mode, api_page_enabled, api_page_name,
@@ -115,15 +114,15 @@ class App:
                                 api_page_header, api_page_footer, api_page_assets,
                                 allowed_route_meta)
         self.config.middleware_manager = MiddlewareManager(self.config)
-        self._api_prefix = api_prefix
-        self._router = Router(self.config)
-        self._api_page = ApiPage(self.config)
+        self.api_prefix = api_prefix
+        self.router = Router(self.config)
+        self.api_page = ApiPage(self.config)
 
-        self._custom_url_map = {}
+        self.custom_url_map = {}
 
-        self._favicon = favicon
+        self.favicon = favicon
 
-        self._url_map = Map([
+        self.url_map = Map([
             Rule('/favicon.ico', endpoint='favicon'),
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
             Rule('/%s/api.json' % api_prefix, endpoint='_api_page'),
@@ -133,7 +132,7 @@ class App:
 
         Collector.create(app_id, app_root, append_slash)
 
-        from restfx import commands
+        from .commands import commands
         commands.register('persist', self.persist, 'Persist routes data into a specified file', '[filename] [encoding]')
 
     def dispose(self):
@@ -150,8 +149,8 @@ class App:
         self._logger.info('App "%s" is shutting down' % self.id)
         Collector.destroy(self.id)
         self.context.pop()
-        if self.id in self._APPS:
-            del self._APPS[self.id]
+        if self.id in self.INSTANCES:
+            del self.INSTANCES[self.id]
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -169,21 +168,21 @@ class App:
 
             response = self.config.middleware_manager.handle_coming(request)
             if not response:
-                adapter = self._url_map.bind_to_environ(environ)
+                adapter = self.url_map.bind_to_environ(environ)
 
                 endpoint, values = adapter.match()
                 if endpoint == '_api_page':
-                    response = self._api_page.dispatch(request)
+                    response = self.api_page.dispatch(request)
                 elif endpoint == 'entry_only':
-                    response = self._router.dispatch(request, values['entry'])
-                elif endpoint in self._custom_url_map:
-                    response = self._custom_url_map[endpoint](request, **values)
+                    response = self.router.dispatch(request, values['entry'])
+                elif endpoint in self.custom_url_map:
+                    response = self.custom_url_map[endpoint](request, **values)
                 elif endpoint == 'favicon':
-                    if self._favicon is None:
+                    if self.favicon is None:
                         response = NotFound()
                     else:
                         from .http import FileResponse
-                        response = FileResponse(os.path.join(self.config.ROOT, self._favicon))
+                        response = FileResponse(os.path.join(self.config.ROOT, self.favicon))
                 else:
                     response = NotFound()
         except Exception as e:
@@ -238,7 +237,7 @@ class App:
         :param kwargs: 适用于 werkzeug 的 run_simple 函数的其它参数
         :return:
         """
-        from restfx.util import helper
+        from .util import helper
         from werkzeug.serving import run_simple
 
         debug = self.config.debug
@@ -301,10 +300,10 @@ class App:
             print(' * Table of APIs:')
             for ip in ips:
                 print('\t- %s://%s:%s/%s%s' % (
-                    protocol, ip, port, self._api_prefix, '/' if self.config.append_slash else ''
+                    protocol, ip, port, self.api_prefix, '/' if self.config.append_slash else ''
                 ))
 
-        run_simple(host, port, self, use_debugger=debug, use_reloader=debug, threaded=threaded, **kwargs)
+        run_simple(host, port, self, use_debugger=False, use_reloader=debug, threaded=threaded, **kwargs)
 
     def register_types(self, *types):
         """
@@ -350,8 +349,8 @@ class App:
         :return:
         """
         for url in urls_map:
-            self._custom_url_map[url] = urls_map[url]
-            self._url_map.add(Rule(url, endpoint=url))
+            self.custom_url_map[url] = urls_map[url]
+            self.url_map.add(Rule(url, endpoint=url))
         return self
 
     def map_routes(self, routes_map: dict):
@@ -415,11 +414,11 @@ class App:
             path = api_info['path']
 
             rid = '%s#%s' % (path, method.lower())
-            if rid in self._router.production_routes:
+            if rid in self.router.production_routes:
                 self._logger.warning('Duplicated route %s %s' % (method, path))
 
             desc = FunctionDescription(handler)
-            self._router.production_routes[rid] = {
+            self.router.production_routes[rid] = {
                 'func': handler,
                 'args': desc.arguments
             }
@@ -434,7 +433,7 @@ class App:
         :param index: 要将包插入的位置，指定为 -1 表示放到最后
         :return:
         """
-        from restfx.middleware import MiddlewareBase
+        from .middleware import MiddlewareBase
 
         for middleware in middlewares:
             assert isinstance(middleware, MiddlewareBase)
@@ -469,7 +468,7 @@ class App:
         :param plugins: 插件实例列表
         :return:
         """
-        from restfx.plugin import PluginBase
+        from .plugin import PluginBase
 
         for plugin in plugins:
             assert isinstance(plugin, PluginBase)
@@ -571,12 +570,12 @@ class App:
 
     @classmethod
     def register_command(cls, command: str, handler: FunctionType, description: str):
-        from restfx import commands
+        from .commands import commands
         commands.register(command, handler, description)
 
     def test_command(self):
-        from restfx import commands
-        return commands.execute(*sys.argv, working_dir=self.config.ROOT)
+        from .commands import execute
+        return execute(*sys.argv, working_dir=self.config.ROOT)
 
     @classmethod
     def get(cls, app_id: str):
@@ -586,7 +585,7 @@ class App:
         :return:
         :rtype: App
         """
-        return cls._APPS.get(app_id)
+        return cls.INSTANCES.get(app_id)
 
     @staticmethod
     def current():
@@ -594,7 +593,7 @@ class App:
         获取当前的应用
         :return:
         """
-        from restfx import globs
+        from . import globs
         return globs.current_app
 
     @staticmethod
@@ -603,14 +602,14 @@ class App:
         获取当前应用的存储对象
         :return:
         """
-        from restfx import globs
+        from . import globs
         return globs.app_store
 
 
 @atexit.register
 def _destroy_apps():
     # Parse the ids into list to avoid the error "RuntimeError: dictionary changed size during iteration"
-    app_ids = list(App._APPS.keys())
+    app_ids = list(App.INSTANCES.keys())
     for app_id in app_ids:
         app = App.get(app_id)
         app.dispose()

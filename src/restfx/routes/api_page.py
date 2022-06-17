@@ -44,7 +44,7 @@ class ApiPage:
         if request.method != 'GET':
             return NotFound()
         if not self.api_page_html_cache or not self.config.api_page_cache:
-            from restfx import __meta__
+            from .. import __meta__
             with open(os.path.join(os.path.dirname(__file__),
                                    '../internal_assets/templates/api_page.html'),
                       encoding='utf-8') as fp:
@@ -60,7 +60,7 @@ class ApiPage:
         if not self.routes_cache or not self.config.api_page_cache:
             self.routes_cache = self.config.docs
 
-        from restfx import __meta__
+        from .. import __meta__
         return JsonResponse({
             'api_version': __meta__.api_version,
             'meta': {
@@ -89,7 +89,7 @@ class ApiPage:
 
         # noinspection PyBroadException
         try:
-            from restfx.util import b64
+            from ..util import b64
             content = b64.dec_bytes(content)
         except Exception:
             # This exception can be ignored safety
@@ -97,7 +97,7 @@ class ApiPage:
 
         import time
 
-        from restfx.http import FileResponse
+        from ..http import FileResponse
         return FileResponse(content,
                             content_type='application/markdown;charset=utf-8',
                             request=request,

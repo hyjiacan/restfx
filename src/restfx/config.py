@@ -2,7 +2,7 @@ import os
 
 from werkzeug.local import LocalStack
 
-from restfx import __meta__
+from . import __meta__
 
 
 class AppConfig:
@@ -115,6 +115,6 @@ class AppConfig:
 
     @classmethod
     def current(cls):
-        from restfx import globs
+        from . import globs
         app_id = globs.current_app.id
         return cls.get(app_id)

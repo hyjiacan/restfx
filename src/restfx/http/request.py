@@ -3,9 +3,9 @@ import uuid
 from werkzeug import Request
 from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage, MultiDict
 
-from restfx.globs import _request_ctx_stack, _app_ctx_stack
-from restfx.session import HttpSession
-from restfx.util import ContextStore
+from ..globs import _request_ctx_stack, _app_ctx_stack
+from ..session import HttpSession
+from ..util import ContextStore
 
 
 def _get_request_data(data: MultiDict) -> ImmutableDict:
@@ -131,8 +131,8 @@ class HttpRequest(Request):
             return None
         match = re.fullmatch(r'\s*(?P<unit>(bytes))=(?P<start>([0-9]+))-(?P<end>([0-9]*))?\s*', request_range)
         if not match:
-            from restfx.util import Logger
-            from restfx.http import BadRequest
+            from ..util import Logger
+            from . import BadRequest
             Logger.current().warning('Invalid value of request header "range": %r' % request_range)
             return BadRequest()
 
@@ -144,7 +144,7 @@ class HttpRequest(Request):
         获取当前的请求对象
         :return:
         """
-        from restfx import globs
+        from .. import globs
         return globs.request
 
     @staticmethod
@@ -153,7 +153,7 @@ class HttpRequest(Request):
         获取当前请求的存储对象
         :return:
         """
-        from restfx import globs
+        from .. import globs
         return globs.req_store
 
 

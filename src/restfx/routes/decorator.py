@@ -165,7 +165,7 @@ def _invoke_with_route(request: HttpRequest, meta: RouteMeta, config: AppConfig,
         else:
             result = func(**actual_args)
     except Exception as e:
-        from restfx.util import utils
+        from ..util import utils
         msg = 'Error occurred during executing the route handler: %s' % str(e)
         Logger.current().error(utils.get_exception_info(e, msg), e)
         if config.debug:
@@ -259,6 +259,30 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
     if is_arr:
         # 请求参数本就为数组: param[]
         # 返回为 tuple 类型
+        return use_default, tuple(value)
+
+    if arg_spec.is_type(list):
+        # 参数 声明为 list 类型
+        # 处理第一个参数是 json 数组的情况
+        if len(value) == 1:
+            value = value[0]
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except Exception:
+                value = [value]
+        return use_default, value.copy()
+
+    if arg_spec.is_type(tuple):
+        # 参数 声明为 tuple 类型
+        # 处理第一个参数是 json 数组的情况
+        if len(value) == 1:
+            value = value[0]
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except Exception:
+                value = [value]
         return use_default, tuple(value)
 
     # 当请求的不是数组时，使用最后一个值

@@ -1,6 +1,6 @@
 import time
 
-from restfx.middleware import MiddlewareBase
+from .. import MiddlewareBase
 
 
 class TimetickMiddleware(MiddlewareBase):

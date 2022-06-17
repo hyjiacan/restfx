@@ -1,10 +1,14 @@
 import re
 from typing import Union
 
-from restfx.http import HttpFile
+from ..http import HttpFile
 
 
-class DefaultValidators:
+class BuiltinValidators:
+    """
+    内置的校验器
+    """
+
     @classmethod
     def range(cls, min_, max_, include_min, include_max, msg, param_name: str, args: dict):
         if not min_ and not max_:
@@ -87,6 +91,26 @@ class DefaultValidators:
 
         return msg
 
+    @classmethod
+    def is_ip(cls, v4: bool, v6: bool, msg: str, param_name, args: dict):
+        value = args.get(param_name)
+        if not value:
+            return True
+
+        from ipaddress import IPv4Address, IPv6Address
+
+        # noinspection PyBroadException
+        try:
+            if v4 and IPv4Address(value):
+                return True
+
+            if v6 and IPv6Address(value):
+                return True
+
+            return msg
+        except Exception:
+            return msg
+
 
 class Validator:
     """
@@ -140,7 +164,7 @@ class Validator:
         :return:
         """
         if min_ or max_:
-            self._append_rule(DefaultValidators.range, (min_, max_, include_min, include_max, msg))
+            self._append_rule(BuiltinValidators.range, (min_, max_, include_min, include_max, msg))
         return self
 
     def enum(self, enums: tuple, msg='Value out of range'):
@@ -151,7 +175,7 @@ class Validator:
         :return:
         """
         if enums:
-            self._append_rule(DefaultValidators.enums, (enums, msg))
+            self._append_rule(BuiltinValidators.enums, (enums, msg))
         return self
 
     def when(self, **kwargs):
@@ -167,7 +191,7 @@ class Validator:
         是否允许输入为空 (包括空串，空列表，空元组)，这应该是校验的第一个接口
         :return:
         """
-        self._append_rule(DefaultValidators.empty, (allow, msg))
+        self._append_rule(BuiltinValidators.empty, (allow, msg))
         return self
 
     def regex(self, pattern: str = None, flags=0, msg='Invalid Value'):
@@ -179,32 +203,24 @@ class Validator:
         :return:
         """
         if pattern:
-            self._append_rule(DefaultValidators.regex, (pattern, flags, msg))
+            self._append_rule(BuiltinValidators.regex, (pattern, flags, msg))
         return self
 
-    def ip(self, v4=True, v6=False, msg='Not a valid IP address'):
+    def ip(self, v4=True, v6=True, msg='Not a valid IP address'):
         """
 
         :param v4: 判断是否为 IPv4
-        :param v6: 判断是否为 IPv6。保留参数，暂不支持
+        :param v6: 判断是否为 IPv6
         :param msg:
         :return:
         """
-        if v4:
-            pattern = r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$'
-        elif v6:
-            pattern = None
-        else:
-            return self
-
-        flags = 0
-        self._append_rule(DefaultValidators.regex, (pattern, flags, msg))
+        self._append_rule(BuiltinValidators.is_ip, (v4, v6, msg))
         return self
 
     def email(self, msg='Not a valid Email'):
         pattern = r'^([a-z0-9_.-]+)@([\da-z.-]+)\.([a-z.]{2,6})$'
         flags = re.IGNORECASE
-        self._append_rule(DefaultValidators.regex, (pattern, flags, msg))
+        self._append_rule(BuiltinValidators.regex, (pattern, flags, msg))
         return self
 
     def match(self, other_param_name: str, msg='The two value not match'):
@@ -216,7 +232,7 @@ class Validator:
         :param msg:
         :return:
         """
-        self._append_rule(DefaultValidators.match, (other_param_name, msg))
+        self._append_rule(BuiltinValidators.match, (other_param_name, msg))
         return self
 
     def file(self, ext=None, mime=None, msg='Invalid file type'):
@@ -228,7 +244,7 @@ class Validator:
         :return:
         """
         if ext or mime:
-            self._append_rule(DefaultValidators.file, (ext, mime, msg))
+            self._append_rule(BuiltinValidators.file, (ext, mime, msg))
         return self
 
     def validate(self, args: dict):
@@ -240,7 +256,7 @@ class Validator:
         common_args = [self._param_name, args]
         for fn, pre_args in self._rule_chain:
             result = fn(*pre_args, *common_args)
-            if result is False and fn == DefaultValidators.empty:
+            if result is False and fn == BuiltinValidators.empty:
                 # 允许为空，并且值为空，不再进行后续的校验
                 return None
             if isinstance(result, str):

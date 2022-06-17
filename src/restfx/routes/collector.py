@@ -209,7 +209,7 @@ class Collector:
         imports = []
         routes = []
 
-        from restfx.config import AppConfig
+        from ..config import AppConfig
         addition_func = AppConfig.current().api_page_addition
 
         print('Generating routes map...')
@@ -415,7 +415,7 @@ class Collector:
 
     @classmethod
     def current(cls):
-        from restfx import globs
+        from .. import globs
         app_id = globs.current_app.id
         return cls.get(app_id)
 

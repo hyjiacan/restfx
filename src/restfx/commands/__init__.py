@@ -29,3 +29,14 @@ def execute(*args, **kwargs):
 
     command_name = args.pop(0)
     return run_command(working_dir, command_name, *args)
+
+
+__all__ = [
+    'run_command',
+    'register',
+    'command_help',
+    'command_create',
+    'command_version',
+    'command_genid',
+    'execute'
+]

@@ -80,7 +80,7 @@ class OptionsMiddleware(MiddlewareBase):
         app = current_app
 
         path = request.path
-        entry = path[len('/' + app._api_prefix):]
+        entry = path[len('/' + app.api_prefix):]
 
         allow_methods = []
 
@@ -89,7 +89,7 @@ class OptionsMiddleware(MiddlewareBase):
             entry = entry.lstrip('/')
             resolver = RouteResolver(
                 app.config,
-                app._router.entry_cache,
+                app.router.entry_cache,
                 request.method, entry
             )
 
@@ -103,7 +103,7 @@ class OptionsMiddleware(MiddlewareBase):
             for method in cls.AVAILABLE_METHODS:
                 # 定义时，路由必须使用小写，所以处理成小写形式再去匹配
                 rid = '%s#%s' % (entry, method.lower())
-                if rid in app._router.production_routes:
+                if rid in app.router.production_routes:
                     allow_methods.append(method)
 
         return allow_methods

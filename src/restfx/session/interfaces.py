@@ -21,7 +21,7 @@ class ISessionProvider(ABC):
         :param auto_clear: 是否在停止/启动时，自动清空 session 存储
         :param on_expired: 在 session 过期时，触发
         """
-        from restfx.util import Logger
+        from ..util import Logger
         self.logger = Logger.current()
         self.auto_clear = auto_clear
 

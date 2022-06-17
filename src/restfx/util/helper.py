@@ -1,4 +1,4 @@
-from restfx import __meta__
+from .. import __meta__
 
 
 def print_meta(append=None):

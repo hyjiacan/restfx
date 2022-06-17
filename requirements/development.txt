@@ -1,4 +1,4 @@
-Werkzeug>=1.0.0
+Werkzeug==2.0.3
 click==7.1.2
 pymysql>=0.10.0
 DBUtils>=2.0.2
@@ -7,3 +7,4 @@ twine==1.15.0
 wheel==0.35.1
 redis==3.5.3
 lesscpy==0.15.0
+MarkupSafe==2.0.1

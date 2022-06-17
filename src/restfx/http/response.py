@@ -3,7 +3,6 @@ from io import BytesIO, IOBase
 from typing import Tuple, Union
 
 from werkzeug.exceptions import InternalServerError
-from werkzeug.utils import escape
 from werkzeug.wrappers import Response
 
 
@@ -158,6 +157,7 @@ class BadRequest(HttpResponse):
 
 class Redirect(HttpResponse):
     def __init__(self, location, status=302, **kwargs):
+        from markupsafe import escape
         super().__init__(None, status=status, headers={
             'Location': escape(location)
         }, **kwargs)

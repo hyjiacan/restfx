@@ -1,8 +1,8 @@
 import logging
 from typing import Tuple
 
-from restfx.http import HttpRequest, HttpResponse
-from restfx.middleware import MiddlewareBase
+from ..http import HttpRequest, HttpResponse
+from . import MiddlewareBase
 
 
 class StatusFilter:

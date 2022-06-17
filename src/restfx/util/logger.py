@@ -1,7 +1,7 @@
 from logging import getLogger
 
-from restfx import __meta__
-from restfx.util import utils
+from .. import __meta__
+from . import utils
 
 logger = getLogger(__meta__.name)
 
@@ -65,6 +65,6 @@ class Logger:
 
     @classmethod
     def current(cls):
-        from restfx import globs
+        from .. import globs
         app_id = globs.current_app.id
         return cls.get(app_id)
