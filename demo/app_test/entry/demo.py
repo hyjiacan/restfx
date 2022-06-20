@@ -83,7 +83,7 @@ def put(request: int, file: HttpFile):
 
 
 @route(module='测试名称-模块', name='测试名称-DELETE_PARAM')
-def delete(request, param1, from_=None, param3=5, **kwargs):
+def delete(request, param1: list, from_=None, param3=5, **kwargs):
     """
 
     :param request:第1个参数
@@ -99,3 +99,14 @@ def delete(request, param1, from_=None, param3=5, **kwargs):
         'param3': param3,
         'variable_args': kwargs
     }
+
+
+@route(module='测试名称-数组', name='测试名称-POST_ARRAY', auth=False)
+def post_array(request, param1: list, param2: str):
+    """
+
+    :param request:第1个参数
+    :param param1:第2个参数
+    :return: 返回值为 param1 的值
+    """
+    return param1, param2

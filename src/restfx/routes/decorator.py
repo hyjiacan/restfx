@@ -200,7 +200,7 @@ def _get_parameter_str(args_def: OrderedDict):
     return ', '.join(filter(lambda n: n[0] != '_', [str(args_def[arg]) for arg in args_def]))
 
 
-def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
+def _get_value(data: dict, name: str, arg_spec: ArgumentSpecification):
     """
 
     :param data:
@@ -213,17 +213,17 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
     name_arr = name + '[]'
     is_arr = False
     if name in data:
-        result = False, data.getlist(name)
+        result = False, data.get(name)
     elif alias:
         result = None, None
         for an in alias:
             an_arr = an + '[]'
             if an in data:
-                result = False, data.getlist(an)
+                result = False, data.get(an)
                 break
             if an_arr in data:
                 is_arr = True
-                result = False, data.getlist(an_arr)
+                result = False, data.get(an_arr)
                 break
         if result[0] is None:
             if arg_spec.has_default:
@@ -234,7 +234,7 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
                 result = None, None
     elif name_arr in data:
         is_arr = True
-        result = False, data.getlist(name_arr)
+        result = False, data.get(name_arr)
     elif arg_spec.has_default:
         # 使用默认值
         result = True, arg_spec.default
@@ -261,32 +261,8 @@ def _get_value(data: MultiDict, name: str, arg_spec: ArgumentSpecification):
         # 返回为 tuple 类型
         return use_default, tuple(value)
 
-    if arg_spec.is_type(list):
-        # 参数 声明为 list 类型
-        # 处理第一个参数是 json 数组的情况
-        if len(value) == 1:
-            value = value[0]
-        if isinstance(value, str):
-            try:
-                value = json.loads(value)
-            except Exception:
-                value = [value]
-        return use_default, value.copy()
-
-    if arg_spec.is_type(tuple):
-        # 参数 声明为 tuple 类型
-        # 处理第一个参数是 json 数组的情况
-        if len(value) == 1:
-            value = value[0]
-        if isinstance(value, str):
-            try:
-                value = json.loads(value)
-            except Exception:
-                value = [value]
-        return use_default, tuple(value)
-
     # 当请求的不是数组时，使用最后一个值
-    return use_default, value[-1]
+    return use_default, value
 
 
 def _get_enum_value(arg_spec, arg_value):
@@ -440,13 +416,13 @@ def _get_variable_args(arg_source, used_args):
     for item in arg_source:
         if item in used_args:
             continue
-        value = arg_source.getlist(item)
+        value = arg_source.get(item)
         # 当值长度大于1时，使用 tuple
         # 或者 item 以 [] 结尾
         if item.endswith('[]'):
             variable_args[item[:-2]] = tuple(value)
             continue
-        variable_args[item] = tuple(value) if len(value) > 1 else value[-1]
+        variable_args[item] = value
 
     return variable_args
 
@@ -461,8 +437,8 @@ def _get_actual_args(request: HttpRequest, func, args_def: OrderedDict, config: 
 
     # 合并参数成一个对象
     # 注意：不同来源（get/post）的参数会被覆盖 (post 覆盖 get) 的值
-    arg_source = MultiDict(request.GET)
-    arg_source.update(request.POST)
+    arg_source = dict(request.GET)
+    arg_source.update(dict(request.POST))
     if isinstance(request.BODY, dict):
         arg_source.update(request.BODY)
     if isinstance(request.FILES, dict):
