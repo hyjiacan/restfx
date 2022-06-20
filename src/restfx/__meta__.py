@@ -1,6 +1,6 @@
 name = 'restfx'
-version = '0.31.0'
-version_info = (0, 30, 15)
+version = '0.31.1'
+version_info = (0, 31, 1)
 api_version = 1
 website = 'https://gitee.com/wangankeji/restfx'
 
