@@ -58,7 +58,8 @@ def command_persist():
 if __name__ == '__main__':
     # 提供对 python main.py persist 命令的支持
     if command_persist():
-        exit(0)
+        import sys
+        sys.exit(0)
 
     if not settings.DEBUG:
         load_routes_map()

@@ -40,7 +40,7 @@ def run_command(working_dir: str, command_name: str, *args):
 
 def get_command(command_name: str):
     if command_name not in _COMMANDS:
-        print('Command %s not found' % command_name)
+        print('Command %r not found' % command_name)
         return None
     return _COMMANDS[command_name]
 

@@ -162,6 +162,3 @@ class IDbSessionProvider(ISessionProvider):
     @abstractmethod
     def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
         raise NotImplemented()
-
-    def dispose(self):
-        super(IDbSessionProvider, self).dispose()

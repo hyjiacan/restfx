@@ -12,8 +12,8 @@
 
     window.addEventListener('keydown', function (e) {
         // F2
-        // Ctrl F/K 查找
-        if (e.keyCode !== 113 && (!e.ctrlKey || (e.keyCode !== 75 && e.keyCode !== 70))) {
+        // Ctrl K 查找
+        if (e.keyCode !== 113 && (!e.ctrlKey || e.keyCode !== 75)) {
             return
         }
         e.preventDefault()

@@ -5,9 +5,6 @@ import uuid
 from types import FunctionType
 from typing import Union, Tuple, List
 
-from werkzeug.exceptions import NotFound as SuperNotFound
-from werkzeug.routing import Map, Rule
-
 from .globs import _app_ctx_stack
 from .util import ContextStore, utils
 from . import __meta__
@@ -122,6 +119,7 @@ class App:
 
         self.favicon = favicon
 
+        from werkzeug.routing import Map, Rule
         self.url_map = Map([
             Rule('/favicon.ico', endpoint='favicon'),
             Rule('/%s%s' % (api_prefix, '/' if append_slash else ''), endpoint='_api_page'),
@@ -132,25 +130,19 @@ class App:
 
         Collector.create(app_id, app_root, append_slash)
 
-        from .commands import commands
-        commands.register('persist', self.persist, 'Persist routes data into a specified file', '[filename] [encoding]')
-
     def dispose(self):
+        self._logger.info('App "%s" is disposing' % self.id)
+
+        if self.id in self.INSTANCES:
+            self.INSTANCES.pop(self.id)
+
         self.config.middleware_manager.handle_shutdown()
 
-        del self.config.middleware_manager
-
-        for plugin in self.config.plugins:
-            try:
-                plugin.destroy()
-            except Exception as e:
-                self._logger.error('Failed to destroy plugin %r' % plugin.__name__, e)
-
-        self._logger.info('App "%s" is shutting down' % self.id)
-        Collector.destroy(self.id)
         self.context.pop()
-        if self.id in self.INSTANCES:
-            del self.INSTANCES[self.id]
+        self.config.dispose()
+        Collector.destroy(self.id)
+
+        self._logger.info('App "%s" exited' % self.id)
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -196,6 +188,7 @@ class App:
 
                 self._logger.error(msg)
 
+                from werkzeug.exceptions import NotFound as SuperNotFound
                 if isinstance(e, SuperNotFound):
                     response = NotFound()
                 elif self.config.debug:
@@ -283,7 +276,8 @@ class App:
         # 检查端口是否被占用
         # if utils.is_port_used(port):
         #     self._logger.warning('The port "%s" is not available, pick another one instead.' % port)
-        #     exit(1)
+        #     import sys
+        #     sys.exit(1)
 
         # 支持 空串和 * 标志
         if host in [None, '', '*']:
@@ -314,6 +308,8 @@ class App:
         collector = Collector.get(self.id)
         for type_item in types:
             collector.global_types[type_item.__name__] = type_item
+
+        return self
 
     def collect(self):
         """
@@ -348,6 +344,8 @@ class App:
         :param urls_map:
         :return:
         """
+        from werkzeug.routing import Rule
+
         for url in urls_map:
             self.custom_url_map[url] = urls_map[url]
             self.url_map.add(Rule(url, endpoint=url))
@@ -492,7 +490,7 @@ class App:
                 assert issubclass(enum_type, Enum)
             if enum_type in (Enum, IntEnum, Flag, IntFlag):
                 # 忽略系统的枚举类型
-                self._logger.warning('Non-user defined of enum type found: ' + enum_type.__name__)
+                self._logger.debug('Ignore non-user defined of enum type: ' + enum_type.__name__)
                 continue
             if sys.version_info >= (3, 11):
                 from enum import StrEnum, FlagBoundary

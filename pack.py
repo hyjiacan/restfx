@@ -70,14 +70,14 @@ def package_sample():
         time.sleep(1)
     except Exception as e:
         print('Failure:' + str(e))
-        exit(1)
+        sys.exit(1)
 
 
 def renew_version():
     # 用法
     # build 版本号
     # 未传版本号参数时表示不更新版本号
-
+    import sys
     new_version = None if len(sys.argv) == 1 else sys.argv[1]
     if new_version is None:
         return
@@ -110,7 +110,8 @@ def renew_version():
         time.sleep(1)
     except Exception as e:
         print('Failure:' + str(e))
-        exit(1)
+        import sys
+        sys.exit(1)
 
 
 if __name__ == '__main__':

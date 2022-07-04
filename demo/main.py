@@ -135,12 +135,13 @@ def command_persist():
 def run():
     # 提供对 python main.py persist 命令的支持
     if app.test_command():
-        exit(0)
+        import sys
+        sys.exit(0)
     else:
         # app.register_plugins(AdminPlugin())
         load_routes_map()
         # 启动内置服务器
-        app.startup()
+        app.startup(reloader_interval=2)
 
 
 if __name__ == '__main__':

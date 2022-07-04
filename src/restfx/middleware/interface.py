@@ -113,3 +113,7 @@ class MiddlewareBase(ABC):
         返回 None 继续执行后续中间件
         """
         pass
+
+    def dispose(self):
+        pass
+

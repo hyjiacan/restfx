@@ -3,6 +3,7 @@ import os
 from werkzeug.local import LocalStack
 
 from . import __meta__
+from .util import Logger
 
 
 class AppConfig:
@@ -97,11 +98,30 @@ class AppConfig:
         if self.api_page_enabled:
             self.static_map['/internal_assets'] = os.path.join(os.path.dirname(__file__), 'internal_assets')
 
-    def __del__(self):
+    def dispose(self):
         if self.app_id in self._CONFIGS:
-            del self._CONFIGS[self.app_id]
+            self._CONFIGS.pop(self.app_id)
+
+        for plugin in self.plugins:
+            try:
+                plugin.destroy()
+            except Exception as e:
+                Logger.current().error('Failed to destroy plugin %r' % plugin.__name__, e)
+
+        for middleware in self.reversed_middlewares:
+            try:
+                middleware.dispose()
+            except Exception as e:
+                Logger.current().error('Failed to dispose middleware %r' % middleware.__name__, e)
+
         del self.middlewares
         del self.reversed_middlewares
+        del self.plugins
+        del self.routes
+        del self.enum_types
+        del self.api_page_assets
+        del self.routes_map
+        del self.static_map
 
     @classmethod
     def get(cls, app_id: str):
