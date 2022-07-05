@@ -9,6 +9,6 @@ setuptools.setup(
     name='restfx',
     version=version,
     install_requires=[
-        'Werkzeug>=1.0.0'
+        'Werkzeug>=2.0.3'
     ]
 )

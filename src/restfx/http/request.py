@@ -1,7 +1,7 @@
 import uuid
 
 from werkzeug import Request
-from werkzeug.datastructures import ImmutableDict, ImmutableMultiDict, FileStorage, MultiDict
+from werkzeug.datastructures import ImmutableDict, FileStorage, MultiDict
 
 from ..globs import _request_ctx_stack, _app_ctx_stack
 from ..session import HttpSession
@@ -32,7 +32,7 @@ def _get_files(files):
         file = files.get(name)
         result[name] = HttpFile.inherit(file)
 
-    return ImmutableMultiDict(result)
+    return ImmutableDict(result)
 
 
 class RequestContext:
