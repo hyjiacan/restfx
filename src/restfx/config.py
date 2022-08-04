@@ -102,13 +102,16 @@ class AppConfig:
         if self.app_id in self._CONFIGS:
             self._CONFIGS.pop(self.app_id)
 
+        logger = Logger._LOGGERS[self.app_id]
+
         for plugin in self.plugins:
             try:
                 plugin.destroy()
             except Exception as e:
-                Logger.current().error('Failed to destroy plugin %r' % plugin.__name__, e)
+                logger.error('Failed to destroy plugin %r' % plugin.__name__, e)
 
         for middleware in self.reversed_middlewares:
+            # logger.debug('Disposing middleware %r' % type(middleware).__name__)
             try:
                 middleware.dispose()
             except Exception as e:

@@ -490,7 +490,7 @@ class App:
                 assert issubclass(enum_type, Enum)
             if enum_type in (Enum, IntEnum, Flag, IntFlag):
                 # 忽略系统的枚举类型
-                self._logger.debug('Ignore non-user defined of enum type: ' + enum_type.__name__)
+                # self._logger.debug('Ignore non-user defined of enum type: ' + enum_type.__name__)
                 continue
             if sys.version_info >= (3, 11):
                 from enum import StrEnum, FlagBoundary

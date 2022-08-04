@@ -10,7 +10,7 @@ def get_old_value():
 
 
 @route('', '包路由', auth=False, extname='asp', validators=(
-        MyValidator('content').range(10, 120).all_a(),
+        MyValidator('content').range(10, 120),
 ))
 def get(request, content, session, a, e: OpTypes, **kwargs):
     """

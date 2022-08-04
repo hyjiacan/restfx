@@ -4,27 +4,7 @@ import time
 
 from tarfile import TarFile
 
-
-def compile_less():
-    root = os.path.dirname(__file__)
-    dir_name = os.path.abspath(os.path.join(root, 'src/restfx/internal_assets/styles'))
-
-    import lesscpy
-
-    for file in os.listdir(dir_name):
-        file_path = os.path.join(dir_name, file)
-        if not os.path.isfile(file_path) or not file.lower().endswith('.less'):
-            continue
-
-        print('Compiling file %s' % file)
-        with open(file_path, encoding='utf8') as fp:
-            output_content = lesscpy.compile(fp, minify=True)
-
-        output_file = os.path.splitext(file_path)[0] + '.css'
-        with open(output_file, mode='w', encoding='utf8') as fp:
-            fp.write(output_content)
-
-    print('Compiled!')
+from less import compile_less
 
 
 def tar_dir(archive_path: str, dir_path: str):
@@ -61,16 +41,27 @@ def tar_dir(archive_path: str, dir_path: str):
 def package_sample():
     print('Packaging sample')
     root = os.path.dirname(__file__)
-    sampledir = os.path.abspath(os.path.join(root, 'src/restfx/internal_assets/sample'))
-    tarname = os.path.abspath(os.path.join(root, 'src/restfx/internal_assets/sample.tar.gz'))
+    sample_dir = os.path.abspath(os.path.join(root, 'src/restfx/internal_assets/sample'))
+    tar_name = os.path.abspath(os.path.join(root, 'src/restfx/internal_assets/sample.tar.gz'))
+
+    # 将依赖写到示例的 requirements.txt 上
+    source_file = os.path.join(root, 'requirements/production.txt')
+    target_file = os.path.join(sample_dir, 'requirements.txt')
+
+    with open(source_file, mode='rb') as source:
+        with open(target_file, mode='wb') as target:
+            target.write(source.read())
 
     try:
-        tar_dir(tarname, sampledir)
+        tar_dir(tar_name, sample_dir)
         print('Package complete!\n')
         time.sleep(1)
     except Exception as e:
         print('Failure:' + str(e))
         sys.exit(1)
+    finally:
+        # 删除
+        os.unlink(target_file)
 
 
 def renew_version():

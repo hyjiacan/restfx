@@ -1,1 +1,5 @@
 Werkzeug>=2.0.3
+MarkupSafe>=2.0.1
+# The following items are optional.
+# pymysql>=1.0.2
+# redis>=3.5.3

@@ -107,6 +107,17 @@ function render(list, data) {
                     type: 'text/javascript',
                     src: asset
                 })
+            } else if(/^js#/.test(asset)) {
+                element = el('script', {
+                    type: 'text/javascript',
+                    src: asset.substring(3)
+                })
+            } else if(/^css#/.test(asset)) {
+                element = el('link', {
+                    rel: 'stylesheet',
+                    type: 'text/css',
+                    href: asset.substring(3)
+                })
             } else {
                 console.error('Cannot resolve asset %s', asset)
                 return

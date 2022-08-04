@@ -125,6 +125,9 @@ class ISessionProvider(ABC):
         if self.auto_clear:
             self.clear()
 
+    def __del__(self):
+        self.dispose()
+
 
 class IDbSessionProvider(ISessionProvider):
     def __init__(self, db_options: dict, expired: int, check_interval: int, auto_clear=False,
