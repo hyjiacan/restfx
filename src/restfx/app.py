@@ -178,23 +178,28 @@ class App:
                 else:
                     response = NotFound()
         except Exception as e:
+            from werkzeug.routing import RequestRedirect
+            if isinstance(e, RequestRedirect):
+                self._logger.debug('Redirect url %r with code %s' % (e.new_url, e.code))
+                from restfx.http import Redirect
+                response = Redirect(e.new_url, e.code)
             # 忽略静态资源请求的 .js.map/.css.map 文件
-            if request and (request.path.lower().endswith('.js.map') or request.path.lower().endswith('.css.map')):
+            elif request and (request.path.lower().endswith('.js.map') or request.path.lower().endswith('.css.map')):
                 response = NotFound()
             else:
-                msg = utils.get_exception_info(e)
-                if request:
-                    msg = 'Error occurred during handling request %r:\n\t%s' % (request.path, msg)
-
-                self._logger.error(msg)
-
                 from werkzeug.exceptions import NotFound as SuperNotFound
                 if isinstance(e, SuperNotFound):
                     response = NotFound()
-                elif self.config.debug:
-                    response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
                 else:
-                    response = ServerError()
+                    msg = utils.get_exception_info(e)
+                    if request:
+                        msg = 'Error occurred during handling request %r:\n\t%s' % (request.path, msg)
+
+                    self._logger.error(msg)
+                    if self.config.debug:
+                        response = ServerError(msg.replace('<', '&lt;').replace('>', '&gt;'))
+                    else:
+                        response = ServerError()
         finally:
             result = self.config.middleware_manager.handle_leaving(request, response)
             if result:
