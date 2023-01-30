@@ -9,6 +9,7 @@ setuptools.setup(
     name='restfx',
     version=version,
     install_requires=[
-        'Werkzeug>=2.0.3'
+        'Werkzeug>=2.0.3',
+        'MarkupSafe>=2.0.1',
     ]
 )

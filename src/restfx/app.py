@@ -5,12 +5,12 @@ import uuid
 from types import FunctionType
 from typing import Union, Tuple, List
 
-from .globs import _app_ctx_stack
-from .util import ContextStore, utils
 from . import __meta__
+from .globs import _app_ctx_stack
 from .http import HttpRequest, NotFound, ServerError
 from .middleware import MiddlewareManager
 from .routes import Collector
+from .util import ContextStore, utils
 
 
 class AppContext:
@@ -131,7 +131,7 @@ class App:
         Collector.create(app_id, app_root, append_slash)
 
     def dispose(self):
-        self._logger.info('App "%s" is disposing' % self.id)
+        self._logger.debug('App "%s" is disposing' % self.id)
 
         if self.id in self.INSTANCES:
             self.INSTANCES.pop(self.id)
@@ -142,7 +142,7 @@ class App:
         self.config.dispose()
         Collector.destroy(self.id)
 
-        self._logger.info('App "%s" exited' % self.id)
+        self._logger.debug('App "%s" exited' % self.id)
 
     def handle_wsgi_request(self, environ, start_response):
         """
@@ -301,8 +301,16 @@ class App:
                 print('\t- %s://%s:%s/%s%s' % (
                     protocol, ip, port, self.api_prefix, '/' if self.config.append_slash else ''
                 ))
-
-        run_simple(host, port, self, use_debugger=False, use_reloader=debug, threaded=threaded, **kwargs)
+        exclude_patterns = (
+            'dist/*',
+            'venv/*',
+            '*/.vscode/*',
+            '*/.idea/*',
+        )
+        if 'exclude_patterns' in kwargs:
+            exclude_patterns = exclude_patterns + kwargs.get('exclude_patterns', tuple())
+        run_simple(host, port, self, use_debugger=False, use_reloader=debug, threaded=threaded,
+                   exclude_patterns=exclude_patterns, **kwargs)
 
     def register_types(self, *types):
         """
@@ -541,13 +549,13 @@ class App:
             lower_dir_name = dir_name.lower()
 
             if is_ignore(lower_dir_name):
-                self._logger.info('Ignore directory: ' + dir_name)
+                self._logger.debug('Ignore directory: ' + dir_name)
                 continue
             if not dir_name.startswith(prefix):
                 self._logger.info('Mismatch directory: ' + dir_name)
                 continue
 
-            self._logger.info('Match directory: ' + dir_name)
+            self._logger.debug('Match directory: ' + dir_name)
 
             item_path = os.path.join(self.config.ROOT, dir_name)
 

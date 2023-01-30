@@ -51,7 +51,7 @@ class FileSessionProvider(ISessionProvider):
             sessions_root = tempfile.gettempdir()
 
         self.sessions_root = os.path.abspath(os.path.join(sessions_root, 'restfx_sessions'))
-        self.logger.info('Session storage root: %s', self.sessions_root)
+        self.logger.debug('Session storage root: %s', self.sessions_root)
 
         if not os.path.exists(self.sessions_root):
             os.makedirs(self.sessions_root)
@@ -201,7 +201,7 @@ class MySQLSessionProvider(IDbSessionProvider):
                 self.clear()
             return
 
-        self.logger.info('Creating session table %r' % self.table_name)
+        self.logger.debug('Creating session table %r' % self.table_name)
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(48) PRIMARY KEY NOT NULL,
         `creation_time` BIGINT NOT NULL,
@@ -339,7 +339,7 @@ class SqliteSessionProvider(IDbSessionProvider):
                 self.clear()
             return
 
-        self.logger.info('Creating session table %r' % self.table_name)
+        self.logger.debug('Creating session table %r' % self.table_name)
         self.execute("""CREATE TABLE `{table_name}` (
         `id` VARCHAR(48) PRIMARY KEY NOT NULL,
         `creation_time` BIGINT NOT NULL,

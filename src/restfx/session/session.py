@@ -123,3 +123,8 @@ class HttpSession:
         self._destroyed = True
         self.store.clear()
         self._drop_watcher(self.id)
+
+    @classmethod
+    def current(cls):
+        from ..globs import session
+        return session
