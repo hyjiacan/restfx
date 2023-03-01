@@ -123,6 +123,21 @@ class HttpRequest(Request):
         """
         return self._user_data.pop(key)
 
+    def get_remote_addr(self):
+        """
+        获取客户端IP地址，如果存在代理，那么尝试从代理地址中加载
+        :return:
+        """
+        if 'HTTP_X_FORWARDED_FOR' in self.environ:
+            address = self.environ.get('HTTP_X_FORWARDED_FOR')
+            address = address.split(',')[0]
+            return address
+        else:
+            if 'REMOTE_ADDR' in self.environ:
+                return self.environ.get('REMOTE_ADDR')
+            else:
+                return self.remote_addr
+
     @property
     def range(self):
         import re

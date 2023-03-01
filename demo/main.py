@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 
+from app_test.tools.enums import *
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
@@ -10,8 +11,7 @@ from restfx.middleware.access import AccessMiddleware
 from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import RedisSessionProvider, SqliteSessionProvider
-from app_test.tools.enums import *
+from restfx.session.providers import SqliteSessionProvider
 
 # from admin_plugin.plugin import AdminPlugin
 
@@ -144,7 +144,7 @@ def run():
         # app.register_plugins(AdminPlugin())
         load_routes_map()
         # 启动内置服务器
-        app.startup(reloader_interval=2)
+        app.startup(reloader_interval=2, exclude_patterns=('*{sep}demo{sep}*'.format(sep=os.path.sep),))
 
 
 if __name__ == '__main__':

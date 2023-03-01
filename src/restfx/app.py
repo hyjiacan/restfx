@@ -233,6 +233,14 @@ class App:
         :param port:
         :param threaded:
         :param kwargs: 适用于 werkzeug 的 run_simple 函数的其它参数
+        `exclude_patterns` 需要排除监视的路径（文件变化时，不会重启）
+        写法说明：
+        其值应当是一个可迭代的类型（list tuple），每一项指定了一个路径。
+        如果是相对路径，此函数会自动在其前面补充项目根路径，处理成绝对路径。
+        若相路径以 * 符号开头，表示匹配所有包含此路径的项。
+        此函数会自动处理不同平台的路径分隔符。
+        示例：
+        忽略虚拟环境目录(已内置) => 'venv/*'
         :return:
         """
         from .util import helper
@@ -301,14 +309,28 @@ class App:
                 print('\t- %s://%s:%s/%s%s' % (
                     protocol, ip, port, self.api_prefix, '/' if self.config.append_slash else ''
                 ))
-        exclude_patterns = (
-            'dist/*',
-            'venv/*',
-            '*/.vscode/*',
-            '*/.idea/*',
+        exclude_suffix = os.path.sep + '*'
+        exclude_patterns_builtin = (
+            # 所有点开头的文件和目录，都被忽略掉
+            '.' + exclude_suffix,
+            # 虚拟环境目录
+            'venv' + exclude_suffix,
+            # 所有的缓存目录
+            '*/__pycache__' + exclude_suffix,
         )
+        exclude_patterns_custom = []
         if 'exclude_patterns' in kwargs:
-            exclude_patterns = exclude_patterns + kwargs.get('exclude_patterns', tuple())
+            exclude_patterns_custom = kwargs.pop('exclude_patterns')
+
+        exclude_patterns_all = exclude_patterns_builtin + exclude_patterns_custom
+
+        # 处理忽略列表的路径为绝对路径
+        exclude_patterns = []
+        for p in exclude_patterns_all:
+            if not os.path.isabs(p):
+                p = os.path.join(self.config.ROOT, p)
+            p = os.path.abspath(p)
+            exclude_patterns.append(p)
         run_simple(host, port, self, use_debugger=False, use_reloader=debug, threaded=threaded,
                    exclude_patterns=exclude_patterns, **kwargs)
 
