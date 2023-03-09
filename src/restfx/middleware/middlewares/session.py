@@ -99,10 +99,20 @@ class SessionMiddleware(MiddlewareBase):
         if config is None or self.provider is None:
             return
 
+        check_key = '__restfx_client_check_info__'
+        remote_addr = request.get_remote_addr()[0:36]
+        user_agent = request.user_agent.string[0:160]
+
         def create_session():
             sid = self.new_sid(request)
             request.session = self.provider.create(sid)
             self.logger.debug('Create new session with sid: ' + sid)
+            if self.check_flags:
+                # 创建 session时
+                request.session.set(check_key, {
+                    'remote_addr': remote_addr,
+                    'user_agent': user_agent
+                })
 
         if not self.cookie_name:
             # 未指定时，使用 app_id 计算一个
@@ -141,7 +151,6 @@ class SessionMiddleware(MiddlewareBase):
         # 检查客户端信息与 session 存储的是否一致
         # 为了避免受到存储溢出攻击，在此处，只存储指定长度的数据
         if self.check_flags:
-            check_key = '__restfx_client_check_info__'
             if not request.session.has(check_key):
                 check_info = {}
                 request.session.set(check_key, check_info)
@@ -149,26 +158,18 @@ class SessionMiddleware(MiddlewareBase):
                 check_info = request.session.get(check_key)
 
             if self.check_flags & self.FLAG_REMOTE_ADDR:
-                remote_addr = request.get_remote_addr()[0:36]
                 store_addr = check_info.get('remote_addr')
-                if not store_addr:
-                    # 还没有值，直接填写
-                    check_info['remote_addr'] = remote_addr
-                elif remote_addr != store_addr:
-                    # IP 地址不一致，新创建 session_id
+                if not store_addr or remote_addr != store_addr:
+                    # 没有或者 IP 地址不一致，新创建 session_id
                     self.logger.warning(
                         'The remote address %r does not equal to cached address %r, this may be an attack.' % (
                             remote_addr, store_addr))
                     create_session()
                     return
             if self.check_flags & self.FLAG_USER_AGENT:
-                user_agent = request.user_agent.string[0:160]
                 store_agent = check_info.get('user_agent')
-                if not store_agent:
-                    # 还没有值，直接填写
-                    check_info['user_agent'] = user_agent
-                elif user_agent != store_agent:
-                    # user_agent 不一致，新创建 session_id
+                if not store_agent or user_agent != store_agent:
+                    # 没有或者 user_agent 不一致，新创建 session_id
                     self.logger.warning(
                         'The remote user agent %r does not equal to cached user agent %r, this may be an attack.' % (
                             user_agent, store_agent))

@@ -188,7 +188,7 @@ class FunctionDescription:
                         break
                     line += 1
                 msg = get_func_info(self.func)
-                msg += 'Invalid type declaration for argument "%s":\n\t\t%s'
+                msg += '\n\tInvalid type declaration for argument "%s":\n\t\t%s'
                 # abort the execution
                 raise Exception(msg % (parameter.name, row.strip()))
 

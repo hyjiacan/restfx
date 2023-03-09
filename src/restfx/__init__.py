@@ -5,6 +5,7 @@ from .app import App
 from .routes.decorator import route
 from .routes.parameter_interface import IParam
 from .routes.validator import Validator
+from .routes import parameter_types as types
 
 __version__ = __meta__.version
 
@@ -30,5 +31,6 @@ __all__ = [
     'val',
     'IParam',
     'env',
+    'types',
     '__version__'
 ]

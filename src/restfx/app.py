@@ -318,7 +318,7 @@ class App:
             # 所有的缓存目录
             '*/__pycache__' + exclude_suffix,
         )
-        exclude_patterns_custom = []
+        exclude_patterns_custom = tuple()
         if 'exclude_patterns' in kwargs:
             exclude_patterns_custom = kwargs.pop('exclude_patterns')
 

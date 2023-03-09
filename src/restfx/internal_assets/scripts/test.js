@@ -48,6 +48,27 @@
         responseLength.text('Content-Length: ' + xhr.headers['content-length'] + ' (' + len + 'KB)')
     }
 
+    function tryParseJsonField(field) {
+        var value = field.value
+        var type = field.getAttribute('data-type')
+        if (['str', 'int', 'number', 'bool', 'boolean'].indexOf(type) !== -1) {
+            return value
+        }
+        try {
+            var x = eval(`(function(){return ${value}})()`)
+            if (x === null || x === undefined) {
+                return ''
+            }
+            if (['{', '['].indexOf(value[0]) === -1) {
+                return x
+            }
+            field.value = JSON.stringify(x)
+            return field.value
+        } catch(e) {
+            return value
+        }
+    }
+
     function getTableArgs() {
         var fields = Object.create(null)
         $('input.arg-value, textarea.arg-value', argsTable).each(function () {
@@ -60,7 +81,7 @@
                 }
             } else {
                 fields[field.name] = {
-                    value: field.value
+                    value: tryParseJsonField(field)
                 }
             }
             fields[field.name].type = field.dataset.type
@@ -473,7 +494,8 @@
             if (!content) {
                 throw new Error('请输入参数')
             }
-            var obj = JSON.parse(content)
+            var obj = eval(`(function(){return ${content}})()`)
+//            var obj = JSON.parse(content)
             argsJson.val(JSON.stringify(obj, null, 2))
             if ($.isArray(obj)) {
                 throw new Error('参数只能是对象，不能是数组')

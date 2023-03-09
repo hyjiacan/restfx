@@ -5,8 +5,6 @@ from functools import partial, wraps
 from types import FunctionType
 from typing import Tuple, Union
 
-from werkzeug.datastructures import MultiDict
-
 from .parameter_interface import IParam
 from .validator import Validator
 from ..config import AppConfig
@@ -308,7 +306,8 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             return False
 
         msg = 'Cannot parse value "%s" as type "%s for parameter %s". (expected: true/false)' % (
-            (arg_value, arg_spec.annotation_name, arg_name))
+            arg_value, arg_spec.annotation_name, arg_name
+        )
         Logger.current().warning(msg)
         return BadRequest(msg)
 
@@ -326,8 +325,15 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
 
     # 声明的类型为 IParam，调用  parse 进行转换
     if arg_spec.is_type(IParam):
-        result = arg_spec.annotation.parse(arg_value)
-        return result
+        try:
+            return arg_spec.annotation.parse(arg_value)
+        except Exception as ex:
+            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s": %s' % (
+                arg_value, arg_spec.annotation_name, arg_name, str(ex)
+            )
+            Logger.current().warning(msg)
+            return BadRequest(msg)
+
 
     # 转换失败时，会抛出异常
     # noinspection PyBroadException

@@ -8,5 +8,5 @@ class IParam(ABC):
 
     @classmethod
     @abstractmethod
-    def parse(cls, value: (list, dict)):
+    def parse(cls, value):
         raise NotImplemented()
