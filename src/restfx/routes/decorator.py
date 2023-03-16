@@ -285,6 +285,17 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
     if arg_value is None:
         return arg_value
 
+    # 声明的类型为 IParam，调用  parse 进行转换
+    if arg_spec.is_type(IParam):
+        try:
+            return arg_spec.annotation.parse(arg_value)
+        except Exception as ex:
+            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s": %s' % (
+                arg_value, arg_spec.annotation_name, arg_name, str(ex)
+            )
+            Logger.current().warning(msg)
+            return BadRequest(msg)
+
     # 检查类型是否一致 #
 
     # 类型一致，直接使用
@@ -322,17 +333,6 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             return BadRequest(msg)
 
         return result
-
-    # 声明的类型为 IParam，调用  parse 进行转换
-    if arg_spec.is_type(IParam):
-        try:
-            return arg_spec.annotation.parse(arg_value)
-        except Exception as ex:
-            msg = 'Cannot parse value "%s" as type "%s" for parameter "%s": %s' % (
-                arg_value, arg_spec.annotation_name, arg_name, str(ex)
-            )
-            Logger.current().warning(msg)
-            return BadRequest(msg)
 
 
     # 转换失败时，会抛出异常

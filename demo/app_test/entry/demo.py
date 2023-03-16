@@ -1,7 +1,5 @@
 from app_test.tools.enums import OpTypes
-
-from restfx import val
-from restfx import route
+from restfx import (route, val, types)
 from restfx.http import HttpFile
 from restfx.http import HttpRequest
 
@@ -9,7 +7,7 @@ from restfx.http import HttpRequest
 @route(module='测试名称-模块', name='测试名称-GET', auth=False, op_type=OpTypes.Query, validators=(
         val('param1').range(2, 2)
 ))
-def get(request, _injection, param1=(1, 2), param2={}, a_complex_param_name_=None):
+def get(request, _injection, param1=(1, 2), param2={}, a_complex_param_name_: types.JsonType = None):
     """
     下面是一个无序列表
     - 这像一个列表吗？
@@ -41,7 +39,8 @@ def get(request, _injection, param1=(1, 2), param2={}, a_complex_param_name_=Non
         'injection': _injection,
         'param1': param1,
         'param2': param2,
-        'temp': temp
+        'temp': temp,
+        'a_complex_param_name_': a_complex_param_name_
     }
     return data
 
