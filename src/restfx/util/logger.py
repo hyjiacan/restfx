@@ -1,32 +1,29 @@
-from logging import getLogger
+import logging
 
-from .. import __meta__
 from . import utils
+from .. import __meta__
 
-logger = getLogger(__meta__.name)
+logger = logging.getLogger(__meta__.name)
 
+
+def __init_logger__():
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s [%(name)s:%(levelname)s] %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
+
+__init_logger__()
 
 class Logger:
     _LOGGERS = {}
-    colors = {
-        'error': '\033[1;31m',
-        'warning': '\033[1;33m',
-        'debug': '\033[1;37m'
-    }
 
     def __init__(self, app_id: str):
         self.app_id = app_id
         self._LOGGERS[app_id] = self
         self.custom_logger = None
-
-    @classmethod
-    def print(cls, level, message):
-
-        if level not in cls.colors:
-            print('%s' % message)
-            return
-
-        print('%s%s%s' % (cls.colors[level], message, '\033[0m'))
 
     def log(self, level, message, e=None):
         if self.custom_logger is not None:
@@ -34,7 +31,6 @@ class Logger:
             self.custom_logger(level, message, e)
             return
         getattr(logger, level)(message)
-        # self.print(level, message)
 
     def debug(self, message):
         self.log('debug', message)

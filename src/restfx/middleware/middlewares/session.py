@@ -22,7 +22,7 @@ class SessionMiddleware(MiddlewareBase):
                  cookie_secure=False,
                  cookie_samesite=None,
                  cookie_httponly=True,
-                 check_flags=FLAG_REMOTE_ADDR | FLAG_USER_AGENT
+                 check_flags=None
                  ):
         """
 
@@ -40,6 +40,7 @@ class SessionMiddleware(MiddlewareBase):
         :param cookie_samesite:
         :param cookie_httponly:
         :param check_flags: 在收到请求时，要检查 session_id 的项标记。这是一个安全性配置。会在一定程序上影响处理性能。
+        可用项: FLAG_REMOTE_ADDR | FLAG_USER_AGENT
         """
         assert isinstance(provider, ISessionProvider)
         self.maker = maker
@@ -159,7 +160,7 @@ class SessionMiddleware(MiddlewareBase):
 
             if self.check_flags & self.FLAG_REMOTE_ADDR:
                 store_addr = check_info.get('remote_addr')
-                if not store_addr or remote_addr != store_addr:
+                if store_addr and remote_addr != store_addr:
                     # 没有或者 IP 地址不一致，新创建 session_id
                     self.logger.warning(
                         'The remote address %r does not equal to cached address %r, this may be an attack.' % (
@@ -168,7 +169,7 @@ class SessionMiddleware(MiddlewareBase):
                     return
             if self.check_flags & self.FLAG_USER_AGENT:
                 store_agent = check_info.get('user_agent')
-                if not store_agent or user_agent != store_agent:
+                if store_agent and user_agent != store_agent:
                     # 没有或者 user_agent 不一致，新创建 session_id
                     self.logger.warning(
                         'The remote user agent %r does not equal to cached user agent %r, this may be an attack.' % (
