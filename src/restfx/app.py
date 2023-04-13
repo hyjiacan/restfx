@@ -568,18 +568,23 @@ class App:
         # 扫描目录，自动加载应用的模块 (app_开头)
         routes_map = {}
         for dir_name in os.listdir(self.config.ROOT):
+            if dir_name in ('.', '..', '__pycache__', 'venv'):
+                continue
+            item_path = os.path.join(self.config.ROOT, dir_name)
+
+            if not os.path.isdir(item_path):
+                continue
+
             lower_dir_name = dir_name.lower()
 
             if is_ignore(lower_dir_name):
                 self._logger.debug('Ignore directory: ' + dir_name)
                 continue
             if not dir_name.startswith(prefix):
-                self._logger.info('Mismatch directory: ' + dir_name)
+                self._logger.debug('Mismatch directory: ' + dir_name)
                 continue
 
             self._logger.debug('Match directory: ' + dir_name)
-
-            item_path = os.path.join(self.config.ROOT, dir_name)
 
             if not os.path.isfile(os.path.join(item_path, '__init__.py')):
                 self._logger.warning('Invalid directory: "%s" is not a package' % dir_name)

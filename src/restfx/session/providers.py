@@ -394,18 +394,18 @@ class RedisSessionProvider(IDbSessionProvider):
     提供基于 Redis 的 session 存储支持
     """
 
-    def __init__(self, db_options: dict, expired: int = None, check_interval=0, auto_clear=False,
+    def __init__(self, db_options: dict, expired: int = None, auto_clear=False,
                  on_expired: FunctionType = None):
         """
         :param db_options: 按 `redis.connection.Connection` 的参数传入: host, password, port=6379, db=0 等
         :param expired:
-        :param check_interval:
         :param auto_clear:
+        :param on_expired: 暂不支持
         """
         super().__init__({
             'socket_timeout': 5,
             **db_options
-        }, expired, check_interval, auto_clear, on_expired)
+        }, expired, 0, auto_clear, on_expired)
         self.started = False
 
     @contextmanager

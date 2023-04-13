@@ -15,7 +15,7 @@ class ISessionProvider(ABC):
 
     def __init__(self, expired: int, check_interval: int, auto_clear: bool, on_expired: FunctionType = None):
         """
-
+        注意：当启用了自动清理过期的 session 时，会影响开发时的服务器热重启。
         :param expired: 过期时长，单位为秒，默认为 10分钟。指定为 0表示不会自动过期
         :param check_interval: 检查 session 是否过期的周期，单位为秒，指定为 0 时不检查
         :param auto_clear: 是否在停止/启动时，自动清空 session 存储
@@ -45,7 +45,7 @@ class ISessionProvider(ABC):
         for session_id in expired_sessions:
             if self.on_expired:
                 self.on_expired(self.get(session_id))
-            # self.logger.debug('Drop expired session: ' + session_id)
+            self.logger.debug('Drop expired session: ' + session_id)
             self.remove(session_id)
 
         self.timer = self.run_timer()
@@ -137,9 +137,19 @@ class IDbSessionProvider(ISessionProvider):
         self.db_options = db_options
         self.is_db_available = False
 
+    @abstractmethod
+    def ensure_table(self):
+        pass
+
     def drop_expired_session(self):
         if self.is_db_available:
             super(IDbSessionProvider, self).drop_expired_session()
+        else:
+            try:
+                self.ensure_table()
+            except:
+                pass
+            self.timer = self.run_timer()
 
     def parse(self, data: dict) -> HttpSession:
         """

@@ -82,7 +82,7 @@ class AccessMiddleware(MiddlewareBase):
             if status in status_filter.exclude:
                 return
 
-        log_tpl = '[access] {remote} "{method} {path}" {status} {{{length}}}'.format(
+        log_tpl = '[access] {remote} "{method} {path}" {status} {{{length}B}}'.format(
             remote=request.environ.get('REMOTE_ADDR'),
             method=request.method,
             path=request.path,
