@@ -394,6 +394,9 @@ class RedisSessionProvider(IDbSessionProvider):
     提供基于 Redis 的 session 存储支持
     """
 
+    def ensure_table(self):
+        pass
+
     def __init__(self, db_options: dict, expired: int = None, auto_clear=False,
                  on_expired: FunctionType = None):
         """
