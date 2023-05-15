@@ -151,7 +151,17 @@ class MySQLSessionProvider(IDbSessionProvider):
             **db_options
         }, expired, check_interval, auto_clear, on_expired)
 
-    def execute(self, sql: str, *args, throw_except=False, ensure_table=True) -> Tuple[int, Tuple[dict]]:
+    def execute(self, sql: str, *args, throw_except=False, ensure_table=True, batch_args: tuple = None) -> Tuple[
+        int, Tuple[dict]]:
+        """
+
+        :param sql:
+        :param args:
+        :param throw_except:
+        :param ensure_table:
+        :param batch_args: 批量执行的参数，结构为 ((), (), ...)
+        :return:
+        """
         if ensure_table:
             self.ensure_table()
 
@@ -167,9 +177,12 @@ class MySQLSessionProvider(IDbSessionProvider):
         try:
             import pymysql.cursors
             cursor = conn.cursor(pymysql.cursors.DictCursor)
-            rows = cursor.execute(sql, args)
-            if is_select:
-                data = cursor.fetchall()
+            if batch_args:
+                cursor.executemany(sql, args)
+            else:
+                rows = cursor.execute(sql, args)
+                if is_select:
+                    data = cursor.fetchall()
         except Exception as e:
             self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
             if throw_except:
@@ -246,6 +259,13 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def remove(self, session_id: str):
         self.execute("""DELETE FROM `{table_name}` WHERE `id`=%s""".format(table_name=self.table_name), session_id)
+
+    def remove_list(self, session_ids: list[str]):
+        args = (
+            (session_id,)
+            for session_id in session_ids
+        )
+        self.execute("""DELETE FROM `{table_name}` WHERE `id`=%s""".format(table_name=self.table_name), args)
 
     def clear(self):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))

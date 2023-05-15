@@ -46,7 +46,8 @@ class ISessionProvider(ABC):
             if self.on_expired:
                 self.on_expired(self.get(session_id))
             self.logger.debug('Drop expired session: ' + session_id)
-            self.remove(session_id)
+
+        self.remove_list(expired_sessions)
 
         self.timer = self.run_timer()
 
@@ -105,6 +106,15 @@ class ISessionProvider(ABC):
         :return:
         """
         raise NotImplemented()
+
+    def remove_list(self, session_ids: list[str]):
+        """
+        销毁一批 session
+        :param session_ids:
+        :return:
+        """
+        for session_id in session_ids:
+            self.remove(session_id)
 
     @abstractmethod
     def clear(self):
