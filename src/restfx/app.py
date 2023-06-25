@@ -331,6 +331,10 @@ class App:
                 p = os.path.join(self.config.ROOT, p)
             p = os.path.abspath(p)
             exclude_patterns.append(p)
+
+        print('---------------------------')
+        print(' * Application is ready to go.')
+        print('---------------------------')
         run_simple(host, port, self, use_debugger=False, use_reloader=debug, threaded=threaded,
                    exclude_patterns=exclude_patterns, **kwargs)
 

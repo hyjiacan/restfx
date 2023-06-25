@@ -260,7 +260,7 @@ class MySQLSessionProvider(IDbSessionProvider):
     def remove(self, session_id: str):
         self.execute("""DELETE FROM `{table_name}` WHERE `id`=%s""".format(table_name=self.table_name), session_id)
 
-    def remove_list(self, session_ids: list[str]):
+    def remove_list(self, session_ids: List[str]):
         args = (
             (session_id,)
             for session_id in session_ids

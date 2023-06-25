@@ -42,12 +42,13 @@ class ISessionProvider(ABC):
     def drop_expired_session(self):
         time_before = time.time() - self.expired
         expired_sessions = self.get_expired_session(time_before)
-        for session_id in expired_sessions:
-            if self.on_expired:
-                self.on_expired(self.get(session_id))
-            self.logger.debug('Drop expired session: ' + session_id)
+        if expired_sessions:
+            for session_id in expired_sessions:
+                if self.on_expired:
+                    self.on_expired(self.get(session_id))
+                self.logger.debug('Drop expired session: ' + session_id)
 
-        self.remove_list(expired_sessions)
+            self.remove_list(expired_sessions)
 
         self.timer = self.run_timer()
 
@@ -107,7 +108,7 @@ class ISessionProvider(ABC):
         """
         raise NotImplemented()
 
-    def remove_list(self, session_ids: list[str]):
+    def remove_list(self, session_ids: List[str]):
         """
         销毁一批 session
         :param session_ids:
