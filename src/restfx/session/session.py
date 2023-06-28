@@ -12,19 +12,46 @@ class HttpSession:
 
         now = time.time()
 
-        # 创建 session 的时间
         self.creation_time = now
-        # 当前 session 对应的请求上下文最后被客户端访问的时间
+        """
+        创建 session 的时间
+        """
+
         self.last_access_time = now
-        # session 项变更的观察者
+        """
+        当前 session 对应的请求上下文最后被客户端访问的时间
+        """
+
+        self.remote_addr = ''
+        """
+        session 对应的客户端IP地址
+        """
+
+        self.user_agent = ''
+        """
+        session 对应的浏览器代理串
+        """
+
         self._update_watcher = update_watcher
-        # session 销毁的观察者
+        """
+        session 项变更的观察者
+        """
+
         self._drop_watcher = drop_watcher
-        # 当前是否已经被销毁
+        """
+        session 销毁的观察者
+        """
+
         self._destroyed = False
-        # session 是否有变更
-        # 默认值指定为 True，以在新建session后，能够被存储
+        """
+        当前是否已经被销毁
+        """
+
         self._changed = True
+        """
+        session 是否有变更
+        默认值指定为 True，以在新建session后，能够被存储
+        """
 
     def __str__(self):
         return self.id
@@ -35,6 +62,8 @@ class HttpSession:
             'store': self.store,
             'creation_time': self.creation_time,
             'last_access_time': self.last_access_time,
+            'remote_addr': self.remote_addr,
+            'user_agent': self.user_agent,
         }
 
     def __setstate__(self, state):
@@ -42,6 +71,8 @@ class HttpSession:
         self.store = state['store']
         self.creation_time = state['creation_time']
         self.last_access_time = state['last_access_time']
+        self.remote_addr = state['remote_addr']
+        self.user_agent = state['user_agent']
         self._destroyed = False
         self._changed = False
 

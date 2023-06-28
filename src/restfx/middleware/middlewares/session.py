@@ -22,7 +22,8 @@ class SessionMiddleware(MiddlewareBase):
                  cookie_secure=False,
                  cookie_samesite=None,
                  cookie_httponly=True,
-                 check_flags=None
+                 check_flags=None,
+                 singleton=True,
                  ):
         """
 
@@ -41,6 +42,7 @@ class SessionMiddleware(MiddlewareBase):
         :param cookie_httponly:
         :param check_flags: 在收到请求时，要检查 session_id 的项标记。这是一个安全性配置。会在一定程序上影响处理性能。
         可用项: FLAG_REMOTE_ADDR | FLAG_USER_AGENT
+        :param singleton: 是否启用单实例 session，启用时，对同一 IP 地址，只允许存在一个 session
         """
         assert isinstance(provider, ISessionProvider)
         self.maker = maker
@@ -56,6 +58,7 @@ class SessionMiddleware(MiddlewareBase):
         self.cookie_samesite = cookie_samesite
         self.cookie_httponly = cookie_httponly
         self.check_flags = check_flags
+        self.singleton = singleton
 
         from restfx.util import Logger
         self.logger = Logger.current()
@@ -100,7 +103,7 @@ class SessionMiddleware(MiddlewareBase):
         if config is None or self.provider is None:
             return
 
-        check_key = '__restfx_client_check_info__'
+        # 为了避免受到存储溢出攻击，在此处，只存储指定长度的数据
         remote_addr = request.get_remote_addr()[0:36]
         user_agent = request.user_agent.string[0:160]
 
@@ -108,12 +111,8 @@ class SessionMiddleware(MiddlewareBase):
             sid = self.new_sid(request)
             request.session = self.provider.create(sid)
             self.logger.debug('Create new session with sid: ' + sid)
-            if self.check_flags:
-                # 创建 session时
-                request.session.set(check_key, {
-                    'remote_addr': remote_addr,
-                    'user_agent': user_agent
-                })
+            request.session.remote_addr = remote_addr
+            request.session.user_agent = user_agent
 
         if not self.cookie_name:
             # 未指定时，使用 app_id 计算一个
@@ -122,7 +121,7 @@ class SessionMiddleware(MiddlewareBase):
         client_session_id = request.cookies.get(self.cookie_name)
         # 客户端无 session_id
         if not client_session_id:
-            self.logger.debug('No session id found in request.')
+            self.logger.debug('Session id not found in request.')
             create_session()
             return
 
@@ -130,6 +129,10 @@ class SessionMiddleware(MiddlewareBase):
         session_id = self.decode(client_session_id)
         if not session_id:
             # session id 非法，新创建一个
+            create_session()
+            return
+
+        if not self.check_singleton(remote_addr, session_id):
             create_session()
             return
 
@@ -150,32 +153,23 @@ class SessionMiddleware(MiddlewareBase):
             return
 
         # 检查客户端信息与 session 存储的是否一致
-        # 为了避免受到存储溢出攻击，在此处，只存储指定长度的数据
         if self.check_flags:
-            if not request.session.has(check_key):
-                check_info = {}
-                request.session.set(check_key, check_info)
-            else:
-                check_info = request.session.get(check_key)
+            if (self.check_flags & self.FLAG_REMOTE_ADDR) and (request.session.remote_addr != remote_addr):
+                # 没有或者 IP 地址不一致，新创建 session_id
+                self.logger.warning(
+                    'The remote address does not equal to cached, this may be an attack. DROP IT.\nRemote: %s\nCached: %s' % (
+                        remote_addr, request.session.remote_addr))
+                self.provider.remove(session_id)
+                create_session()
 
-            if self.check_flags & self.FLAG_REMOTE_ADDR:
-                store_addr = check_info.get('remote_addr')
-                if store_addr and remote_addr != store_addr:
-                    # 没有或者 IP 地址不一致，新创建 session_id
-                    self.logger.warning(
-                        'The remote address %r does not equal to cached address %r, this may be an attack.' % (
-                            remote_addr, store_addr))
-                    create_session()
-                    return
-            if self.check_flags & self.FLAG_USER_AGENT:
-                store_agent = check_info.get('user_agent')
-                if store_agent and user_agent != store_agent:
-                    # 没有或者 user_agent 不一致，新创建 session_id
-                    self.logger.warning(
-                        'The remote user agent %r does not equal to cached user agent %r, this may be an attack.' % (
-                            user_agent, store_agent))
-                    create_session()
-                    return
+            if (self.check_flags & self.FLAG_USER_AGENT) and (request.session.user_agent != user_agent):
+                # 没有或者 user_agent 不一致，新创建 session_id
+                self.logger.warning(
+                    'The remote user-agent does not equal to cached, this may be an attack. DROP IT.\nRemote: %s\nCached: %s' % (
+                        user_agent, request.session.user_agent))
+                self.provider.remove(session_id)
+                create_session()
+                return
 
         # 修改已经存在 session 的最后访问时间
         request.session.last_access_time = now
@@ -203,5 +197,37 @@ class SessionMiddleware(MiddlewareBase):
                             samesite=self.cookie_samesite,
                             )
 
-    def dispose(self):
-        self.provider.dispose()
+    def check_singleton(self, remote_addr, session_id):
+        """
+        检查单实例
+        :return: True 表示不存在实例 False 表示存在其它实例
+        """
+        if not self.singleton:
+            return True
+
+        # 先检查是否终端上有 session　了，如果有，则移除
+        sessions = self.provider.get_by_remote_addr(remote_addr)
+        if not sessions:
+            return True
+
+        if len(sessions) == 1 and sessions[0].id == session_id:
+            return True
+
+        matched = False
+        for session in sessions:
+            if session_id == session.id:
+                matched = True
+                continue
+
+            self.logger.debug(
+                'Session %r with same remote_addr %s exists(exists session: %s), this is abnormal (May be an attack). DROP IT.' % (
+                    session_id, remote_addr, session.id
+                )
+            )
+            self.provider.remove(session.id)
+
+        return matched
+
+
+def dispose(self):
+    self.provider.dispose()

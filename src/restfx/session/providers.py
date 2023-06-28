@@ -18,6 +18,12 @@ class MemorySessionProvider(ISessionProvider):
         super().__init__(expired, check_interval, True, on_expired)
         self.sessions = {}
 
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        return [
+            session
+            for session in self.sessions.values() if session.remote_addr == addr
+        ]
+
     def remove(self, session_id: str):
         if self.exists(session_id):
             del self.sessions[session_id]
@@ -43,6 +49,7 @@ class MemorySessionProvider(ISessionProvider):
 
 
 class FileSessionProvider(ISessionProvider):
+
     def __init__(self, sessions_root: str = None, expired: int = None, check_interval=0, auto_clear=False,
                  on_expired: FunctionType = None):
         super().__init__(expired, check_interval, auto_clear, on_expired)
@@ -93,10 +100,10 @@ class FileSessionProvider(ISessionProvider):
             return session
 
     def remove(self, session_id: str):
-        # print('Remove session:' + session_id)
+        # print('Drop session:' + session_id)
         session_file = self._get_session_path(session_id)
         if not self.exists(session_file):
-            # print("The session to remove is not exists:" + session_file)
+            # print("The session to drop is not exists:" + session_file)
             return
         os.remove(session_file)
 
@@ -132,6 +139,9 @@ class FileSessionProvider(ISessionProvider):
 
     def clear(self):
         os.removedirs(self.sessions_root)
+
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        raise NotImplemented()
 
 
 class MySQLSessionProvider(IDbSessionProvider):
@@ -184,9 +194,11 @@ class MySQLSessionProvider(IDbSessionProvider):
                 if is_select:
                     data = cursor.fetchall()
         except Exception as e:
-            self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
             if throw_except:
+                self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
                 raise e
+            else:
+                self.logger.info('Warning occurred during executing SQL statement: %s\n%s, args=%s' % (str(e), sql, args))
         else:
             if not is_select:
                 conn.commit()
@@ -208,22 +220,37 @@ class MySQLSessionProvider(IDbSessionProvider):
                 db_name=self.db_options['database'],
                 table_name=self.table_name
             ), throw_except=True, ensure_table=False)
-        if rows > 0:
-            self.is_db_available = True
-            if self.auto_clear:
-                self.clear()
-            return
+        if rows == 0:
+            self.logger.debug('Creating session table %r' % self.table_name)
+            self.execute("""CREATE TABLE `{table_name}` (
+            `id` VARCHAR(48) PRIMARY KEY NOT NULL,
+            `creation_time` BIGINT NOT NULL,
+            `last_access_time` BIGINT NOT NULL,
+            `store` BLOB,
+            `remote_addr` VARCHAR(36),
+            `user_agent` VARCHAR(160),
+            INDEX `last_access`(`last_access_time` ASC),
+            INDEX `idx_restfx_sessions_remote_addr`(`remote_addr`),
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True,
+                         ensure_table=False)
 
-        self.logger.debug('Creating session table %r' % self.table_name)
-        self.execute("""CREATE TABLE `{table_name}` (
-        `id` VARCHAR(48) PRIMARY KEY NOT NULL,
-        `creation_time` BIGINT NOT NULL,
-        `last_access_time` BIGINT NOT NULL,
-        `store` BLOB,
-        INDEX `last_access`(`last_access_time` ASC)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8""".format(table_name=self.table_name), throw_except=True,
-                     ensure_table=False)
+        # 升级字段
+        self.execute('''alter table `{table_name}` add column `remote_addr` VARCHAR(36)'''.format(
+            table_name=self.table_name
+        ), throw_except=False, ensure_table=False)
 
+        self.execute('''alter table `{table_name}` add column `user_agent` VARCHAR(160)'''.format(
+            table_name=self.table_name
+        ), throw_except=False, ensure_table=False)
+
+        # 升级索引
+        self.execute(
+            '''alter table `{table_name}` add index `idx_restfx_sessions_remote_addr` (`remote_addr`)'''.format(
+                table_name=self.table_name
+            ), throw_except=False, ensure_table=False)
+
+        if self.auto_clear:
+            self.clear()
         self.is_db_available = True
 
     def get_expired_session(self, time_before: float) -> List[str]:
@@ -242,15 +269,20 @@ class MySQLSessionProvider(IDbSessionProvider):
             return None
         return self.parse(data[0])
 
-    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        self.execute("""INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s) ON DUPLICATE KEY UPDATE
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes, remote_addr: str,
+               user_agent: str):
+        self.execute(
+            """INSERT INTO `{table_name}` VALUES(%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE
         last_access_time=%s, store=%s""".format(table_name=self.table_name),
-                     session_id,
-                     int(creation_time),
-                     int(last_access_time),
-                     store,
-                     int(last_access_time),
-                     store)
+            session_id,
+            int(creation_time),
+            int(last_access_time),
+            store,
+            remote_addr,
+            user_agent,
+            int(last_access_time),
+            store,
+        )
 
     def exists(self, session_id: str) -> bool:
         rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=%s limit 1""".format(
@@ -269,6 +301,14 @@ class MySQLSessionProvider(IDbSessionProvider):
 
     def clear(self):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))
+
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        _, data = self.execute("""SELECT * FROM `{table_name}` WHERE `remote_addr`=%s""".format(
+            table_name=self.table_name), addr)
+
+        return [
+            self.parse(item) for item in data
+        ]
 
 
 class SqliteSessionProvider(IDbSessionProvider):
@@ -328,9 +368,11 @@ class SqliteSessionProvider(IDbSessionProvider):
             else:
                 rows = cursor.rowcount
         except Exception as e:
-            self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
             if throw_except:
+                self.logger.error('Error occurred during executing SQL statement: %s, args=%s' % (sql, args), e)
                 raise e
+            else:
+                self.logger.info('Warning occurred during executing SQL statement: %s\n%s, args=%s' % (str(e), sql, args))
         finally:
             if cursor is not None:
                 cursor.close()
@@ -353,24 +395,37 @@ class SqliteSessionProvider(IDbSessionProvider):
             WHERE `type`='table' AND `name` = '{table_name}' LIMIT 1""".format(
                 table_name=self.table_name
             ), throw_except=True, ensure_table=False)
-        if rows > 0:
-            self.is_db_available = True
-            if self.auto_clear:
-                self.clear()
-            return
+        if rows == 0:
+            self.logger.debug('Creating session table %r' % self.table_name)
+            self.execute("""CREATE TABLE `{table_name}` (
+            `id` VARCHAR(48) PRIMARY KEY NOT NULL,
+            `creation_time` BIGINT NOT NULL,
+            `last_access_time` BIGINT NOT NULL,
+            `store` BLOB
+            )""".format(table_name=self.table_name), throw_except=True,
+                         ensure_table=False)
+            # 创建索引
+            self.execute("""CREATE INDEX `last_access` ON `{table_name}`(`last_access_time`)""".format(
+                table_name=self.table_name
+            ), throw_except=True, ensure_table=False)
 
-        self.logger.debug('Creating session table %r' % self.table_name)
-        self.execute("""CREATE TABLE `{table_name}` (
-        `id` VARCHAR(48) PRIMARY KEY NOT NULL,
-        `creation_time` BIGINT NOT NULL,
-        `last_access_time` BIGINT NOT NULL,
-        `store` BLOB
-        )""".format(table_name=self.table_name), throw_except=True,
-                     ensure_table=False)
-        # 创建索引
-        self.execute("""CREATE INDEX `last_access` ON `{table_name}`(`last_access_time`)""".format(
+        # 升级字段
+        self.execute('''alter table `{table_name}` add column `remote_addr` VARCHAR(36)'''.format(
             table_name=self.table_name
-        ), throw_except=True, ensure_table=False)
+        ), throw_except=False, ensure_table=False)
+
+        self.execute('''alter table `{table_name}` add column `user_agent` VARCHAR(160)'''.format(
+            table_name=self.table_name
+        ), throw_except=False, ensure_table=False)
+
+        # 升级索引
+        self.execute(
+            '''alter table `{table_name}` add index `idx_restfx_sessions_remote_addr` (`remote_addr`)'''.format(
+                table_name=self.table_name
+            ), throw_except=False, ensure_table=False)
+
+        if self.auto_clear:
+            self.clear()
         self.is_db_available = True
 
     def get_expired_session(self, time_before: float) -> List[str]:
@@ -389,13 +444,18 @@ class SqliteSessionProvider(IDbSessionProvider):
             return None
         return self.parse(data[0])
 
-    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        self.execute("""REPLACE INTO `{table_name}`(`id`, `creation_time`, `last_access_time`, `store`)
-         VALUES(?, ?, ?, ?)""".format(table_name=self.table_name),
-                     session_id,
-                     int(creation_time),
-                     int(last_access_time),
-                     store)
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes,
+               remote_addr: str, user_agent: str):
+        self.execute(
+            """REPLACE INTO `{table_name}`(`id`, `creation_time`, `last_access_time`, `store`, `remote_addr`,
+            `user_agent`) VALUES(?, ?, ?, ?, ?, ?)""".format(table_name=self.table_name),
+            session_id,
+            int(creation_time),
+            int(last_access_time),
+            store,
+            remote_addr,
+            user_agent
+        )
 
     def exists(self, session_id: str) -> bool:
         rows, _ = self.execute("""SELECT 1 FROM `{table_name}` WHERE `id`=? limit 1""".format(
@@ -408,14 +468,19 @@ class SqliteSessionProvider(IDbSessionProvider):
     def clear(self):
         self.execute('TRUNCATE TABLE `{table_name}`'.format(table_name=self.table_name))
 
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        _, data = self.execute("""SELECT * FROM `{table_name}` WHERE `remote_addr`=?""".format(
+            table_name=self.table_name), addr)
+
+        return [
+            self.parse(item) for item in data
+        ]
+
 
 class RedisSessionProvider(IDbSessionProvider):
     """
     提供基于 Redis 的 session 存储支持
     """
-
-    def ensure_table(self):
-        pass
 
     def __init__(self, db_options: dict, expired: int = None, auto_clear=False,
                  on_expired: FunctionType = None):
@@ -459,8 +524,15 @@ class RedisSessionProvider(IDbSessionProvider):
             setattr(session, '_drop_watcher', self.remove)
             return session
 
-    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
-        raise NotImplemented()
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes, remote_addr: str,
+               user_agent: str):
+        pass
+
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        pass
+
+    def ensure_table(self):
+        pass
 
     def set(self, session: HttpSession):
         with self.connect() as conn:

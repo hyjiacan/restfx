@@ -118,6 +118,15 @@ class ISessionProvider(ABC):
             self.remove(session_id)
 
     @abstractmethod
+    def get_by_remote_addr(self, addr: str) -> List[HttpSession]:
+        """
+        根据终端地址获取 session
+        :param addr:
+        :return: session 列表
+        """
+        raise NotImplemented()
+
+    @abstractmethod
     def clear(self):
         """
         清空所有 session
@@ -173,16 +182,23 @@ class IDbSessionProvider(ISessionProvider):
         session.creation_time = int(data['creation_time'])
         session.last_access_time = int(data['last_access_time'])
         session.store = pickle.loads(data['store'])
+        session.remote_addr = data['remote_addr']
+        session.user_agent = data['user_agent']
 
         return session
 
     def set(self, session: HttpSession):
         import pickle
-        self.upsert(session.id,
-                    session.creation_time,
-                    session.last_access_time,
-                    pickle.dumps(session.store))
+        self.upsert(
+            session.id,
+            session.creation_time,
+            session.last_access_time,
+            pickle.dumps(session.store),
+            session.remote_addr,
+            session.user_agent
+        )
 
     @abstractmethod
-    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes):
+    def upsert(self, session_id: str, creation_time: float, last_access_time: float, store: bytes, remote_addr: str,
+               user_agent: str):
         raise NotImplemented()
