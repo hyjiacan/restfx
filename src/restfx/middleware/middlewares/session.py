@@ -63,12 +63,12 @@ class SessionMiddleware(MiddlewareBase):
         from restfx.util import Logger
         self.logger = Logger.current()
 
-    @staticmethod
-    def default_maker():
+    @classmethod
+    def default_maker(cls, request):
         return uuid.uuid4().hex
 
     def new_sid(self, request):
-        sid = self.maker(request) if self.maker else self.default_maker()
+        sid = self.maker(request) if self.maker else self.default_maker(request)
         return md5.hash_str(sid)
 
     def decode(self, sid):
@@ -98,14 +98,20 @@ class SessionMiddleware(MiddlewareBase):
             self.secret = app.id
         self.secret_bytes = md5.hash_str(self.secret).encode()
 
+    @classmethod
+    def get_request_info(cls, request):
+        # 为了避免受到存储溢出攻击，在此处，只存储指定长度的数据
+        remote_addr = request.get_remote_addr()[0:36]
+        user_agent = request.user_agent.string[0:160]
+
+        return remote_addr, user_agent
+
     def on_coming(self, request):
         config = AppConfig.current()
         if config is None or self.provider is None:
             return
 
-        # 为了避免受到存储溢出攻击，在此处，只存储指定长度的数据
-        remote_addr = request.get_remote_addr()[0:36]
-        user_agent = request.user_agent.string[0:160]
+        remote_addr, user_agent = self.get_request_info(request)
 
         def create_session():
             sid = self.new_sid(request)
@@ -132,13 +138,13 @@ class SessionMiddleware(MiddlewareBase):
             create_session()
             return
 
-        if not self.check_singleton(remote_addr, session_id):
-            create_session()
-            return
+        # if not self.check_singleton(remote_addr, session_id):
+        #     create_session()
+        #     return
+        self.check_singleton(remote_addr, session_id)
 
         # 尝试根据客户端的 session_id 获取 session
         request.session = self.provider.get(session_id)
-
         # session 已经过期或session被清除
         if request.session is None:
             self.logger.debug('Session %r not found.' % session_id)

@@ -28,7 +28,11 @@ class ISessionProvider(ABC):
         self.expired = 10 * 60 if expired is None else expired
         self.on_expired = on_expired
         self.check_interval = check_interval
-        self.timer = self.run_timer()
+
+        if check_interval:
+            self.timer = self.run_timer()
+        else:
+            self.timer = None
 
     def run_timer(self):
         # 不会过期，不用启动定时器

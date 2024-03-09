@@ -276,7 +276,7 @@ def _get_enum_value(arg_spec, arg_value):
     return None
 
 
-def _get_input_value(arg_spec, arg_name, arg_value, config):
+def _get_input_value(arg_spec: ArgumentSpecification, arg_name, arg_value, config):
     # 未指定类型
     if not arg_spec.has_annotation:
         return arg_value
@@ -333,7 +333,6 @@ def _get_input_value(arg_spec, arg_name, arg_value, config):
             return BadRequest(msg)
 
         return result
-
 
     # 转换失败时，会抛出异常
     # noinspection PyBroadException

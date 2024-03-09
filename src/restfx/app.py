@@ -294,7 +294,7 @@ class App:
 
         # 支持 空串和 * 标志
         if host in [None, '', '*']:
-            host = '0.0.0.0'
+            host = '127.0.0.1'
 
         if self.config.api_page_enabled:
             if host == '0.0.0.0':
@@ -303,6 +303,10 @@ class App:
                 ips = [host]
 
             protocol = 'https' if kwargs.get('ssl_context') else 'http'
+
+            print(' * Table of serving:')
+            for ip in ips:
+                print('\t- %s://%s:%s' % (protocol, ip, port))
 
             print(' * Table of APIs:')
             for ip in ips:
@@ -400,9 +404,10 @@ class App:
             if not path:
                 raise Exception('Empty route map prefix value')
             pkg = routes_map[path]
-            pkg_path = os.path.join(self.config.ROOT, pkg.replace('.', '/'))
-            if not os.path.exists(pkg_path):
-                self._logger.warning('Route map "%s" does not exist, path=%s' % (pkg, pkg_path))
+            if isinstance(pkg, str):
+                pkg_path = os.path.join(self.config.ROOT, pkg.replace('.', '/'))
+                if not os.path.exists(pkg_path):
+                    self._logger.warning('Route map "%s" does not exist, path=%s' % (pkg, pkg_path))
             self.config.routes_map[path] = pkg
         return self
 
@@ -646,6 +651,9 @@ class App:
         """
         from . import globs
         return globs.app_store
+
+    def export(self):
+        Collector.get()
 
 
 @atexit.register

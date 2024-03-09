@@ -2,17 +2,18 @@ import json
 import os
 import uuid
 
+import obj_test
 from app_test.tools.enums import *
 from midlewares import MiddlewareA
 from restfx import App
 from restfx.http import HttpRequest, HttpResponse
 from restfx.http.response import Redirect
 from restfx.middleware.access import AccessMiddleware
-from restfx.middleware.middlewares import HttpAuthMiddleware, SessionMiddleware, TimetickMiddleware
+from restfx.middleware.middlewares import HttpAuthMiddleware, TimetickMiddleware
 from restfx.middleware.middlewares import OptionsMiddleware
 from restfx.middleware.middlewares.check_referer import CheckRefererMiddleware
 from restfx.routes import RouteMeta
-from restfx.session.providers import MySQLSessionProvider
+from geventwebsocket.handler import WebSocketHandler
 
 # from admin_plugin.plugin import AdminPlugin
 
@@ -49,17 +50,24 @@ app = App(root,
           )
 
 app.scan_routes()
+app.map_routes({
+    'test/obj': obj_test
+})
+
+app.map_static({
+    '/': 'static'
+})
 
 # app.map_routes({
 #     'test': 'app_test.api'
 # })
 
-app.map_static({
-    '/': 'static'
-}).map_urls({
-    '/': lambda request: Redirect('/index.html'),
-    '/test/<param>': lambda request, param: HttpResponse(param)
-})
+# app.map_static({
+#     '/': 'static'
+# }).map_urls({
+#     '/': lambda request: Redirect('/index.html'),
+#     '/test/<param>': lambda request, param: HttpResponse(param)
+# })
 
 app.register_types(OpTypes)
 
@@ -81,24 +89,24 @@ def sessionid_maker(request):
 
 
 app.register_middleware(
-    CheckRefererMiddleware(),
-    AccessMiddleware(),
-    TimetickMiddleware(),
-    OptionsMiddleware(),
-    HttpAuthMiddleware(on_auth),
+    # CheckRefererMiddleware(),
+    # AccessMiddleware(),
+    # TimetickMiddleware(),
+    # OptionsMiddleware(),
+    # HttpAuthMiddleware(on_auth),
     # SessionMiddleware(MemorySessionProvider()),
-    SessionMiddleware(MySQLSessionProvider(
-        db_options={
-            'host': '127.0.0.1',
-            'port': 3306,
-            'user': 'root',
-            'password': '123asd!@#',
-            'database': 'test',
-            'charset': 'utf8',
-        }, expired=30 * 60, check_interval=0),
-        maker=sessionid_maker,
-        check_flags=SessionMiddleware.FLAG_REMOTE_ADDR | SessionMiddleware.FLAG_USER_AGENT,
-        singleton=False),
+    # SessionMiddleware(MySQLSessionProvider(
+    #     db_options={
+    #         'host': '127.0.0.1',
+    #         'port': 50013,
+    #         'user': 'mysqluser',
+    #         'password': '123asd!@#$',
+    #         'database': 'test',
+    #         'charset': 'utf8',
+    #     }, expired=30 * 60, check_interval=0),
+    #     # maker=sessionid_maker,
+    #     check_flags=SessionMiddleware.FLAG_REMOTE_ADDR | SessionMiddleware.FLAG_USER_AGENT,
+    #     singleton=False),
     # SessionMiddleware(RedisSessionProvider({
     #     'host': '127.0.0.1',
     #     # 'password': '123456',
@@ -107,19 +115,19 @@ app.register_middleware(
     # SessionMiddleware(
     #     SqliteSessionProvider()
     # ),
-    MiddlewareA(),
+    # MiddlewareA(),
     # MiddlewareB(),
     # MiddlewareC()
 )
 app.inject(injection='try1try')
 
-app.register_enums((
-    TestType,
-    TestType1,
-    TestType2,
-    TestType3,
-    OpTypes,
-))
+# app.register_enums((
+#     TestType,
+#     TestType1,
+#     TestType2,
+#     TestType3,
+#     OpTypes,
+# ))
 
 
 def load_routes_map():

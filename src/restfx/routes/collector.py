@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import ast
+import inspect
 # 此模块用于收集路由
 import json
 import keyword
@@ -68,7 +69,16 @@ class Collector:
                 'Routes map is empty, did you forgot to call "restfx.map_routes(routes_map: dict)"')
 
         for (http_prefix, pkg_prefix) in routes_map.items():
-            route_root = path.abspath(path.join(self.app_root, pkg_prefix.replace('.', path.sep)))
+            if isinstance(pkg_prefix, str):
+                route_root = path.abspath(path.join(self.app_root, pkg_prefix.replace('.', path.sep)))
+            else:
+                module_path = inspect.getfile(pkg_prefix)
+                if module_path.endswith('__init__.py'):
+                    route_root = os.path.dirname(module_path)
+                else:
+                    route_root = module_path
+
+                route_root = route_root.replace(os.path.sep, '.')
 
             # 遍历目录，找出所有的 .py 文件
             for (current_path, dirs, files) in os.walk(route_root):
